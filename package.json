@@ -1,14 +1,14 @@
 {
   "name": "structured-field-values",
   "version": "0.0.0",
-  "description": "https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19",
+  "description": "implementation of https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19",
   "main": "index.js",
   "scripts": {
     "test": "make test"
   },
   "repository": {
     "type": "git",
-    "url": "git"
+    "url": "git+https://github.com/Jxck/structured-field-values.git"
   },
   "keywords": [
     "structured headers",
