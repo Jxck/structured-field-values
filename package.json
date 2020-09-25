@@ -15,5 +15,6 @@
     "structured fiedl values"
   ],
   "author": "Jxck",
-  "license": "MIT"
+  "license": "MIT",
+  "type": "module"
 }
