@@ -325,7 +325,23 @@ function test_sf_binary() {
   ])
   assert.deepEqual(sf_binary()(`:cHJldGVuZCB0aGlzIGlzIGJpbmFyeSBjb250ZW50Lg==:`), {ok, value, rest: ''})
 }
-test_sf_binary()
+
+function sf_boolean() {
+  return (rest) => {
+    const result = token(/^((\?0)|(\?1))/)(rest)
+    if (result.ok) {
+      result.value = result.value === '?1'
+      return result
+    } else {
+      return result
+    }
+  }
+}
+
+function test_sf_boolean() {
+  assert.deepEqual(sf_boolean()(`?0`), {ok, value: false, rest: ''})
+  assert.deepEqual(sf_boolean()(`?1`), {ok, value: true,  rest: ''})
+}
 
 
 
@@ -343,4 +359,5 @@ test_unescaped()
 test_escaped()
 
 test_sf_token()
-
+test_sf_binary()
+test_sf_boolean()
