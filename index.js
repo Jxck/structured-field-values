@@ -281,6 +281,54 @@ function test_escaped() {
 }
 
 
+function sf_token() {
+  return token(/^([a-zA-Z\*])([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]){0,512}/)
+}
+
+function test_sf_token() {
+  assert.deepEqual(sf_token()(`*foo123/456`), {ok, value: `*foo123/456`, rest: ''})
+  assert.deepEqual(sf_token()(`foo123;456`), {ok, value: `foo123`, rest: ';456'})
+  assert.deepEqual(sf_token()(`abc!#$%&'*+-.^_'|~:/012`), {ok, value: `abc!#$%&'*+-.^_'|~:/012`, rest: ''})
+}
+
+
+function base64decode(str) {
+  if (typeof window === 'undefined') {
+    return Buffer.from(str, 'base64')
+  } else {
+    return new Uint8Array([...atob(str)].map(a => a.charCodeAt(0)));
+  }
+}
+
+function sf_binary() {
+  return (rest) => {
+    const result = list([
+      token(/^:/),
+      token(/^([\w+/=]){0,16384}/),
+      token(/^:/),
+    ])(rest)
+
+    if (result.ok) {
+      result.value = base64decode(result.value[1]) // remove ":"
+      return result
+    } else {
+      return result
+    }
+  }
+}
+
+function test_sf_binary() {
+  const value = Buffer.from([
+    112, 114, 101, 116, 101, 110, 100, 32, 116, 104, 105, 115, 32,
+    105, 115, 32, 98, 105, 110, 97, 114, 121, 32, 99, 111, 110, 116,
+    101, 110, 116, 46
+  ])
+  assert.deepEqual(sf_binary()(`:cHJldGVuZCB0aGlzIGlzIGJpbmFyeSBjb250ZW50Lg==:`), {ok, value, rest: ''})
+}
+test_sf_binary()
+
+
+
 test_token()
 test_alt()
 test_list()
@@ -293,3 +341,6 @@ test_sf_string()
 test_sf_char()
 test_unescaped()
 test_escaped()
+
+test_sf_token()
+
