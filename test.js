@@ -349,6 +349,27 @@ function test_sf_item() {
     console.log('string done')
   })();
 
+  // token
+  (() => {
+    const suites = [
+      ...read('token'),
+      //...read('token-generated'),
+    ]
+    suites.forEach((suite) => {
+      if (suite.header_type !== 'item') return // TODO
+      console.log(suite)
+      try {
+        const result = parseItem(suite.raw[0])
+        const [expected, param] = suite.expected
+        if (expected['__type'] !== 'token') return // TODO
+        console.log(JSON.stringify([expected.value, param]), JSON.stringify(result), '\n\n')
+        assert.deepEqual(result, [expected.value, param], suite.name)
+      } catch(err) {
+        assert.deepEqual(suite.must_fail, true)
+      }
+    })
+    console.log('token done')
+  })();
 
 
 }
