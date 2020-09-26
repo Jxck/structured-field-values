@@ -8,6 +8,7 @@ function read(name) {
 
 import {
   parseItem,
+  parseList,
   token,
   alt,
   list,
@@ -225,8 +226,11 @@ function test_sf_key() {
   assert.deepEqual(sf_key()(`*a123`),    {ok, value: `*a123`,    rest: ''})
 }
 
-
-
+function test_sf_list() {
+  assert.deepEqual(sf_list()(`foo, bar, buz`), {ok, value: [['foo',[]], ['bar',[]], ['buz',[]]], rest: ''})
+  assert.deepEqual(sf_list()(`"a", "b", "c"`), {ok, value: [["a",[]], ["b",[]], ["c",[]]], rest: ''})
+}
+// test_sf_list()
 
 
 
@@ -251,6 +255,19 @@ test_escaped()
 test_sf_token()
 test_sf_binary()
 test_sf_boolean()
+
+
+test_sf_item()
+
+test_sf_list()
+
+
+
+
+
+
+
+
 
 
 
@@ -367,17 +384,26 @@ function test_sf_item() {
     })
     console.log('token done')
   })();
+
+
+
+
+  // list
+  (() => {
+    const suites = read('list')
+    suites.forEach((suite) => {
+      if (suite.header_type !== 'list') return
+      if (suite.raw.length > 1) return // TODO: multi line
+      try {
+        const result = parseList(suite.raw[0])
+        assert.deepEqual(result, suite.expected, suite.name)
+      } catch (err) {
+        assert.deepEqual(suite.must_fail, true)
+      }
+    })
+    console.log('list done')
+  })();
+
+
+
 }
-
-test_sf_item()
-
-
-
-
-
-
-
-
-
-
-

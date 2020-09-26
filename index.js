@@ -17,13 +17,29 @@ export function parseItem(value) {
   // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2
   const result = sf_item()(value.trim())
   if (result.ok === false) {
-    throw ParseError('failed to parse')
+    throw new Error('failed to parse')
   }
   if (result.rest.length > 0) {
-    throw ParseError(`failed to parse: trailing values ${result.rest}`)
+    throw new Error(`failed to parse: trailing values ${result.rest}`)
   }
   return result.value
 }
+
+export function parseList(value) {
+  // return if empty
+  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
+  if (value === '') return []
+
+  const result = sf_list()(value.trim())
+  if (result.ok === false) {
+    throw new Error('failed to parse')
+  }
+  if (result.rest.length > 0) {
+    throw new Error(`failed to parse: trailing values ${result.rest}`)
+  }
+  return result.value
+}
+
 
 //////////////////////////////////////////////////////
 export function token(reg) {
@@ -242,24 +258,37 @@ export function sf_boolean() {
 // sf-list
 //       = list-member *( OWS "," OWS list-member )
 export function sf_list() {
+  return (rest) => {
+    const result = list([
+      list_member(),
+      _repeat_list_member()
+    ])(rest)
+
+    if (result.ok) {
+      // [ [1,[]], [ [2,[]], [3,[]] .. ] ]
+      result.value = [result.value[0], ...result.value[1]]
+    }
+    return result
+  }
+}
+
+// repeat of list member
+export function _repeat_list_member() {
   function fn() {
     return (rest) => {
       const result = list([
-        token(/^( *),( *)/),
+        token(/^([ \t]*),([ \t]*)/),
         list_member()
       ])(rest)
 
       if (result.ok) {
-        const [h, [t]] = result.value
-        result.value = t
+        // [ ',', [a, []] => [a, []]
+        result.value = result.value[1]
       }
       return result
     }
   }
-  return list([
-    list_member(),
-    tee(repeat(0, 1024, fn(), false), 'repeat list')
-  ])
+  return tee(repeat(0, 1024, fn(), false), 'repeat list')
 }
 
 // list-member
@@ -268,15 +297,27 @@ export function sf_list() {
 export function list_member() {
   return alt([
     sf_item(),
-    // inner_list(),
+    inner_list(),
   ])
 }
 
-export function test_sf_list() {
-  console.log(sf_list()(`foo, bar, buz`))
-  console.log(sf_list()(`"a", "b", "c"`))
+// inner-list
+//       = "(" *SP [ sf-item *( 1*SP sf-item ) *SP ] ")" parameters
+export function inner_list() {
+  return list([
+    token(/^\( */),
+    repeat(0, 1, list([
+      sf_item(),
+      repeat(0, 256, list([
+        token(/^ +/),
+        sf_item()
+      ])),
+      token(/^ */)
+    ])),
+    token(/^\)/),
+    parameters()
+  ])
 }
-// test_sf_list()
 
 // function sf_dictionary() {
 //   return list([
@@ -375,6 +416,7 @@ export function parameter() {
   ])
 }
 
+// [ "=" param-value ]
 export function param_value() {
   return (rest) => {
     const result = repeat(0, 1, list([
