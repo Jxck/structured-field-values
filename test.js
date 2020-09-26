@@ -230,13 +230,15 @@ function test_sf_list() {
   assert.deepStrictEqual(sf_list()(`foo, bar, buz`), {ok, value: [['foo',[]], ['bar',[]], ['buz',[]]], rest: ''})
   assert.deepStrictEqual(sf_list()(`"a", "b", "c"`), {ok, value: [["a",[]], ["b",[]], ["c",[]]], rest: ''})
 }
-// test_sf_list()
 
+function test_parameters() {
+  assert.deepStrictEqual(parameters()(`; a; b=?0`), {ok, value: [['a', true], ['b', false]], rest: ''})
+}
 
+test_sf_list()
+test_parameters()
 
 test_sf_key()
-
-
 test_bare_item()
 
 test_token()

@@ -3,6 +3,7 @@
 let tmp
 const ok = true
 const log = console.log.bind(console)
+const j = JSON.stringify.bind(JSON)
 
 const tee = (fn, k) => {
   return (rest) => {
@@ -319,35 +320,56 @@ export function inner_list() {
   ])
 }
 
-// function sf_dictionary() {
-//   return list([
-//     sf_dict_member(),
-//     repeat(0, 1024, list([
-//       token(/^ */),
-//       token(/^,/),
-//       token(/^ */),
-//       sf_dict_member()
-//     ]))
-//   ])
-// }
-// 
-// function sf_dict_member() {
-//   return list([
-//     sf_member_name(),
-//     repeat(0, 1, list([
-//       token(/^=/),
-//       sf_member_value()
-//     ]))
-//   ])
-// }
-// 
-// function sf_member_name() {
-//   return token(/([a-z\*]) ([a-z0-9\_\-\.\*]){0,64}/)
-// }
-// 
-// function sf_member_value() {
-//   return alt([sf_item, sf_inner_list])
-// }
+// sf-dictionary
+//       = dict-member *( OWS "," OWS dict-member )
+function sf_dictionary() {
+  return tee(list([
+    dict_member(),
+    repeat(0, 1024, list([
+      token(/^([ \t]*),([ \t]*)/),
+      dict_member()
+    ]), false)
+  ]), 'sf_dictionary')
+}
+
+// dict-member
+//       = member-name [ "=" member-value ]
+// member-name
+//       = key
+function dict_member() {
+  return tee(list([
+    sf_key(),
+    repeat(0, 1, list([
+      tee(token(/^=/), '='),
+      tee(member_value(), '_memver_value')
+    ]), false)
+  ]), 'dict_member')
+}
+
+// member-value
+//       = sf-item
+//       / inner-list
+function member_value() {
+  return (rest) => {
+    const result = alt([sf_item(), inner_list()])(rest)
+    console.log('>', result)
+
+    return result
+  }
+}
+
+
+log(j(sf_dictionary()('a=1, b=2')))
+
+
+
+
+
+
+
+
+
+
 
 // sf-item
 //       = bare-item parameters
@@ -398,10 +420,6 @@ export function parameters() {
 }
 
 
-export function test_parameters() {
-  // log(parameters()(`; a`))
-}
-test_parameters()
 
 // parameter
 //       = param-name [ "=" param-value ]
@@ -446,5 +464,5 @@ export function param_value() {
 // lcalpha
 //       = %x61-7A ; a-z
 export function sf_key() {
-  return token(/^([a-z\*])([a-z0-9\_\-\.\*]){0,64}/)
+  return tee(token(/^([a-z\*])([a-z0-9\_\-\.\*]){0,64}/), 'sf_key')
 }
