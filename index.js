@@ -300,6 +300,14 @@ function base64decode(str) {
   }
 }
 
+function base64encode(binary) {
+  if (typeof window === 'undefined') {
+    return Buffer.from(binary).toString('base64')
+  } else {
+  }
+
+}
+
 function sf_binary() {
   return (rest) => {
     const result = list([
@@ -343,6 +351,37 @@ function test_sf_boolean() {
   assert.deepEqual(sf_boolean()(`?1`), {ok, value: true,  rest: ''})
 }
 
+
+
+// bare-item
+//       = sf-integer
+//       / sf-decimal
+//       / sf-string
+//       / sf-token
+//       / sf-binary
+//       / sf-boolean
+function sf_bare_item() {
+  return alt([
+    sf_decimal(),
+    sf_integer(),
+    sf_string(),
+    sf_token(),
+    sf_binary(),
+    sf_boolean(),
+  ])
+}
+
+function test_sf_bare_item() {
+  assert.deepEqual(sf_bare_item()(`123`),        {ok, value: 123,      rest: ''})
+  assert.deepEqual(sf_bare_item()(`3.14`),       {ok, value: 3.14,     rest: ''})
+  assert.deepEqual(sf_bare_item()(`string`),     {ok, value: `string`, rest: ''})
+  assert.deepEqual(sf_bare_item()(`string`),     {ok, value: `string`, rest: ''})
+  assert.deepEqual(sf_bare_item()(`foo123;456`), {ok, value: `foo123`, rest: ';456'})
+  const binary = new Uint8Array([1,2,3,4,5])
+  assert.deepEqual(sf_bare_item()(`:${base64encode(binary)}:`), {ok, value: binary, rest: ''})
+  assert.deepEqual(sf_bare_item()(`?1`),         {ok, value: true,     rest: ''})
+}
+test_sf_bare_item()
 
 
 test_token()
