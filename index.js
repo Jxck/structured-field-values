@@ -130,6 +130,7 @@ export function sf_string() {
       token(/^"/),
     ])
     const result = fn(rest)
+    log('>>', result)
     if (result.ok) {
       result.value = result.value.join('')
       return result
@@ -150,11 +151,11 @@ export function char() {
 }
 
 // unescaped
-//       = %x20-21
-//       / %x23-5B
+//       = %x20-21  (x22 is ")
+//       / %x23-5B  (x5c is \)
 //       / %x5D-7E
 export function unescaped() {
-  return token(/^([\x20-\x21])|([\x23-\x5B])|([\x5D-\x7E])/)
+  return token(/^([\x20-\x21\x23-\x5B\x5D-\x7E])/)
 }
 
 // escaped
@@ -222,6 +223,7 @@ export function sf_list() {
       ])(rest)
 
       log(rest, result)
+
       if (result.ok) {
         const [h, [t]] = result.value
         result.value = t
@@ -243,11 +245,16 @@ export function list_member() {
   //  sf_item(),
   //  // inner_list(),
   //])
-  return sf_item()
+  return (rest) => {
+    const tmp = sf_item()(rest)
+    log('>', tmp)
+    return tmp
+  }
 }
 
 export function test_sf_list() {
-  console.log(sf_list()(`foo, bar, buz`))
+  // console.log(sf_list()(`foo, bar, buz`))
+  console.log(sf_list()(`"foo", "bar", "It"`))
 }
 test_sf_list()
 

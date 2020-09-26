@@ -209,27 +209,27 @@ function test_bare_item() {
   assert.deepEqual(bare_item()(`?1`),         {ok, value: true,     rest: ''})
 }
 
-test_bare_item()
-
 function test_sf_key() {
   assert.deepEqual(sf_key()(`a123_-.*`), {ok, value: `a123_-.*`, rest: ''})
   assert.deepEqual(sf_key()(`*a123`),    {ok, value: `*a123`,    rest: ''})
 }
-test_sf_key()
+// test_sf_key()
 
-test_token()
-test_alt()
-test_list()
-test_repeat()
 
-test_sf_integer()
-test_sf_decimal()
-
-test_sf_string()
-test_char()
-test_unescaped()
-test_escaped()
-
-test_sf_token()
-test_sf_binary()
-test_sf_boolean()
+// test_bare_item()
+//test_token()
+//test_alt()
+//test_list()
+//test_repeat()
+//
+//test_sf_integer()
+//test_sf_decimal()
+//
+//test_sf_string()
+//test_char()
+//test_unescaped()
+//test_escaped()
+//
+//test_sf_token()
+//test_sf_binary()
+//test_sf_boolean()
