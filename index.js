@@ -13,7 +13,9 @@ const tee = (fn, k) => {
 }
 
 export function parseItem(value) {
-  const result = sf_item()(value)
+  // trim leading/trailing space
+  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2
+  const result = sf_item()(value.trim())
   if (result.ok === false) {
     throw ParseError('failed to parse')
   }
@@ -22,8 +24,6 @@ export function parseItem(value) {
   }
   return result.value
 }
-
-
 
 //////////////////////////////////////////////////////
 export function token(reg) {
@@ -186,7 +186,6 @@ export function escaped() {
     if (result.ok) {
       // unescape (\\" => ",  \\\\ => \\)
       result.value = (result.value === `\\"`) ? `"` : `\\`
-      console.log(result)
     }
     return result
   }

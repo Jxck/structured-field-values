@@ -298,21 +298,19 @@ function test_sf_item() {
   })();
 
   // item
-  // TODO: parseItem を作ってパース残しがあったらエラーにする
-  // (() => {
-  //   const suites = read('item')
-  //   suites.forEach((suite) => {
-  //     if (suite.header_type !== 'item') throw new Error("not item")
-  //     const result = sf_item()(suite.raw[0])
-  //     console.log(suite, result)
-  //     if (suite.must_fail) {
-  //       assert.deepEqual(result.ok, false)
-  //     } else {
-  //       assert.deepEqual(result.value, suite.expected, suite.name)
-  //     }
-  //   })
-  //   console.log('item done')
-  // })();
+  (() => {
+    const suites = read('item')
+    suites.forEach((suite) => {
+      if (suite.header_type !== 'item') throw new Error("not item")
+      try {
+        const result = parseItem(suite.raw[0])
+        assert.deepEqual(result, suite.expected, suite.name)
+      } catch(err) {
+        assert.deepEqual(suite.must_fail, true)
+      }
+    })
+    console.log('item done')
+  })();
 
   // number
   (() => {
@@ -329,7 +327,7 @@ function test_sf_item() {
         assert.deepEqual(suite.must_fail, true)
       }
     })
-    console.log('item done')
+    console.log('number done')
   })();
 
 
@@ -343,13 +341,12 @@ function test_sf_item() {
       if (suite.header_type !== 'item') throw new Error("not item")
       try {
         const result = parseItem(suite.raw[0])
-        console.log(suite,result, '\n\n')
         assert.deepEqual(result, suite.expected, suite.name)
       } catch(err) {
         assert.deepEqual(suite.must_fail, true)
       }
     })
-    console.log('item done')
+    console.log('string done')
   })();
 
 
