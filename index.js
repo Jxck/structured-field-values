@@ -152,7 +152,7 @@ export function sf_string() {
     ])
     const result = fn(rest)
     if (result.ok) {
-      result.value = result.value.join('')
+      result.value = result.value[1]
       return result
     } else {
       return result
@@ -181,7 +181,15 @@ export function unescaped() {
 // escaped
 //       = "\" ( DQUOTE / "\" )
 export function escaped() {
-  return token(/^((\\\")|(\\\\))/)
+  return (rest) => {
+    const result = token(/^((\\\")|(\\\\))/)(rest)
+    if (result.ok) {
+      // unescape (\\" => ",  \\\\ => \\)
+      result.value = (result.value === `\\"`) ? `"` : `\\`
+      console.log(result)
+    }
+    return result
+  }
 }
 
 // sf-token

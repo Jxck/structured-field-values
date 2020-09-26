@@ -158,17 +158,17 @@ function test_sf_decimal() {
 }
 
 function test_sf_string() {
-  assert.deepEqual(sf_string()(`"asdf"`),  {ok, value: `"asdf"`,  rest: ``})
-  assert.deepEqual(sf_string()(`"a""`),    {ok, value: `"a"`,     rest: `"`})
-  assert.deepEqual(sf_string()(`"a\\\""`), {ok, value: `"a\\\""`, rest: ``})
+  assert.deepEqual(sf_string()(`"asdf"`),  {ok, value: `asdf`, rest: ``})
+  assert.deepEqual(sf_string()(`"a""`),    {ok, value: `a`,    rest: `"`})
+  assert.deepEqual(sf_string()(`"a\\\""`), {ok, value: `a"`,   rest: ``})
   assert.deepEqual(sf_string()(`"a\\"`),   {ok: false, rest: `"a\\"`})
-  assert.deepEqual(sf_string()(`"a\\\\c"`),{ok, value: `"a\\\\c"`, rest: ``})
+  assert.deepEqual(sf_string()(`"a\\\\c"`),{ok, value: `a\\c`, rest: ``})
 }
 
 function test_char() {
-  assert.deepEqual(char()('"'),    {ok: false,        rest: '"'})
-  assert.deepEqual(char()("\\\""), {ok, value: '\\\"', rest: ''})
-  assert.deepEqual(char()("\\\\"), {ok, value: '\\\\', rest: ''})
+  assert.deepEqual(char()('"'),    {ok: false,       rest: '"'})
+  assert.deepEqual(char()(`\\"`),  {ok, value: `"`,  rest: ''})
+  assert.deepEqual(char()(`\\\\`), {ok, value: `\\`, rest: ''})
 }
 
 function test_unescaped() {
@@ -181,8 +181,8 @@ function test_unescaped() {
   assert.deepEqual(unescaped()("]"),  {ok, value: ']', rest: ''})   // x5D
 }
 function test_escaped() {
-  assert.deepEqual(escaped()(`\\\"`), {ok, value: `\\\"`, rest: ''})
-  assert.deepEqual(escaped()(`\\\\`), {ok, value: `\\\\`, rest: ''})
+  assert.deepEqual(escaped()(`\\"`),  {ok, value: `"`,  rest: ''})
+  assert.deepEqual(escaped()(`\\\\`), {ok, value: `\\`, rest: ''})
 }
 
 function test_sf_token() {
@@ -316,7 +316,10 @@ function test_sf_item() {
 
   // number
   (() => {
-    const suites = read('number')
+    const suites = [
+      ...read('number'),
+      ...read('number-generated'),
+    ]
     suites.forEach((suite) => {
       if (suite.header_type !== 'item') throw new Error("not item")
       try {
@@ -329,6 +332,25 @@ function test_sf_item() {
     console.log('item done')
   })();
 
+
+  // string
+  (() => {
+    const suites = [
+      ...read('string'),
+      ...read('string-generated'),
+    ]
+    suites.forEach((suite) => {
+      if (suite.header_type !== 'item') throw new Error("not item")
+      try {
+        const result = parseItem(suite.raw[0])
+        console.log(suite,result, '\n\n')
+        assert.deepEqual(result, suite.expected, suite.name)
+      } catch(err) {
+        assert.deepEqual(suite.must_fail, true)
+      }
+    })
+    console.log('item done')
+  })();
 
 
 
