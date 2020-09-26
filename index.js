@@ -4,6 +4,15 @@ let tmp
 const ok = true
 const log = console.log.bind(console)
 
+const tee = (fn, k) => {
+  return (rest) => {
+    const result = fn(rest)
+    // console.log(k, result)
+    return result
+  }
+}
+
+
 //////////////////////////////////////////////////////
 export function token(reg) {
   return (rest) => {
@@ -35,10 +44,10 @@ export function list(fns) {
     const orig  = rest
     for (let i = 0; i < fns.length; i ++) {
       const result = fns[i](rest)
+      if (result.value == '"b"') debugger
       if (result.ok) {
         value.push(result.value)
         rest = result.rest
-        if (rest.length === 0) break
       }
     }
 
@@ -66,7 +75,7 @@ export function repeat(min, max, fn, join = true) { // default join('')
       }
     }
 
-    if (value.length <= min) {
+    if (value.length < min) {
       return {ok: false, rest: orig}
     } else {
       if (join) {
@@ -130,7 +139,6 @@ export function sf_string() {
       token(/^"/),
     ])
     const result = fn(rest)
-    log('>>', result)
     if (result.ok) {
       result.value = result.value.join('')
       return result
@@ -222,8 +230,6 @@ export function sf_list() {
         list_member()
       ])(rest)
 
-      log(rest, result)
-
       if (result.ok) {
         const [h, [t]] = result.value
         result.value = t
@@ -233,7 +239,7 @@ export function sf_list() {
   }
   return list([
     list_member(),
-    repeat(0, 10, fn(), false)
+    tee(repeat(0, 1024, fn(), false), 'repeat list')
   ])
 }
 
@@ -241,20 +247,15 @@ export function sf_list() {
 //       = sf-item
 //       / inner-list
 export function list_member() {
-  //return alt([
-  //  sf_item(),
-  //  // inner_list(),
-  //])
-  return (rest) => {
-    const tmp = sf_item()(rest)
-    log('>', tmp)
-    return tmp
-  }
+  return alt([
+    sf_item(),
+    // inner_list(),
+  ])
 }
 
 export function test_sf_list() {
-  // console.log(sf_list()(`foo, bar, buz`))
-  console.log(sf_list()(`"foo", "bar", "It"`))
+  console.log(sf_list()(`foo, bar, buz`))
+  console.log(sf_list()(`"a", "b", "c"`))
 }
 test_sf_list()
 
@@ -291,10 +292,10 @@ test_sf_list()
 // sf-item
 //       = bare-item parameters
 export function sf_item() {
-  return list([
-    bare_item(),
-    parameters()
-  ])
+  return tee(list([
+    tee(bare_item(), '....bare_item'),
+    tee(parameters(), 'parameters')
+  ]), 'sf_item')
 }
 
 // bare-item
@@ -305,24 +306,33 @@ export function sf_item() {
 //       / sf-binary
 //       / sf-boolean
 export function bare_item() {
-  return alt([
+  return tee(alt([
     sf_decimal(),
     sf_integer(),
     sf_string(),
     sf_token(),
     sf_binary(),
     sf_boolean(),
-  ])
+  ]), 'bare_item')
 }
 
 // parameters
 //       = *( ";" *SP parameter )
 export function parameters() {
-  return repeat(0, 256, list([
-    token(/^; */),
-    parameter()
-  ]), false)
+  return (rest) => {
+    const fn = repeat(0, 256, list([
+      token(/^; */),
+      parameter()
+    ]), false)
+
+    const result = fn(rest)
+    console.log('...parameters', result)
+
+    return result
+  }
+
 }
+
 
 export function test_parameters() {
   // log(parameters()(`; a`))
@@ -336,13 +346,13 @@ test_parameters()
 // param-value
 //       = bare-item
 export function parameter() {
-  return list([
+  return tee(list([
     sf_key(),
     repeat(0, 1, list([
       token(/^=/),
       bare_item()
     ]), false)
-  ])
+  ]), 'parameter')
 }
 
 // key

@@ -81,7 +81,7 @@ function test_list() {
 }
 
 function test_repeat() {
-  let fn = repeat(0, 5, alt([token(/^a/), token(/^b/)]))
+  let fn = repeat(1, 5, alt([token(/^a/), token(/^b/)]))
   assert.deepEqual(
     fn("a"),
     {ok, value: "a", rest: ""}
@@ -213,23 +213,36 @@ function test_sf_key() {
   assert.deepEqual(sf_key()(`a123_-.*`), {ok, value: `a123_-.*`, rest: ''})
   assert.deepEqual(sf_key()(`*a123`),    {ok, value: `*a123`,    rest: ''})
 }
-// test_sf_key()
+
+function test_sf_list() {
+  assert.deepEqual(sf_list()(`foo, bar, buz`), {ok, value: `a123_-.*`, rest: ''})
+  assert.deepEqual(sf_list()(`"a", "b", "c"`), {ok, value: `*a123`,    rest: ''})
+}
 
 
-// test_bare_item()
-//test_token()
-//test_alt()
-//test_list()
-//test_repeat()
-//
-//test_sf_integer()
-//test_sf_decimal()
-//
-//test_sf_string()
-//test_char()
-//test_unescaped()
-//test_escaped()
-//
-//test_sf_token()
-//test_sf_binary()
-//test_sf_boolean()
+
+
+
+
+
+test_sf_key()
+
+
+test_bare_item()
+
+test_token()
+test_alt()
+test_list()
+test_repeat()
+
+test_sf_integer()
+test_sf_decimal()
+
+test_sf_string()
+test_char()
+test_unescaped()
+test_escaped()
+
+test_sf_token()
+test_sf_binary()
+test_sf_boolean()
