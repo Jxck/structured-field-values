@@ -1,11 +1,11 @@
 "use strict";
-import assert from "assert";
+
 let tmp
 const ok = true
-
 const log = console.log.bind(console)
 
-function token(reg) {
+//////////////////////////////////////////////////////
+export function token(reg) {
   return (rest) => {
     const result = reg.exec(rest)
     if (result === null) {
@@ -17,19 +17,7 @@ function token(reg) {
   }
 }
 
-function test_token() {
-  const fn = token(/^abc/)
-  assert.deepEqual(
-    fn("abc"),
-    {ok, value: "abc", rest: ""}
-  )
-  assert.deepEqual(
-    fn("abd"),
-    {ok: false, rest: "abd"}
-  )
-}
-
-function alt(fns) {
+export function alt(fns) {
   return (rest) => {
     for (let i = 0; i < fns.length; i ++) {
       const result = fns[i](rest)
@@ -41,24 +29,7 @@ function alt(fns) {
   }
 }
 
-function test_alt() {
-  // a / b
-  const fn = alt([token(/^a/), token(/^b/)])
-  assert.deepEqual(
-    fn("a"),
-    {ok, value: "a", rest: ""}
-  )
-  assert.deepEqual(
-    fn("b"),
-    {ok, value: "b", rest: ""}
-  )
-  assert.deepEqual(
-    fn("c"),
-    {ok: false, rest: "c"}
-  )
-}
-
-function list(fns) {
+export function list(fns) {
   return (rest) => {
     const value = []
     const orig  = rest
@@ -79,31 +50,7 @@ function list(fns) {
   }
 }
 
-function test_list() {
-  // [a, b, c]
-  let fn = list([token(/^a/), token(/^b/), token(/^c/)])
-  assert.deepEqual(
-    fn("abc"),
-    {ok, value: ["a", "b", "c"], rest: ""}
-  )
-  assert.deepEqual(
-    fn("axc"),
-    {ok: false, rest: "axc"}
-  )
-
-  // [ab, cde, f]
-  fn = list([token(/^ab/), token(/^cde/), token(/^f/)])
-  assert.deepEqual(
-    fn("abcdef"),
-    {ok, value: ["ab", "cde", "f"], rest: ""}
-  )
-  assert.deepEqual(
-    fn("abcde"),
-    {ok: false, rest: "abcde"}
-  )
-}
-
-function repeat(min, max, fn) {
+export function repeat(min, max, fn, join = true) { // default join('')
   return (rest) => {
     const value = []
     const found = 0
@@ -122,40 +69,34 @@ function repeat(min, max, fn) {
     if (value.length <= min) {
       return {ok: false, rest: orig}
     } else {
-      return {ok, value: value.join(""), rest}
+      if (join) {
+        return {ok, value: value.join(""), rest}
+      }
+      return {ok, value, rest}
     }
   }
 }
 
-function test_repeat() {
-  let fn = repeat(0, 5, alt([token(/^a/), token(/^b/)]))
-  assert.deepEqual(
-    fn("a"),
-    {ok, value: "a", rest: ""}
-  )
-  assert.deepEqual(
-    fn("ab"),
-    {ok, value: "ab", rest: ""}
-  )
-  assert.deepEqual(
-    fn("b"),
-    {ok, value: "b", rest: ""}
-  )
-  assert.deepEqual(
-    fn("c"),
-    {ok:false, rest: "c"}
-  )
-  assert.deepEqual(
-    fn("aabaab"),
-    {ok, value: "aabaa", rest: "b"}
-  )
-  assert.deepEqual(
-    fn("aacaaab"),
-    {ok, value: "aa", rest: "caaab"}
-  )
+export function base64decode(str) {
+  if (typeof window === 'undefined') {
+    return Buffer.from(str, 'base64')
+  } else {
+    return new Uint8Array([...atob(str)].map(a => a.charCodeAt(0)));
+  }
 }
 
-function sf_integer() {
+export function base64encode(binary) {
+  if (typeof window === 'undefined') {
+    return Buffer.from(binary).toString('base64')
+  } else {
+    // TODO: browser base64
+  }
+}
+//////////////////////////////////////////////////////
+
+// sf-integer
+//       = ["-"] 1*15DIGIT
+export function sf_integer() {
   return (rest) => {
     const result = token(/^\-{0,1}\d{1,15}/)(rest)
     if (result.ok) {
@@ -166,30 +107,9 @@ function sf_integer() {
   }
 }
 
-function test_sf_integer() {
-  assert.deepEqual(
-    sf_integer()("42"),
-    {ok, value: 42, rest: ""}
-  )
-  assert.deepEqual(
-    sf_integer()("-42"),
-    {ok, value: -42, rest: ""}
-  )
-  assert.deepEqual(
-    sf_integer()("4.2"),
-    {ok, value: 4, rest: ".2"}
-  )
-  assert.deepEqual(
-    sf_integer()("4a"),
-    {ok, value: 4, rest: "a"}
-  )
-  assert.deepEqual(
-    sf_integer()("a"),
-    {ok: false, rest: "a"}
-  )
-}
-
-function sf_decimal() {
+// sf-decimal
+//       = ["-"] 1*12DIGIT "." 1*3DIGIT
+export function sf_decimal() {
   return (rest) => {
     const result = token(/^\-{0,1}\d{1,12}\.\d{1,3}/)(rest)
     if (result.ok) {
@@ -200,30 +120,13 @@ function sf_decimal() {
   }
 }
 
-function test_sf_decimal() {
-  assert.deepEqual(
-    sf_decimal()("4.5"),
-    {ok, value: 4.5, rest: ""}
-  )
-  assert.deepEqual(
-    sf_decimal()("-4.5"),
-    {ok, value: -4.5, rest: ""}
-  )
-  assert.deepEqual(
-    sf_decimal()("4.0"),
-    {ok, value: 4, rest: ""}
-  )
-  assert.deepEqual(
-    sf_decimal()("45"),
-    {ok: false, rest: "45"}
-  )
-}
-
-function sf_string() {
+// sf-string
+//       = DQUOTE *chr DQUOTE
+export function sf_string() {
   return function(rest) {
     const fn = list([
       token(/^"/),
-      repeat(0, 1024, sf_char()),
+      repeat(0, 1024, char()),
       token(/^"/),
     ])
     const result = fn(rest)
@@ -236,83 +139,49 @@ function sf_string() {
   }
 }
 
-function test_sf_string() {
-  assert.deepEqual(sf_string()(`"asdf"`),  {ok, value: `"asdf"`,  rest: ``})
-  assert.deepEqual(sf_string()(`"a""`),    {ok, value: `"a"`,     rest: `"`})
-  assert.deepEqual(sf_string()(`"a\\\""`), {ok, value: `"a\\\""`, rest: ``})
-  assert.deepEqual(sf_string()(`"a\\"`),   {ok: false, rest: `"a\\"`})
-  assert.deepEqual(sf_string()(`"a\\\\c"`),{ok, value: `"a\\\\c"`, rest: ``})
-}
-
-function sf_char() {
+// chr
+//       = unescaped
+//       / escaped
+export function char() {
   return alt([
     escaped(),
     unescaped(),
   ])
 }
 
-function test_sf_char() {
-  assert.deepEqual(sf_char()('"'),    {ok: false,        rest: '"'})
-  assert.deepEqual(sf_char()("\\\""), {ok, value: '\\\"', rest: ''})
-  assert.deepEqual(sf_char()("\\\\"), {ok, value: '\\\\', rest: ''})
-}
-
-function unescaped() {
+// unescaped
+//       = %x20-21
+//       / %x23-5B
+//       / %x5D-7E
+export function unescaped() {
   return token(/^([\x20-\x21])|([\x23-\x5B])|([\x5D-\x7E])/)
 }
 
-function test_unescaped() {
-  assert.deepEqual(unescaped()(" "),  {ok, value: ' ', rest: ''})   // x20
-  assert.deepEqual(unescaped()("!"),  {ok, value: '!', rest: ''})   // x21
-  assert.deepEqual(unescaped()('"'),  {ok: false,      rest: '"'})  // x22
-  assert.deepEqual(unescaped()("#"),  {ok, value: '#', rest: ''})   // x23
-  assert.deepEqual(unescaped()("["),  {ok, value: '[', rest: ''})   // x5B
-  assert.deepEqual(unescaped()(`\\`), {ok: false,      rest: '\\'}) // x5C
-  assert.deepEqual(unescaped()("]"),  {ok, value: ']', rest: ''})   // x5D
-}
-
-function escaped() {
+// escaped
+//       = "\" ( DQUOTE / "\" )
+export function escaped() {
   return token(/^((\\\")|(\\\\))/)
 }
 
-function test_escaped() {
-  assert.deepEqual(escaped()(`\\\"`), {ok, value: `\\\"`, rest: ''})
-  assert.deepEqual(escaped()(`\\\\`), {ok, value: `\\\\`, rest: ''})
-}
-
-
-function sf_token() {
+// sf-token
+//       = ( ALPHA / "*" ) *( tchar / ":" / "/" )
+export function sf_token() {
   return token(/^([a-zA-Z\*])([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]){0,512}/)
 }
 
-function test_sf_token() {
-  assert.deepEqual(sf_token()(`*foo123/456`), {ok, value: `*foo123/456`, rest: ''})
-  assert.deepEqual(sf_token()(`foo123;456`), {ok, value: `foo123`, rest: ';456'})
-  assert.deepEqual(sf_token()(`abc!#$%&'*+-.^_'|~:/012`), {ok, value: `abc!#$%&'*+-.^_'|~:/012`, rest: ''})
-}
-
-
-function base64decode(str) {
-  if (typeof window === 'undefined') {
-    return Buffer.from(str, 'base64')
-  } else {
-    return new Uint8Array([...atob(str)].map(a => a.charCodeAt(0)));
-  }
-}
-
-function base64encode(binary) {
-  if (typeof window === 'undefined') {
-    return Buffer.from(binary).toString('base64')
-  } else {
-  }
-
-}
-
-function sf_binary() {
+// sf-binary
+//       = ":" *(base64) ":"
+// base64
+//       = ALPHA
+//       / DIGIT
+//       / "+"
+//       / "/"
+//       / "="
+export function sf_binary() {
   return (rest) => {
     const result = list([
       token(/^:/),
-      token(/^([\w+/=]){0,16384}/),
+      token(/^([\w+/=]){0,16384}/), // base64
       token(/^:/),
     ])(rest)
 
@@ -325,16 +194,12 @@ function sf_binary() {
   }
 }
 
-function test_sf_binary() {
-  const value = Buffer.from([
-    112, 114, 101, 116, 101, 110, 100, 32, 116, 104, 105, 115, 32,
-    105, 115, 32, 98, 105, 110, 97, 114, 121, 32, 99, 111, 110, 116,
-    101, 110, 116, 46
-  ])
-  assert.deepEqual(sf_binary()(`:cHJldGVuZCB0aGlzIGlzIGJpbmFyeSBjb250ZW50Lg==:`), {ok, value, rest: ''})
-}
-
-function sf_boolean() {
+// sf-boolean
+//       = "?" boolean
+// boolean
+//       = "0"
+//       / "1"
+export function sf_boolean() {
   return (rest) => {
     const result = token(/^((\?0)|(\?1))/)(rest)
     if (result.ok) {
@@ -346,12 +211,84 @@ function sf_boolean() {
   }
 }
 
-function test_sf_boolean() {
-  assert.deepEqual(sf_boolean()(`?0`), {ok, value: false, rest: ''})
-  assert.deepEqual(sf_boolean()(`?1`), {ok, value: true,  rest: ''})
+// sf-list
+//       = list-member *( OWS "," OWS list-member )
+export function sf_list() {
+  function fn() {
+    return (rest) => {
+      const result = list([
+        token(/^( *),( *)/),
+        list_member()
+      ])(rest)
+
+      log(rest, result)
+      if (result.ok) {
+        const [h, [t]] = result.value
+        result.value = t
+      }
+      return result
+    }
+  }
+  return list([
+    list_member(),
+    repeat(0, 10, fn(), false)
+  ])
 }
 
+// list-member
+//       = sf-item
+//       / inner-list
+export function list_member() {
+  //return alt([
+  //  sf_item(),
+  //  // inner_list(),
+  //])
+  return sf_item()
+}
 
+export function test_sf_list() {
+  console.log(sf_list()(`foo, bar, buz`))
+}
+test_sf_list()
+
+// function sf_dictionary() {
+//   return list([
+//     sf_dict_member(),
+//     repeat(0, 1024, list([
+//       token(/^ */),
+//       token(/^,/),
+//       token(/^ */),
+//       sf_dict_member()
+//     ]))
+//   ])
+// }
+// 
+// function sf_dict_member() {
+//   return list([
+//     sf_member_name(),
+//     repeat(0, 1, list([
+//       token(/^=/),
+//       sf_member_value()
+//     ]))
+//   ])
+// }
+// 
+// function sf_member_name() {
+//   return token(/([a-z\*]) ([a-z0-9\_\-\.\*]){0,64}/)
+// }
+// 
+// function sf_member_value() {
+//   return alt([sf_item, sf_inner_list])
+// }
+
+// sf-item
+//       = bare-item parameters
+export function sf_item() {
+  return list([
+    bare_item(),
+    parameters()
+  ])
+}
 
 // bare-item
 //       = sf-integer
@@ -360,7 +297,7 @@ function test_sf_boolean() {
 //       / sf-token
 //       / sf-binary
 //       / sf-boolean
-function sf_bare_item() {
+export function bare_item() {
   return alt([
     sf_decimal(),
     sf_integer(),
@@ -371,32 +308,41 @@ function sf_bare_item() {
   ])
 }
 
-function test_sf_bare_item() {
-  assert.deepEqual(sf_bare_item()(`123`),        {ok, value: 123,      rest: ''})
-  assert.deepEqual(sf_bare_item()(`3.14`),       {ok, value: 3.14,     rest: ''})
-  assert.deepEqual(sf_bare_item()(`string`),     {ok, value: `string`, rest: ''})
-  assert.deepEqual(sf_bare_item()(`string`),     {ok, value: `string`, rest: ''})
-  assert.deepEqual(sf_bare_item()(`foo123;456`), {ok, value: `foo123`, rest: ';456'})
-  const binary = new Uint8Array([1,2,3,4,5])
-  assert.deepEqual(sf_bare_item()(`:${base64encode(binary)}:`), {ok, value: binary, rest: ''})
-  assert.deepEqual(sf_bare_item()(`?1`),         {ok, value: true,     rest: ''})
+// parameters
+//       = *( ";" *SP parameter )
+export function parameters() {
+  return repeat(0, 256, list([
+    token(/^; */),
+    parameter()
+  ]), false)
 }
-test_sf_bare_item()
 
+export function test_parameters() {
+  // log(parameters()(`; a`))
+}
+test_parameters()
 
-test_token()
-test_alt()
-test_list()
-test_repeat()
+// parameter
+//       = param-name [ "=" param-value ]
+// param-name
+//       = key
+// param-value
+//       = bare-item
+export function parameter() {
+  return list([
+    sf_key(),
+    repeat(0, 1, list([
+      token(/^=/),
+      bare_item()
+    ]), false)
+  ])
+}
 
-test_sf_integer()
-test_sf_decimal()
-
-test_sf_string()
-test_sf_char()
-test_unescaped()
-test_escaped()
-
-test_sf_token()
-test_sf_binary()
-test_sf_boolean()
+// key
+//       = ( lcalpha / "*" )
+//         *( lcalpha / DIGIT / "_" / "-" / "." / "*" )
+// lcalpha
+//       = %x61-7A ; a-z
+export function sf_key() {
+  return token(/^([a-z\*])([a-z0-9\_\-\.\*]){0,64}/)
+}
