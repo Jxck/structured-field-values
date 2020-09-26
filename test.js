@@ -330,7 +330,6 @@ function test_sf_item() {
     console.log('number done')
   })();
 
-
   // string
   (() => {
     const suites = [
@@ -353,16 +352,14 @@ function test_sf_item() {
   (() => {
     const suites = [
       ...read('token'),
-      //...read('token-generated'),
+      ...read('token-generated'),
     ]
     suites.forEach((suite) => {
       if (suite.header_type !== 'item') return // TODO
-      console.log(suite)
       try {
         const result = parseItem(suite.raw[0])
         const [expected, param] = suite.expected
         if (expected['__type'] !== 'token') return // TODO
-        console.log(JSON.stringify([expected.value, param]), JSON.stringify(result), '\n\n')
         assert.deepEqual(result, [expected.value, param], suite.name)
       } catch(err) {
         assert.deepEqual(suite.must_fail, true)
@@ -370,8 +367,6 @@ function test_sf_item() {
     })
     console.log('token done')
   })();
-
-
 }
 
 test_sf_item()

@@ -338,11 +338,24 @@ export function bare_item() {
 // parameters
 //       = *( ";" *SP parameter )
 export function parameters() {
-  return repeat(0, 256, list([
-    token(/^; */),
-    parameter()
-  ]), false)
+  return (rest) => {
+    const fn = (_rest) => {
+      const _result = list([
+        token(/^; */),
+        parameter()
+      ])(_rest)
+
+      if (_result.ok === false) return _result
+
+      // [';' , [a, 1]] => [a, 1]
+      _result.value = _result.value[1]
+      return _result
+    }
+
+    return repeat(0, 256, fn, false)(rest)
+  }
 }
+
 
 export function test_parameters() {
   // log(parameters()(`; a`))
@@ -356,13 +369,33 @@ test_parameters()
 // param-value
 //       = bare-item
 export function parameter() {
-  return tee(list([
+  return list([
     sf_key(),
-    repeat(0, 1, list([
+    param_value(),
+  ])
+}
+
+export function param_value() {
+  return (rest) => {
+    const result = repeat(0, 1, list([
       token(/^=/),
       bare_item()
-    ]), false)
-  ]), 'parameter')
+    ]), false)(rest)
+
+    if (result.ok === false) return result
+
+    if (result.value.length === 0) {
+      // no parameter is true
+      // ;a => [a, true]
+      result.value = true
+    }
+
+    if (result.value.length === 1 && result.value[0][0] === '=') {
+      // b=1 => [=, 1]
+      result.value = result.value[0][1]
+    }
+    return result
+  }
 }
 
 // key
