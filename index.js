@@ -116,7 +116,7 @@ export function repeat(min, max, fn, join = true) { // default join('')
 
 export function base64decode(str) {
   if (typeof window === 'undefined') {
-    return Buffer.from(str, 'base64')
+    return Uint8Array.from(Buffer.from(str, 'base64'))
   } else {
     return new Uint8Array([...atob(str)].map(a => a.charCodeAt(0)));
   }
