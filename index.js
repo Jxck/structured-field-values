@@ -12,6 +12,18 @@ const tee = (fn, k) => {
   }
 }
 
+export function parseItem(value) {
+  const result = sf_item()(value)
+  if (result.ok === false) {
+    throw ParseError('failed to parse')
+  }
+  if (result.rest.length > 0) {
+    throw ParseError(`failed to parse: trailing values ${result.rest}`)
+  }
+  return result.value
+}
+
+
 
 //////////////////////////////////////////////////////
 export function token(reg) {
@@ -257,7 +269,7 @@ export function test_sf_list() {
   console.log(sf_list()(`foo, bar, buz`))
   console.log(sf_list()(`"a", "b", "c"`))
 }
-test_sf_list()
+// test_sf_list()
 
 // function sf_dictionary() {
 //   return list([
@@ -319,20 +331,11 @@ export function bare_item() {
 // parameters
 //       = *( ";" *SP parameter )
 export function parameters() {
-  return (rest) => {
-    const fn = repeat(0, 256, list([
-      token(/^; */),
-      parameter()
-    ]), false)
-
-    const result = fn(rest)
-    console.log('...parameters', result)
-
-    return result
-  }
-
+  return repeat(0, 256, list([
+    token(/^; */),
+    parameter()
+  ]), false)
 }
-
 
 export function test_parameters() {
   // log(parameters()(`; a`))

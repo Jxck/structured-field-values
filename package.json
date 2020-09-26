@@ -16,5 +16,8 @@
   ],
   "author": "Jxck",
   "license": "MIT",
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "hi-base32": "^0.5.0"
+  }
 }

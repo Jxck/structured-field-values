@@ -1,6 +1,13 @@
 import assert from 'assert'
+import {readFileSync} from 'fs'
+import base32 from 'hi-base32'
+
+function read(name) {
+  return JSON.parse(readFileSync(`./structured-field-tests/${name}.json`).toString())
+}
 
 import {
+  parseItem,
   token,
   alt,
   list,
@@ -191,6 +198,10 @@ function test_sf_binary() {
     101, 110, 116, 46
   ])
   assert.deepEqual(sf_binary()(`:cHJldGVuZCB0aGlzIGlzIGJpbmFyeSBjb250ZW50Lg==:`), {ok, value, rest: ''})
+
+
+
+
 }
 
 function test_sf_boolean() {
@@ -213,12 +224,6 @@ function test_sf_key() {
   assert.deepEqual(sf_key()(`a123_-.*`), {ok, value: `a123_-.*`, rest: ''})
   assert.deepEqual(sf_key()(`*a123`),    {ok, value: `*a123`,    rest: ''})
 }
-
-function test_sf_list() {
-  assert.deepEqual(sf_list()(`foo, bar, buz`), {ok, value: `a123_-.*`, rest: ''})
-  assert.deepEqual(sf_list()(`"a", "b", "c"`), {ok, value: `*a123`,    rest: ''})
-}
-
 
 
 
@@ -246,3 +251,98 @@ test_escaped()
 test_sf_token()
 test_sf_binary()
 test_sf_boolean()
+
+
+
+
+
+
+
+
+
+
+
+
+function test_sf_item() {
+  // boolean
+  (() => {
+    const suites = read('boolean')
+    suites.forEach((suite) => {
+      if (suite.header_type !== 'item') throw new Error("not item")
+      const result = sf_item()(suite.raw[0])
+      if (suite.must_fail) {
+        assert.deepEqual(result.ok, false)
+      } else {
+        assert.deepEqual(result.value, suite.expected, suite.name)
+      }
+    })
+    console.log('boolean done')
+  })();
+
+  // binary
+  (() => {
+    const suites = read('binary')
+    suites.forEach((suite) => {
+      if (suite.header_type !== 'item') throw new Error("not item")
+      const result = sf_item()(suite.raw[0])
+      if (suite.must_fail) {
+        assert.deepEqual(result.ok, false)
+      } else {
+        const [expected, param] = suite.expected
+        if (expected['__type'] !== 'binary') throw new Error('not binary')
+        const buffer = Buffer.from(expected.value === '' ? [] : base32.decode.asBytes(expected.value))
+        assert.deepEqual(result.value, [buffer, param], suite.name)
+      }
+    })
+    console.log('binary done')
+  })();
+
+  // item
+  // TODO: parseItem を作ってパース残しがあったらエラーにする
+  // (() => {
+  //   const suites = read('item')
+  //   suites.forEach((suite) => {
+  //     if (suite.header_type !== 'item') throw new Error("not item")
+  //     const result = sf_item()(suite.raw[0])
+  //     console.log(suite, result)
+  //     if (suite.must_fail) {
+  //       assert.deepEqual(result.ok, false)
+  //     } else {
+  //       assert.deepEqual(result.value, suite.expected, suite.name)
+  //     }
+  //   })
+  //   console.log('item done')
+  // })();
+
+  // number
+  (() => {
+    const suites = read('number')
+    suites.forEach((suite) => {
+      if (suite.header_type !== 'item') throw new Error("not item")
+      try {
+        const result = parseItem(suite.raw[0])
+        assert.deepEqual(result, suite.expected, suite.name)
+      } catch(err) {
+        assert.deepEqual(suite.must_fail, true)
+      }
+    })
+    console.log('item done')
+  })();
+
+
+
+
+}
+
+test_sf_item()
+
+
+
+
+
+
+
+
+
+
+
