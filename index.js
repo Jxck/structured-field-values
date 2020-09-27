@@ -1,25 +1,10 @@
 "use strict";
 
-let tmp
 const ok = true
-function log(...arg) {
-  try {
-    throw new Error()
-  } catch (err) {
-    const line = err.stack.split('\n')[2].split('/').pop()
-    console.log(line, ...arg)
-  }
-}
-const j = JSON.stringify.bind(JSON)
 
-const tee = (fn, k) => {
-  return (rest) => {
-    const result = fn(rest)
-    // console.log(k, result)
-    return result
-  }
-}
-
+/**
+ * public interface
+ */
 export function parseItem(value) {
   // trim leading/trailing space
   // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2
@@ -64,7 +49,11 @@ export function parseDict(value) {
 }
 
 
-//////////////////////////////////////////////////////
+/**
+ * private utility
+ */
+
+// a => token(/^a/)
 export function token(reg) {
   return (rest) => {
     const result = reg.exec(rest)
@@ -77,6 +66,7 @@ export function token(reg) {
   }
 }
 
+// (a / b) => alt([a(), b()])
 export function alt(fns) {
   return (rest) => {
     for (let i = 0; i < fns.length; i ++) {
@@ -89,6 +79,7 @@ export function alt(fns) {
   }
 }
 
+// (a b c) => list([a(), b(), c()])
 export function list(fns) {
   return (rest) => {
     const value = []
@@ -306,7 +297,7 @@ export function _repeat_list_member() {
       return result
     }
   }
-  return tee(repeat(0, 1024, fn(), false), 'repeat list')
+  return repeat(0, 1024, fn(), false)
 }
 
 // list-member
@@ -486,14 +477,14 @@ export function sf_item() {
 //       / sf-binary
 //       / sf-boolean
 export function bare_item() {
-  return tee(alt([
+  return alt([
     sf_decimal(),
     sf_integer(),
     sf_string(),
     sf_token(),
     sf_binary(),
     sf_boolean(),
-  ]), 'bare_item')
+  ])
 }
 
 // parameters
@@ -563,5 +554,5 @@ export function param_value() {
 // lcalpha
 //       = %x61-7A ; a-z
 export function sf_key() {
-  return tee(token(/^([a-z\*])([a-z0-9\_\-\.\*]){0,64}/), 'sf_key')
+  return token(/^([a-z\*])([a-z0-9\_\-\.\*]){0,64}/)
 }

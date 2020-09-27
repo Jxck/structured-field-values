@@ -2,11 +2,35 @@ import assert from 'assert'
 import {readFileSync} from 'fs'
 import base32 from 'hi-base32'
 
-const log = console.log.bind(console)
+function log(...arg) {
+  try {
+    throw new Error()
+  } catch (err) {
+    const line = err.stack.split('\n')[2].split('/').pop()
+    console.log(line, ...arg)
+  }
+}
+
 const j = JSON.stringify.bind(JSON)
 
+// read json test suite
 function read(name) {
   return JSON.parse(readFileSync(`./structured-field-tests/${name}.json`).toString())
+}
+
+// convert "expected" in test.json into comparable
+function format(e) {
+  if (Array.isArray(e)) {
+    return e.map(format)
+  }
+  switch(e['__type']) {
+    case 'binary':
+      return Uint8Array.from(e.value === '' ? [] : base32.decode.asBytes(e.value))
+    case 'token':
+      return e.value
+    default:
+      return e
+  }
 }
 
 import {
@@ -271,21 +295,6 @@ test_sf_list()
 
 
 
-// convert "expected" in test.json into comparable
-function format(e) {
-  if (Array.isArray(e)) {
-    return e.map(format)
-  }
-
-  if (e['__type'] === 'binary') {
-    return Uint8Array.from(e.value === '' ? [] : base32.decode.asBytes(e.value))
-  }
-  if (e['__type'] === 'token') {
-    return e.value
-  }
-  return e
-}
-
 
 structured_field_tests()
 
@@ -359,7 +368,6 @@ function structured_field_tests() {
       ...read('number'),
     ]
     suites.forEach((suite) => {
-      if (suite.header_type !== 'item') throw new Error("not item")
       try {
         const result = parseItem(suite.raw[0])
         assert.deepEqual(result, suite.expected, suite.name)
