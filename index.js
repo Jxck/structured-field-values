@@ -1,5 +1,16 @@
 `use strict`;
 
+function log(...arg) {
+  try {
+    throw new Error()
+  } catch (err) {
+    const line = err.stack.split(`\n`)[2].split(`/`).pop()
+    console.log(line, ...arg)
+  }
+}
+
+const j = JSON.stringify.bind(JSON)
+
 const ok = true
 
 /////////////////////////
@@ -450,8 +461,6 @@ function member_value() {
   return alt([sf_item(), inner_list()])
 }
 
-
-
 // sf-item
 //       = bare-item parameters
 export function sf_item() {
@@ -495,8 +504,6 @@ export function parameters() {
   return repeat(0, 256, fn)
 }
 
-
-
 // parameter
 //       = param-name [ "=" param-value ]
 // param-name
@@ -504,34 +511,34 @@ export function parameters() {
 // param-value
 //       = bare-item
 export function parameter() {
-  return list([
-    sf_key(),
-    param_value(),
-  ])
+  return (rest) => {
+    const result = list([
+      sf_key(),
+      param_value(),
+    ])(rest)
+
+    if (result.ok) {
+      const [key, [param]] = result.value
+      if (param === undefined) {
+        // no parameter is true
+        // [key, []] => [key, true]
+        result.value = [key, true]
+      } else {
+        // ['=', param] => param
+        result.value = [key, param[1]]
+      }
+    }
+
+    return result
+  }
 }
 
 // [ "=" param-value ]
 export function param_value() {
-  return (rest) => {
-    const result = repeat(0, 1, list([
-      token(/^=/),
-      bare_item()
-    ]))(rest)
-
-    if (result.ok === false) return result
-
-    if (result.value.length === 0) {
-      // no parameter is true
-      // ;a => [a, true]
-      result.value = true
-    }
-
-    if (result.value.length === 1 && result.value[0][0] === `=`) {
-      // b=1 => [=, 1]
-      result.value = result.value[0][1]
-    }
-    return result
-  }
+  return repeat(0, 1, list([
+    token(/^=/),
+    bare_item()
+  ]))
 }
 
 // key

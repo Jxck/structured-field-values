@@ -260,6 +260,11 @@ function test_sf_key() {
 
 
 function test_parameters() {
+
+  const result = parameters()(`; a; b=?0`)
+  const expected = {ok, value: [[`a`, true], [`b`, false]]}
+  log(j(result))
+  log(j(expected))
   assert.deepStrictEqual(parameters()(`; a; b=?0`), {ok, value: [[`a`, true], [`b`, false]], rest: ``})
 }
 
@@ -305,7 +310,7 @@ function structured_field_tests() {
       ]
       if (ignore.includes(suite.name)) return
 
-      console.log(suite.name)
+      // console.log(suite.name)
 
       try {
         let result;
