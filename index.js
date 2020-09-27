@@ -434,7 +434,6 @@ function dict_member() {
         parameters()
       ])(rest)
 
-
       if (result.ok) {
         if (result.value[0] === `=`) {
           // ['=', [member]] => [1, []]

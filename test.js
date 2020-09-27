@@ -23,11 +23,13 @@ import {
   sf_boolean,
   sf_list,
   list_member,
+  inner_list,
   sf_item,
   bare_item,
   parameters,
   parameter,
   sf_key,
+  sf_dictionary,
 } from "./index.js"
 
 function log(...arg) {
@@ -177,18 +179,7 @@ function test_sf_list() {
   assert.deepStrictEqual(sf_list()(`"foo", "bar", "It was the best of times."`), {ok, value: [[`foo`,[]], [`bar`,[]], [`It was the best of times.`,[]]], rest: ``})
   assert.deepStrictEqual(sf_list()(`foo, bar`), {ok, value: [[`foo`,[]], [`bar`,[]]], rest: ``})
   assert.deepStrictEqual(sf_list()(``), {ok: false, rest: ``})
-}
-
-function test_repeat_list_member() {
-  // omit
-}
-
-function test_list_member() {
-  // test_sf_item / test_inner_list
-}
-
-function test_inner_list() {
-  assert.deepStrictEqual(inner_list()(`("foo" "bar"), ("baz"), ("bat" "one"), ()`), {ok, value:
+  assert.deepStrictEqual(sf_list()(`("foo" "bar"), ("baz"), ("bat" "one"), ()`), {ok, value:
     [
       [
         [
@@ -216,7 +207,7 @@ function test_inner_list() {
       ]
     ], rest: ``})
 
-  assert.deepStrictEqual(inner_list()(`("foo"; a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), {ok, value:
+  assert.deepStrictEqual(sf_list()(`("foo"; a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), {ok, value:
     [
       [
         [
@@ -234,12 +225,65 @@ function test_inner_list() {
     rest: ``})
 }
 
+function test_repeat_list_member() {
+  // omit
+}
+
+function test_list_member() {
+  // test_sf_item / test_inner_list
+}
+
+function test_inner_list() {
+  // omit
+}
+
 function test_optional_inner_item() {
   // omit
 }
 
 function test_repeat_inner_item() {
   // omit
+}
+
+function test_sf_dictionary() {
+  assert.deepStrictEqual(sf_dictionary()(`en="Applepie", da=:w4ZibGV0w6ZydGU=:`), {ok, value: [
+    [ `en`, [`Applepie`, []] ],
+    [ `da`, [ new Uint8Array([ 195, 134, 98, 108, 101, 116, 195, 166, 114, 116, 101 ]), [] ]]
+  ], rest: ``})
+
+  assert.deepStrictEqual(sf_dictionary()(`a=?0, b, c; foo=bar`), {ok, value: [
+    [ `a`, [false, [] ] ],
+    [ `b`, [true,  [] ] ],
+    [ `c`, [true,  [[`foo`,`bar`]] ] ]
+  ], rest: `` })
+
+  assert.deepStrictEqual(sf_dictionary()(`rating=1.5, feelings=(joy sadness)`), {ok, value: [
+    [ `rating`,   [1.5,[]] ],
+    [ `feelings`, [[[`joy`,[]], [`sadness`,[]]], []]]
+  ], rest:``})
+
+  assert.deepStrictEqual(sf_dictionary()(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {ok, value: [
+    [ `a`, [ [ [ 1, [] ], [ 2, [] ] ], [] ] ],
+    [ `b`, [ 3, [] ] ],
+    [ `c`, [ 4, [ [ `aa`, `bb` ] ] ] ],
+    [ `d`, [ [ [ 5, [] ], [ 6, [] ] ], [ [ `valid`,true ] ] ] ]
+  ], rest: ``})
+}
+
+function test_repeat_dict_member() {
+  // omit
+}
+
+function test_dict_member() {
+  // omit
+}
+
+function test_member_value() {
+  // test_sf_item / test_inner_list
+}
+
+function test_sf_item() {
+  // test_bare_item() parameters()
 }
 
 function test_bare_item() {
@@ -253,23 +297,22 @@ function test_bare_item() {
   assert.deepStrictEqual(bare_item()(`?1`),         {ok, value: true,     rest: ``})
 }
 
+function test_parameters() {
+  assert.deepStrictEqual(parameters()(`; a; b=?0;c=10`), {ok, value: [[`a`, true], [`b`, false], [`c`, 10]], rest: ``})
+}
+
+function test_parameter() {
+  assert.deepStrictEqual(parameter()(`a`),    {ok, value: [`a`, true],  rest: ``})
+  assert.deepStrictEqual(parameter()(`b=?0`), {ok, value: [`b`, false], rest: ``})
+  assert.deepStrictEqual(parameter()(`c=10`), {ok, value: [`c`, 10],    rest: ``})
+}
+
 function test_sf_key() {
   assert.deepStrictEqual(sf_key()(`a123_-.*`), {ok, value: `a123_-.*`, rest: ``})
   assert.deepStrictEqual(sf_key()(`*a123`),    {ok, value: `*a123`,    rest: ``})
 }
 
-
-function test_parameters() {
-
-  const result = parameters()(`; a; b=?0`)
-  const expected = {ok, value: [[`a`, true], [`b`, false]]}
-  log(j(result))
-  log(j(expected))
-  assert.deepStrictEqual(parameters()(`; a; b=?0`), {ok, value: [[`a`, true], [`b`, false]], rest: ``})
-}
-
 function structured_field_tests() {
-
   (() => {
     const suites = [
       ...read(`binary`),
@@ -349,39 +392,32 @@ function structured_field_tests() {
   })();
 }
 
-// private utility
 test_token()
 test_alt()
 test_list()
 test_repeat()
-
 test_sf_integer()
 test_sf_decimal()
-
 test_sf_string()
 test_char()
 test_unescaped()
 test_escaped()
-
 test_sf_token()
 test_sf_binary()
 test_sf_boolean()
-
-
-// test_sf_item()
-
 test_sf_list()
-
-
-test_sf_list()
-test_parameters()
-
-test_sf_key()
+test_repeat_list_member()
+test_list_member()
+test_inner_list()
+test_optional_inner_item()
+test_repeat_inner_item()
+test_sf_dictionary()
+test_repeat_dict_member()
+test_dict_member()
+test_member_value()
+test_sf_item()
 test_bare_item()
-
-
-
-
-
+test_parameters()
+test_parameter()
+test_sf_key()
 structured_field_tests()
-
