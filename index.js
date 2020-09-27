@@ -96,7 +96,7 @@ export function list(fns) {
   }
 }
 
-export function repeat(min, max, fn, join = true) { // default join('')
+export function repeat(min, max, fn, join = false) { // true for join("")
   return (rest) => {
     const value = []
     const found = 0
@@ -172,7 +172,7 @@ export function sf_string() {
   return function(rest) {
     const fn = list([
       token(/^"/),
-      repeat(0, 1024, char()),
+      repeat(0, 1024, char(), true),
       token(/^"/),
     ])
     const result = fn(rest)
@@ -297,7 +297,7 @@ export function _repeat_list_member() {
       return result
     }
   }
-  return repeat(0, 1024, fn(), false)
+  return repeat(0, 1024, fn())
 }
 
 // list-member
@@ -335,7 +335,7 @@ export function _optional_inner_item() {
       sf_item(),
       _repeat_inner_item(),
       token(/^ */)
-    ]), false)(rest)
+    ]))(rest)
 
     if (result.ok && result.value.length > 0) {
       //  [ list
@@ -367,7 +367,7 @@ export function _repeat_inner_item() {
       return result
     }
   }
-  return repeat(0, 256, fn(), false)
+  return repeat(0, 256, fn())
 }
 
 
@@ -409,7 +409,7 @@ export function _repeat_dict_member() {
       return result
     }
   }
-  return repeat(0, 1024, fn() , false)
+  return repeat(0, 1024, fn())
 }
 
 // dict-member
@@ -444,7 +444,7 @@ function dict_member() {
 
   return list([
     sf_key(),
-    repeat(0, 1, fn(), false)
+    repeat(0, 1, fn())
   ])
 }
 
@@ -504,7 +504,7 @@ export function parameters() {
   }
 
   return (rest) => {
-    const result = repeat(0, 256, fn, false)(rest)
+    const result = repeat(0, 256, fn)(rest)
     return result
   }
 }
@@ -530,7 +530,7 @@ export function param_value() {
     const result = repeat(0, 1, list([
       token(/^=/),
       bare_item()
-    ]), false)(rest)
+    ]))(rest)
 
     if (result.ok === false) return result
 

@@ -117,7 +117,7 @@ function test_list() {
 }
 
 function test_repeat() {
-  let fn = repeat(1, 5, alt([token(/^a/), token(/^b/)]))
+  let fn = repeat(1, 5, alt([token(/^a/), token(/^b/)]), true)
   assert.deepStrictEqual(
     fn("a"),
     {ok, value: "a", rest: ""}
