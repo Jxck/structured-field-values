@@ -2,6 +2,9 @@ import assert from 'assert'
 import {readFileSync} from 'fs'
 import base32 from 'hi-base32'
 
+const log = console.log.bind(console)
+const j = JSON.stringify.bind(JSON)
+
 function read(name) {
   return JSON.parse(readFileSync(`./structured-field-tests/${name}.json`).toString())
 }
@@ -9,6 +12,7 @@ function read(name) {
 import {
   parseItem,
   parseList,
+  parseDict,
   token,
   alt,
   list,
@@ -388,9 +392,6 @@ function test_sf_item() {
     console.log('token done')
   })();
 
-
-
-
   // list
   (() => {
     const suites = read('list')
@@ -405,6 +406,24 @@ function test_sf_item() {
       }
     })
     console.log('list done')
+  })();
+
+
+  // dict
+  (() => {
+    const suites = read('dictionary')
+    suites.forEach((suite) => {
+      console.log(suite)
+      if (suite.header_type !== 'dictionary') return
+      if (suite.raw.length > 1) return
+      try {
+        const result = parseDict(suite.raw[0])
+        assert.deepStrictEqual(result, suite.expected, suite.name)
+      } catch (err) {
+        assert.deepStrictEqual(suite.must_fail, true)
+      }
+    })
+    console.log('dictionary done')
   })();
 
 
