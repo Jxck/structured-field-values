@@ -1,16 +1,5 @@
 `use strict`;
 
-function log(...arg) {
-  try {
-    throw new Error()
-  } catch (err) {
-    const line = err.stack.split(`\n`)[2].split(`/`).pop()
-    console.log(line, ...arg)
-  }
-}
-
-const j = JSON.stringify.bind(JSON)
-
 const ok = true
 
 /////////////////////////
