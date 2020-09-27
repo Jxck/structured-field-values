@@ -263,7 +263,7 @@ test_sf_binary()
 test_sf_boolean()
 
 
-test_sf_item()
+// test_sf_item()
 
 test_sf_list()
 
@@ -271,81 +271,97 @@ test_sf_list()
 
 
 
+// convert "expected" in test.json into comparable
+function format(e) {
+  if (Array.isArray(e)) {
+    return e.map(format)
+  }
+
+  if (e['__type'] === 'binary') {
+    return Uint8Array.from(e.value === '' ? [] : base32.decode.asBytes(e.value))
+  }
+  if (e['__type'] === 'token') {
+    return e.value
+  }
+  return e
+}
 
 
+structured_field_tests()
 
+function structured_field_tests() {
 
-
-
-
-
-
-
-
-
-
-
-
-function test_sf_item() {
-  // boolean
   (() => {
-    const suites = read('boolean')
+    const suites = [
+      ...read('binary'),
+      ...read('boolean'),
+      ...read('dictionary'),
+      ...read('examples'),
+      ...read('item'),
+      ...read('key-generated'),
+      ...read('large-generated'),
+      ...read('list'),
+      ...read('listlist'),
+      ...read('number-generated'),
+      //// ...read('number'),
+      ...read('param-dict'),
+      ...read('param-list'),
+      ...read('param-listlist'),
+      ...read('string-generated'),
+      ...read('string'),
+      ...read('token-generated'),
+      ...read('token'),
+    ]
     suites.forEach((suite) => {
-      if (suite.header_type !== 'item') throw new Error("not item")
-      const result = sf_item()(suite.raw[0])
-      if (suite.must_fail) {
-        assert.deepStrictEqual(result.ok, false)
-      } else {
-        assert.deepStrictEqual(result.value, suite.expected, suite.name)
-      }
-    })
-    console.log('boolean done')
-  })();
+      const ignore = [
+        // list.json
+        "two line list",
+        // dictionary.json
+        "two lines dictionary",
+        "duplicate key dictionary",
+        // param-dict.json
+        "two lines parameterised list",
+        // example.json
+        "Example-Hdr (list on two lines)",
+        "Example-Hdr (dictionary on two lines)",
+        "0x2c in dictionary key", // merging keys
+        "0x3b in dictionary key", // merging keys
+        "0x3b starting an dictionary key", // merging keys
+        "0x3b in parameterised list key", // merging keys
+      ]
+      if (ignore.includes(suite.name)) return
 
-  // binary
-  (() => {
-    const suites = read('binary')
-    suites.forEach((suite) => {
-      if (suite.header_type !== 'item') throw new Error("not item")
-      const result = sf_item()(suite.raw[0])
-      if (suite.must_fail) {
-        assert.deepStrictEqual(result.ok, false)
-      } else {
-        const [expected, param] = suite.expected
-        if (expected['__type'] !== 'binary') throw new Error('not binary')
-        const buffer = Uint8Array.from(expected.value === '' ? [] : base32.decode.asBytes(expected.value))
-        assert.deepStrictEqual(result.value, [buffer, param], suite.name)
-      }
-    })
-    console.log('binary done')
-  })();
+      console.log(suite.name)
 
-  // item
-  (() => {
-    const suites = read('item')
-    suites.forEach((suite) => {
-      if (suite.header_type !== 'item') throw new Error("not item")
       try {
-        const result = parseItem(suite.raw[0])
-        assert.deepStrictEqual(result, suite.expected, suite.name)
+        let result;
+        if (suite.header_type === 'item') {
+          result = parseItem(suite.raw[0])
+        }
+        if (suite.header_type === 'list') {
+          result = parseList(suite.raw[0])
+        }
+        if (suite.header_type === 'dictionary') {
+          result = parseDict(suite.raw[0])
+        }
+        const expected = format(suite.expected)
+        assert.deepStrictEqual(result, expected, suite.name)
       } catch(err) {
         assert.deepStrictEqual(suite.must_fail, true)
       }
     })
-    console.log('item done')
   })();
 
   // number
+  // use deepEqual insted of deepStrictEqual for allow -0 === 0
   (() => {
     const suites = [
       ...read('number'),
-      ...read('number-generated'),
     ]
     suites.forEach((suite) => {
       if (suite.header_type !== 'item') throw new Error("not item")
       try {
         const result = parseItem(suite.raw[0])
-        // use deepEqual for allow -0 === 0
         assert.deepEqual(result, suite.expected, suite.name)
       } catch(err) {
         assert.deepStrictEqual(suite.must_fail, true)
@@ -353,79 +369,4 @@ function test_sf_item() {
     })
     console.log('number done')
   })();
-
-  // string
-  (() => {
-    const suites = [
-      ...read('string'),
-      ...read('string-generated'),
-    ]
-    suites.forEach((suite) => {
-      if (suite.header_type !== 'item') throw new Error("not item")
-      try {
-        const result = parseItem(suite.raw[0])
-        assert.deepStrictEqual(result, suite.expected, suite.name)
-      } catch(err) {
-        assert.deepStrictEqual(suite.must_fail, true)
-      }
-    })
-    console.log('string done')
-  })();
-
-  // token
-  (() => {
-    const suites = [
-      ...read('token'),
-      ...read('token-generated'),
-    ]
-    suites.forEach((suite) => {
-      if (suite.header_type !== 'item') return // TODO
-      try {
-        const result = parseItem(suite.raw[0])
-        const [expected, param] = suite.expected
-        if (expected['__type'] !== 'token') return // TODO
-        assert.deepStrictEqual(result, [expected.value, param], suite.name)
-      } catch(err) {
-        assert.deepStrictEqual(suite.must_fail, true)
-      }
-    })
-    console.log('token done')
-  })();
-
-  // list
-  (() => {
-    const suites = read('list')
-    suites.forEach((suite) => {
-      if (suite.header_type !== 'list') return
-      if (suite.raw.length > 1) return // TODO: multi line
-      try {
-        const result = parseList(suite.raw[0])
-        assert.deepStrictEqual(result, suite.expected, suite.name)
-      } catch (err) {
-        assert.deepStrictEqual(suite.must_fail, true)
-      }
-    })
-    console.log('list done')
-  })();
-
-
-  // dict
-  (() => {
-    const suites = read('dictionary')
-    suites.forEach((suite) => {
-      console.log(suite)
-      if (suite.header_type !== 'dictionary') return
-      if (suite.raw.length > 1) return
-      try {
-        const result = parseDict(suite.raw[0])
-        assert.deepStrictEqual(result, suite.expected, suite.name)
-      } catch (err) {
-        assert.deepStrictEqual(suite.must_fail, true)
-      }
-    })
-    console.log('dictionary done')
-  })();
-
-
-
 }

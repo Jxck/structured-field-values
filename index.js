@@ -379,10 +379,8 @@ export function _repeat_inner_item() {
   return repeat(0, 256, fn(), false)
 }
 
-const input = "a=1, b;foo=9, c=3"
-console.log({input})
-log(j(sf_dictionary()(input).value))
-log(j([["a", [1, []]], ["b", [true, [["foo", 9]]]], ["c", [3, []]]]))
+
+// log(j(sf_dictionary()("a,a=1")))
 
 // sf-dictionary
 //       = dict-member *( OWS "," OWS dict-member )
