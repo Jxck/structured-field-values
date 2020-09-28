@@ -240,22 +240,24 @@ function test_list_member() {
 }
 
 function test_inner_list() {
-  assert.deepStrictEqual(inner_list()(`( 1 2 3 )`), {ok, value: [
-    [
-      [1,[]],
-      [2,[]],
-      [3,[]]
-    ],[]
-  ], rest: ``})
-  assert.deepStrictEqual(inner_list()(`(1)`), {ok, value: [
-    [
-      [1,[]]
-    ],[]
-  ], rest: ``})
-  assert.deepStrictEqual(inner_list()(`()`), {ok, value: [
-    [],
-    []
-  ], rest: ``})
+  assert.deepStrictEqual(inner_list()(`( 1 2 3 )`), {ok, value: {
+    inner_list: [
+      {value: 1, params: {}},
+      {value: 2, params: {}},
+      {value: 3, params: {}}
+    ],
+    params: {}
+  }, rest: ``})
+  assert.deepStrictEqual(inner_list()(`(1)`), {ok, value: {
+    inner_list: [
+      {value: 1, params: {}},
+    ],
+    params: {}
+  }, rest: ``})
+  assert.deepStrictEqual(inner_list()(`()`), {ok, value: {
+    inner_list: [],
+    params: {}
+  }, rest: ``})
 }
 
 function test_optional_inner_item() {
@@ -419,9 +421,9 @@ function structured_field_tests() {
 // test_sf_list()
 // test_repeat_list_member()
 // test_list_member()
-// test_inner_list()
-// test_optional_inner_item()
-// test_repeat_inner_item()
+test_inner_list()
+test_optional_inner_item()
+test_repeat_inner_item()
 // test_sf_dictionary()
 // test_repeat_dict_member()
 // test_dict_member()

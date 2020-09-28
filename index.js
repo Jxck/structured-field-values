@@ -337,7 +337,8 @@ export function inner_list() {
 
     if (result.ok) {
       // [ "(", repeat, ")", param ] => [repeat, param]
-      result.value = [result.value[1], result.value[3]]
+      const [_open, inner_list, _close, params] = result.value
+      result.value = {inner_list, params}
     }
     return result
   }
