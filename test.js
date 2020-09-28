@@ -304,13 +304,17 @@ function test_bare_item() {
 }
 
 function test_parameters() {
-  assert.deepStrictEqual(parameters()(`; a; b=?0;c=10`), {ok, value: [[`a`, true], [`b`, false], [`c`, 10]], rest: ``})
+  assert.deepStrictEqual(parameters()(`;a=0`), {ok, value: [[`a`, 0]],    rest: ``})
+  assert.deepStrictEqual(parameters()(`;a`),   {ok, value: [[`a`, true]], rest: ``})
+  assert.deepStrictEqual(parameters()(`;  a;  b=?0`),  {ok, value: [[`a`, true], [`b`, false]], rest: ``})
+  assert.deepStrictEqual(parameters()(`;a;b=?0;c=10`), {ok, value: [[`a`, true], [`b`, false], [`c`, 10]], rest: ``})
 }
 
 function test_parameter() {
   assert.deepStrictEqual(parameter()(`a`),    {ok, value: [`a`, true],  rest: ``})
   assert.deepStrictEqual(parameter()(`b=?0`), {ok, value: [`b`, false], rest: ``})
   assert.deepStrictEqual(parameter()(`c=10`), {ok, value: [`c`, 10],    rest: ``})
+  assert.deepStrictEqual(parameter()(``),     {ok: false, rest: ``})
 }
 
 function test_sf_key() {
@@ -361,7 +365,7 @@ function structured_field_tests() {
       ]
       if (ignore.includes(suite.name)) return
 
-      console.log(suite.name)
+      // console.log(suite.name)
 
       try {
         let result;

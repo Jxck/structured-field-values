@@ -377,7 +377,6 @@ export function _repeat_inner_item() {
   return repeat(0, 256, fn())
 }
 
-
 // sf-dictionary
 //       = dict-member *( OWS "," OWS dict-member )
 export function sf_dictionary() {
@@ -395,7 +394,6 @@ export function sf_dictionary() {
     return result
   }
 }
-
 
 // repeat of dict member
 export function _repeat_dict_member() {
@@ -420,7 +418,6 @@ export function _repeat_dict_member() {
 // dict-member
 //       = member-name [ "=" member-value ]
 //       = member-name [ ( "=" member-value ) / parameters ] TODO: https://github.com/httpwg/http-extensions/issues/1273
-//                     [ _dict_memebr_value   / parameters ]
 // member-name
 //       = key
 export function dict_member() {
@@ -457,13 +454,19 @@ export function dict_member() {
 //       = sf-item
 //       / inner-list
 export function member_value() {
-  return alt([sf_item(), inner_list()])
+  return alt([
+    sf_item(),
+    inner_list()
+  ])
 }
 
 // sf-item
 //       = bare-item parameters
 export function sf_item() {
-  return list([bare_item(), parameters()])
+  return list([
+    bare_item(),
+    parameters()
+  ])
 }
 
 // bare-item
@@ -510,34 +513,33 @@ export function parameters() {
 // param-value
 //       = bare-item
 export function parameter() {
+  return list([
+    sf_key(),
+    param_value(),
+  ])
+}
+
+// [ "=" param-value ]
+export function param_value() {
   return (rest) => {
-    const result = list([
-      sf_key(),
-      param_value(),
-    ])(rest)
+    const result = repeat(0, 1, list([
+      token(/^=/),
+      bare_item()
+    ]))(rest)
 
     if (result.ok) {
-      const [key, [param]] = result.value
-      if (param === undefined) {
+      if (result.value.length === 0) {
         // no parameter is true
-        // [key, []] => [key, true]
-        result.value = [key, true]
+        // [] => true
+        result.value = true
       } else {
-        // ['=', param] => param
-        result.value = [key, param[1]]
+        // [['=', value]] => value
+        result.value = result.value[0][1]
       }
     }
 
     return result
   }
-}
-
-// [ "=" param-value ]
-export function param_value() {
-  return repeat(0, 1, list([
-    token(/^=/),
-    bare_item()
-  ]))
 }
 
 // key
