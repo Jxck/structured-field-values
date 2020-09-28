@@ -343,6 +343,7 @@ export function inner_list() {
   }
 }
 
+// [ sf-item *( 1*SP sf-item ) *SP ]
 export function _optional_inner_item() {
   return (rest) => {
     const result = repeat(0, 1, list([
@@ -351,9 +352,11 @@ export function _optional_inner_item() {
       token(/^ */)
     ]))(rest)
 
-    if (result.ok && result.value.length > 0) {
-      // [[sf_item, repeat, space]] => [sf_item, ...repeat]
-      result.value = [result.value[0][0], ...result.value[0][1]]
+    if (result.ok) {
+      if (result.value.length > 0) {
+        // [[sf_item, repeat, space]] => [sf_item, ...repeat]
+        result.value = [result.value[0][0], ...result.value[0][1]]
+      }
     }
     return result
   }
