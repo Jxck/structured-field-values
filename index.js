@@ -2,17 +2,6 @@
 
 const ok = true
 
-function log(...arg) {
-  try {
-    throw new Error()
-  } catch (err) {
-    const line = err.stack.split(`\n`)[2].split(`/`).pop()
-    console.log(line, ...arg)
-  }
-}
-
-const j = JSON.stringify.bind(JSON)
-
 /////////////////////////
 // public interface
 /////////////////////////
@@ -47,7 +36,7 @@ export function parseList(value) {
 export function parseDict(value) {
   // return if empty
   // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
-  if (value === ``) return []
+  if (value === ``) return {}
 
   const result = sf_dictionary()(value.trim())
   if (result.ok === false) {
@@ -337,7 +326,8 @@ export function inner_list() {
 
     if (result.ok) {
       // [ "(", repeat, ")", param ] => [repeat, param]
-      result.value = [result.value[1], result.value[3]]
+      const [_open, inner_list, _close, params] = result.value
+      result.value = {value: inner_list, params}
     }
     return result
   }
@@ -392,7 +382,7 @@ export function sf_dictionary() {
     if (result.ok) {
       // [dict_member, repeated]
       const [[key, [value]], rest] = result.value
-      result.value = [[key, value], ...rest]
+      result.value = Object.fromEntries([[key, value], ...rest])
     }
     return result
   }
@@ -446,7 +436,7 @@ export function _optional_member_value() {
         result.value = result.value[1]
       } else {
         // value should be true if member is ommited
-        result.value = [true, result.value]
+        result.value = {value: true, params: result.value}
       }
     }
     return result
@@ -466,10 +456,18 @@ export function member_value() {
 // sf-item
 //       = bare-item parameters
 export function sf_item() {
-  return list([
-    bare_item(),
-    parameters()
-  ])
+  return (rest) => {
+    const result = list([
+      bare_item(),
+      parameters()
+    ])(rest)
+
+    if (result.ok) {
+      const [value, params] = result.value
+      result.value = {value, params}
+    }
+    return result
+  }
 }
 
 // bare-item
@@ -493,7 +491,19 @@ export function bare_item() {
 // parameters
 //       = *( ";" *SP parameter )
 export function parameters() {
-  const fn = (rest) => {
+  return (rest) => {
+    const result = repeat(0, 256, _inner_parameters())(rest)
+
+    if (result.ok) {
+      result.value = Object.fromEntries(result.value)
+    }
+
+    return result
+  }
+}
+
+export function _inner_parameters() {
+  return (rest) => {
     const result = list([
       token(/^; */),
       parameter()
@@ -505,8 +515,6 @@ export function parameters() {
     }
     return result
   }
-
-  return repeat(0, 256, fn)
 }
 
 // parameter

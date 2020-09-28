@@ -49,12 +49,16 @@ function log(...arg) {
 
 const j = JSON.stringify.bind(JSON)
 
+
+// utility const
+const ok = true;
+
 // read json test suite
 function read(name) {
   return JSON.parse(readFileSync(`./structured-field-tests/${name}.json`).toString())
 }
 
-// convert "expected" in test.json into comparable
+// convert "expected" in test.json into JS Primitive
 function format(e) {
   if (Array.isArray(e)) {
     return e.map(format)
@@ -68,8 +72,45 @@ function format(e) {
       return e
   }
 }
+function formatItem(expected) {
+  const [_value, _params] = expected
+  const value  = format(_value)
+  const params = Object.fromEntries(_params.map(format))
+  return {value, params}
+}
 
-const ok = true;
+function formatList(expected) {
+  return expected.map(([value, params]) => {
+    if (Array.isArray(value)) {
+      return {
+        value: value.map(formatItem),
+        params: Object.fromEntries(params.map(format))
+      }
+    } else {
+      return {
+        value: format(value),
+        params: Object.fromEntries(params.map(format))
+      }
+    }
+  })
+}
+
+function formatDict(expected) {
+  return Object.fromEntries(expected.map(([name, member]) => {
+    const [value, params] = member
+    if (Array.isArray(value[0])) {
+      return [name, {
+        value: value.map(formatItem),
+        params: Object.fromEntries(params.map(format))
+      }]
+    } else {
+      return [name, {
+        value: format(value),
+        params: Object.fromEntries(params.map(format)),
+      }]
+    }
+  }))
+}
 
 function test_token() {
   const fn = token(/^abc/)
@@ -182,53 +223,66 @@ function test_sf_boolean() {
 }
 
 function test_sf_list() {
-  assert.deepStrictEqual(sf_list()(`"foo", "bar", "It was the best of times."`), {ok, value: [[`foo`,[]], [`bar`,[]], [`It was the best of times.`,[]]], rest: ``})
-  assert.deepStrictEqual(sf_list()(`foo, bar`), {ok, value: [[`foo`,[]], [`bar`,[]]], rest: ``})
+  assert.deepStrictEqual(
+    sf_list()(`"foo", "bar", "It was the best of times."`),
+    {ok, value: [
+      { value: `foo`, params: {} },
+      { value: `bar`, params: {} },
+      { value: `It was the best of times.`, params: {} }
+    ], rest: ``}
+  )
+  assert.deepStrictEqual(
+    sf_list()(`foo, bar`),
+    {ok, value: [
+      { value: `foo`, params: {} },
+      { value: `bar`, params: {} },
+    ], rest: ``}
+  )
+  assert.deepStrictEqual(
+    sf_list()(`("foo" "bar"), ("baz"), ("bat" "one"), ()`),
+    {ok, value: [
+      {
+        value: [
+          { value: "foo", params: {} },
+          { value: "bar", params: {} }
+        ],
+        params: {}
+      },
+      {
+        value: [
+          { value: "baz", params: {} }
+        ],
+        params: {}
+      },
+      {
+        value: [
+          { value: "bat", params: {} },
+          { value: "one", params: {} }
+        ],
+        params: {}
+      },
+      {
+        value: [],
+        params: {}
+      }
+    ], rest: ``}
+  )
+  assert.deepStrictEqual(sf_list()(`("foo"; a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), {ok, value: [
+    {
+      value: [
+        { value: "foo", params: { "a": 1, "b": 2 } }
+      ],
+      params: { "lvl": 5 }
+    },
+    {
+      value: [
+        { value: "bar", params: {} },
+        { value: "baz", params: {} }
+      ],
+      params: { "lvl": 1 }
+    }
+  ], rest: ``})
   assert.deepStrictEqual(sf_list()(``), {ok: false, rest: ``})
-  assert.deepStrictEqual(sf_list()(`("foo" "bar"), ("baz"), ("bat" "one"), ()`), {ok, value:
-    [
-      [
-        [
-          ["foo",[]],
-          ["bar",[]]
-        ],
-        []
-      ],
-      [
-        [
-          ["baz",[]]
-        ],
-        []
-      ],
-      [
-        [
-          ["bat",[]],
-          ["one",[]]
-        ],
-        []
-      ],
-      [
-        [],
-        []
-      ]
-    ], rest: ``})
-
-  assert.deepStrictEqual(sf_list()(`("foo"; a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), {ok, value:
-    [
-      [
-        [
-          ['foo', [['a', 1], ['b', 2]] ]
-        ],
-        [ ['lvl', 5] ]
-      ],
-      [
-        [
-          ['bar', []], ['baz', []]
-        ],
-        [ ['lvl', 1] ]
-      ]
-    ],
-    rest: ``})
 }
 
 function test_repeat_list_member() {
@@ -240,22 +294,24 @@ function test_list_member() {
 }
 
 function test_inner_list() {
-  assert.deepStrictEqual(inner_list()(`( 1 2 3 )`), {ok, value: [
-    [
-      [1,[]],
-      [2,[]],
-      [3,[]]
-    ],[]
-  ], rest: ``})
-  assert.deepStrictEqual(inner_list()(`(1)`), {ok, value: [
-    [
-      [1,[]]
-    ],[]
-  ], rest: ``})
-  assert.deepStrictEqual(inner_list()(`()`), {ok, value: [
-    [],
-    []
-  ], rest: ``})
+  assert.deepStrictEqual(inner_list()(`( 1 2 3 )`), {ok, value: {
+    value: [
+      { value: 1, params: {} },
+      { value: 2, params: {} },
+      { value: 3, params: {} }
+    ],
+    params: {}
+  }, rest: ``})
+  assert.deepStrictEqual(inner_list()(`(1)`), {ok, value: {
+    value: [
+      { value: 1, params: {} },
+    ],
+    params: {}
+  }, rest: ``})
+  assert.deepStrictEqual(inner_list()(`()`), {ok, value: {
+    value: [],
+    params: {}
+  }, rest: ``})
 }
 
 function test_optional_inner_item() {
@@ -267,28 +323,52 @@ function test_repeat_inner_item() {
 }
 
 function test_sf_dictionary() {
-  assert.deepStrictEqual(sf_dictionary()(`en="Applepie", da=:w4ZibGV0w6ZydGU=:`), {ok, value: [
-    [ `en`, [`Applepie`, []] ],
-    [ `da`, [ new Uint8Array([ 195, 134, 98, 108, 101, 116, 195, 166, 114, 116, 101 ]), [] ]]
-  ], rest: ``})
+  assert.deepStrictEqual(sf_dictionary()(`en="Applepie", da=:w4ZibGV0w6ZydGU=:`), {ok, value: {
+    "en": { value: `Applepie`, params: {} },
+    "da": { value: new Uint8Array([195,134,98,108,101,116,195,166,114,116,101]), params: {} }
+  }, rest: ``})
 
-  assert.deepStrictEqual(sf_dictionary()(`a=?0, b, c; foo=bar`), {ok, value: [
-    [ `a`, [false, [] ] ],
-    [ `b`, [true,  [] ] ],
-    [ `c`, [true,  [[`foo`,`bar`]] ] ]
-  ], rest: `` })
+  assert.deepEqual(sf_dictionary()(`a=?0, b, c; foo=bar`), {ok, value: {
+    "a": { value: false, params: {} },
+    "b": { value: true,  params: {} },
+    "c": { value: true,  params: {"foo": "bar"} }
+  }, rest: `` })
 
-  assert.deepStrictEqual(sf_dictionary()(`rating=1.5, feelings=(joy sadness)`), {ok, value: [
-    [ `rating`,   [1.5,[]] ],
-    [ `feelings`, [[[`joy`,[]], [`sadness`,[]]], []]]
-  ], rest:``})
+  assert.deepStrictEqual(sf_dictionary()(`rating=1.5, feelings=(joy sadness)`), {ok, value: {
+    "rating": { value: 1.5, params: {} },
+    "feelings": {
+      value: [
+        { value: "joy",     params: {} },
+        { value: "sadness", params: {} }
+      ],
+      params: {}
+    }
+  }, rest:``})
 
-  assert.deepStrictEqual(sf_dictionary()(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {ok, value: [
-    [ `a`, [ [ [ 1, [] ], [ 2, [] ] ], [] ] ],
-    [ `b`, [ 3, [] ] ],
-    [ `c`, [ 4, [ [ `aa`, `bb` ] ] ] ],
-    [ `d`, [ [ [ 5, [] ], [ 6, [] ] ], [ [ `valid`,true ] ] ] ]
-  ], rest: ``})
+  assert.deepStrictEqual(sf_dictionary()(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {ok, value: {
+    "a": {
+      value: [
+        { value: 1, params: {} },
+        { value: 2, params: {} }
+      ],
+      params: {}
+    },
+    "b": {
+      value: 3,
+      params: {},
+    },
+    "c": {
+      value: 4,
+      params: { "aa": "bb" },
+    },
+    "d": {
+      value: [
+        { value: 5, params: {} },
+        { value: 6, params: {} }
+      ],
+      params: { "valid": true }
+    },
+  }, rest: ``})
 }
 
 function test_repeat_dict_member() {
@@ -304,7 +384,7 @@ function test_member_value() {
 }
 
 function test_sf_item() {
-  assert.deepStrictEqual(sf_item()(`123;a=1;b`), {ok, value: [123,[['a',1],['b',true]]], rest: ``})
+  assert.deepStrictEqual(sf_item()(`123;a=1;b`), {ok, value: {value: 123, params: {"a":1, "b":true}}, rest: ``})
   assert.deepStrictEqual(sf_item()(``),          {ok: false, rest: ``})
 }
 
@@ -320,10 +400,10 @@ function test_bare_item() {
 }
 
 function test_parameters() {
-  assert.deepStrictEqual(parameters()(`;a=0`), {ok, value: [[`a`, 0]],    rest: ``})
-  assert.deepStrictEqual(parameters()(`;a`),   {ok, value: [[`a`, true]], rest: ``})
-  assert.deepStrictEqual(parameters()(`;  a;  b=?0`),  {ok, value: [[`a`, true], [`b`, false]], rest: ``})
-  assert.deepStrictEqual(parameters()(`;a;b=?0;c=10`), {ok, value: [[`a`, true], [`b`, false], [`c`, 10]], rest: ``})
+  assert.deepStrictEqual(parameters()(`;a=0`),         {ok, value: {"a": 0},                         rest: ``})
+  assert.deepStrictEqual(parameters()(`;a`),           {ok, value: {"a": true},                      rest: ``})
+  assert.deepStrictEqual(parameters()(`;  a;  b=?0`),  {ok, value: {"a": true, "b": false},          rest: ``})
+  assert.deepStrictEqual(parameters()(`;a;b=?0;c=10`), {ok, value: {"a": true, "b": false, "c": 10}, rest: ``})
 }
 
 function test_parameter() {
@@ -368,33 +448,30 @@ function structured_field_tests() {
         `two line list`,
         // dictionary.json
         `two lines dictionary`,
-        `duplicate key dictionary`,
         // param-dict.json
         `two lines parameterised list`,
         // example.json
         `Example-Hdr (list on two lines)`,
         `Example-Hdr (dictionary on two lines)`,
-        `0x2c in dictionary key`, // merging keys
-        `0x3b in dictionary key`, // merging keys
-        `0x3b starting an dictionary key`, // merging keys
-        `0x3b in parameterised list key`, // merging keys
       ]
       if (ignore.includes(suite.name)) return
 
-      // console.log(suite.name)
+      console.log(suite.name)
 
       try {
-        let result;
+        let result, expected;
         if (suite.header_type === `item`) {
-          result = parseItem(suite.raw[0])
+          result   = parseItem(suite.raw[0])
+          expected = formatItem(suite.expected)
         }
         if (suite.header_type === `list`) {
-          result = parseList(suite.raw[0])
+          result   = parseList(suite.raw[0])
+          expected = formatList(suite.expected)
         }
         if (suite.header_type === `dictionary`) {
-          result = parseDict(suite.raw[0])
+          result   = parseDict(suite.raw[0])
+          expected = formatDict(suite.expected)
         }
-        const expected = format(suite.expected)
         assert.deepStrictEqual(result, expected, suite.name)
       } catch(err) {
         assert.deepStrictEqual(suite.must_fail, true)
