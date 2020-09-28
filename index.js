@@ -412,7 +412,7 @@ export function _repeat_dict_member() {
 //                     [ _dict_memebr_value   / parameters ]
 // member-name
 //       = key
-function dict_member() {
+export function dict_member() {
   function fn() {
     return (rest) => {
       const result = alt([
@@ -445,7 +445,7 @@ function dict_member() {
 // member-value
 //       = sf-item
 //       / inner-list
-function member_value() {
+export function member_value() {
   return alt([sf_item(), inner_list()])
 }
 
