@@ -304,7 +304,8 @@ function test_member_value() {
 }
 
 function test_sf_item() {
-  // test_bare_item() parameters()
+  assert.deepStrictEqual(sf_item()(`123;a=1;b`), {ok, value: [123,[['a',1],['b',true]]], rest: ``})
+  assert.deepStrictEqual(sf_item()(``),          {ok: false, rest: ``})
 }
 
 function test_bare_item() {
