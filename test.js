@@ -240,7 +240,22 @@ function test_list_member() {
 }
 
 function test_inner_list() {
-  // omit
+  assert.deepStrictEqual(inner_list()(`( 1 2 3 )`), {ok, value: [
+    [
+      [1,[]],
+      [2,[]],
+      [3,[]]
+    ],[]
+  ], rest: ``})
+  assert.deepStrictEqual(inner_list()(`(1)`), {ok, value: [
+    [
+      [1,[]]
+    ],[]
+  ], rest: ``})
+  assert.deepStrictEqual(inner_list()(`()`), {ok, value: [
+    [],
+    []
+  ], rest: ``})
 }
 
 function test_optional_inner_item() {
