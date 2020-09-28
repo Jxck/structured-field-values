@@ -424,33 +424,33 @@ export function _repeat_dict_member() {
 // member-name
 //       = key
 export function dict_member() {
-  function fn() {
-    return (rest) => {
-      const result = alt([
-        list([
-          token(/^=/),
-          member_value(),
-        ]),
-        parameters()
-      ])(rest)
-
-      if (result.ok) {
-        if (result.value[0] === `=`) {
-          // ['=', [member]] => [1, []]
-          result.value = result.value[1]
-        } else {
-          // value should be true if member is ommited
-          result.value = [true, result.value]
-        }
-      }
-      return result
-    }
-  }
-
   return list([
     sf_key(),
-    repeat(0, 1, fn())
+    repeat(0, 1, _optional_member_value())
   ])
+}
+
+export function _optional_member_value() {
+  return (rest) => {
+    const result = alt([
+      list([
+        token(/^=/),
+        member_value(),
+      ]),
+      parameters()
+    ])(rest)
+
+    if (result.ok) {
+      if (result.value[0] === `=`) {
+        // ['=', [member]] => [1, []]
+        result.value = result.value[1]
+      } else {
+        // value should be true if member is ommited
+        result.value = [true, result.value]
+      }
+    }
+    return result
+  }
 }
 
 // member-value
