@@ -393,7 +393,7 @@ export function sf_dictionary() {
     if (result.ok) {
       // [dict_member, repeated]
       const [[key, [value]], rest] = result.value
-      result.value = [[key, value], ...rest]
+      result.value = Object.fromEntries([[key, value], ...rest])
     }
     return result
   }
@@ -447,7 +447,7 @@ export function _optional_member_value() {
         result.value = result.value[1]
       } else {
         // value should be true if member is ommited
-        result.value = [true, result.value]
+        result.value = {value: true, params: result.value}
       }
     }
     return result
