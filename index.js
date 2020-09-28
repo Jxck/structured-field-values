@@ -493,7 +493,19 @@ export function bare_item() {
 // parameters
 //       = *( ";" *SP parameter )
 export function parameters() {
-  const fn = (rest) => {
+  return (rest) => {
+    const result = repeat(0, 256, _inner_parameters())(rest)
+
+    if (result.ok) {
+      result.value = Object.fromEntries(result.value)
+    }
+
+    return result
+  }
+}
+
+export function _inner_parameters() {
+  return (rest) => {
     const result = list([
       token(/^; */),
       parameter()
@@ -505,8 +517,6 @@ export function parameters() {
     }
     return result
   }
-
-  return repeat(0, 256, fn)
 }
 
 // parameter
