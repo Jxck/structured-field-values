@@ -54,10 +54,30 @@ function read(name) {
   return JSON.parse(readFileSync(`./structured-field-tests/${name}.json`).toString())
 }
 
-// convert "expected" in test.json into comparable
+// convert "expected" in test.json into JS Primitive
 function format(e) {
   if (Array.isArray(e)) {
     return e.map(format)
+  }
+  switch(e[`__type`]) {
+    case `binary`:
+      return Uint8Array.from(e.value === `` ? [] : base32.decode.asBytes(e.value))
+    case `token`:
+      return e.value
+    default:
+      return e
+  }
+}
+function formatItem(e) {
+  const [_value, _params] = e
+  const value = format(_value)
+  const params = Object.fromEntries(_params.map(format))
+  return {value, params}
+}
+
+function formatList(e) {
+  if (Array.isArray(e)) {
+    return e.map(formatList)
   }
   switch(e[`__type`]) {
     case `binary`:
@@ -420,20 +440,22 @@ function structured_field_tests() {
       ]
       if (ignore.includes(suite.name)) return
 
-      // console.log(suite.name)
+      console.log(suite.name)
 
       try {
-        let result;
+        let result, expected;
         if (suite.header_type === `item`) {
-          result = parseItem(suite.raw[0])
+          result   = parseItem(suite.raw[0])
+          expected = formatItem(suite.expected)
         }
-        if (suite.header_type === `list`) {
-          result = parseList(suite.raw[0])
-        }
-        if (suite.header_type === `dictionary`) {
-          result = parseDict(suite.raw[0])
-        }
-        const expected = format(suite.expected)
+        // if (suite.header_type === `list`) {
+        //   result   = parseList(suite.raw[0])
+        //   expected = formatList(suite.expected)
+        // }
+        // if (suite.header_type === `dictionary`) {
+        //   result   = parseDict(suite.raw[0])
+        //   expected = formatDict(suite.expected)
+        // }
         assert.deepStrictEqual(result, expected, suite.name)
       } catch(err) {
         assert.deepStrictEqual(suite.must_fail, true)
@@ -470,4 +492,4 @@ test_bare_item()
 test_parameters()
 test_parameter()
 test_sf_key()
-// structured_field_tests()
+structured_field_tests()
