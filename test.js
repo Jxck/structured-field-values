@@ -1,8 +1,8 @@
-import assert from "assert"
-import {readFileSync} from "fs"
-import base32 from "hi-base32"
+const assert = require("assert")
+const fs     = require("fs");
+const base32 = require("hi-base32")
 
-import {
+const {
   parseItem,
   parseList,
   parseDict,
@@ -36,7 +36,7 @@ import {
   parameters,
   parameter,
   sf_key,
-} from "./index.js"
+} = require("./index.js")
 
 function log(...arg) {
   try {
@@ -55,7 +55,7 @@ const ok = true;
 
 // read json test suite
 function read(name) {
-  return JSON.parse(readFileSync(`./structured-field-tests/${name}.json`).toString())
+  return JSON.parse(fs.readFileSync(`./structured-field-tests/${name}.json`).toString())
 }
 
 // convert "expected" in test.json into JS Primitive

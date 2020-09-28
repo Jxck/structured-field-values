@@ -1,11 +1,12 @@
 `use strict`;
+const fs = require("fs");
 
 const ok = true
 
 /////////////////////////
 // public interface
 /////////////////////////
-export function parseItem(value) {
+function parseItem(value) {
   // trim leading/trailing space
   // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2
   const result = sf_item()(value.trim())
@@ -18,7 +19,7 @@ export function parseItem(value) {
   return result.value
 }
 
-export function parseList(value) {
+function parseList(value) {
   // return if empty
   // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
   if (value === ``) return []
@@ -33,7 +34,7 @@ export function parseList(value) {
   return result.value
 }
 
-export function parseDict(value) {
+function parseDict(value) {
   // return if empty
   // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
   if (value === ``) return {}
@@ -54,7 +55,7 @@ export function parseDict(value) {
 /////////////////////////
 
 // a => token(/^a/)
-export function token(reg) {
+function token(reg) {
   return (rest) => {
     const result = reg.exec(rest)
     if (result === null) {
@@ -67,7 +68,7 @@ export function token(reg) {
 }
 
 // (a / b) => alt([a(), b()])
-export function alt(fns) {
+function alt(fns) {
   return (rest) => {
     for (let i = 0; i < fns.length; i ++) {
       const result = fns[i](rest)
@@ -80,7 +81,7 @@ export function alt(fns) {
 }
 
 // (a b c) => list([a(), b(), c()])
-export function list(fns) {
+function list(fns) {
   return (rest) => {
     const value = []
     const orig  = rest
@@ -97,7 +98,7 @@ export function list(fns) {
 }
 
 // *(a b) => repeat(0, Infinity, list([a(), b()]))
-export function repeat(min, max, fn) {
+function repeat(min, max, fn) {
   return (rest) => {
     const value = []
     const found = 0
@@ -124,7 +125,7 @@ export function repeat(min, max, fn) {
 /////////////////////////
 // base64 uility
 /////////////////////////
-export function base64decode(str) {
+function base64decode(str) {
   if (typeof window === `undefined`) {
     return Uint8Array.from(Buffer.from(str, `base64`))
   } else {
@@ -132,7 +133,7 @@ export function base64decode(str) {
   }
 }
 
-export function base64encode(binary) {
+function base64encode(binary) {
   if (typeof window === `undefined`) {
     return Buffer.from(binary).toString(`base64`)
   } else {
@@ -147,7 +148,7 @@ export function base64encode(binary) {
 
 // sf-integer
 //       = ["-"] 1*15DIGIT
-export function sf_integer() {
+function sf_integer() {
   return (rest) => {
     const result = token(/^\-{0,1}\d{1,15}/)(rest)
     if (result.ok) {
@@ -159,7 +160,7 @@ export function sf_integer() {
 
 // sf-decimal
 //       = ["-"] 1*12DIGIT "." 1*3DIGIT
-export function sf_decimal() {
+function sf_decimal() {
   return (rest) => {
     const result = token(/^\-{0,1}\d{1,12}\.\d{1,3}/)(rest)
     if (result.ok) {
@@ -171,7 +172,7 @@ export function sf_decimal() {
 
 // sf-string
 //       = DQUOTE *chr DQUOTE
-export function sf_string() {
+function sf_string() {
   return function(rest) {
     const fn = list([
       token(/^"/),
@@ -192,7 +193,7 @@ export function sf_string() {
 // chr
 //       = unescaped
 //       / escaped
-export function char() {
+function char() {
   return alt([
     escaped(),
     unescaped(),
@@ -203,13 +204,13 @@ export function char() {
 //       = %x20-21  (x22 is ")
 //       / %x23-5B  (x5c is \)
 //       / %x5D-7E
-export function unescaped() {
+function unescaped() {
   return token(/^([\x20-\x21\x23-\x5B\x5D-\x7E])/)
 }
 
 // escaped
 //       = "\" ( DQUOTE / "\" )
-export function escaped() {
+function escaped() {
   return (rest) => {
     const result = token(/^((\\\")|(\\\\))/)(rest)
     if (result.ok) {
@@ -222,7 +223,7 @@ export function escaped() {
 
 // sf-token
 //       = ( ALPHA / "*" ) *( tchar / ":" / "/" )
-export function sf_token() {
+function sf_token() {
   return token(/^([a-zA-Z\*])([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]){0,512}/)
 }
 
@@ -234,7 +235,7 @@ export function sf_token() {
 //       / "+"
 //       / "/"
 //       / "="
-export function sf_binary() {
+function sf_binary() {
   return (rest) => {
     const result = list([
       token(/^:/),
@@ -255,7 +256,7 @@ export function sf_binary() {
 // boolean
 //       = "0"
 //       / "1"
-export function sf_boolean() {
+function sf_boolean() {
   return (rest) => {
     const result = token(/^((\?0)|(\?1))/)(rest)
     if (result.ok) {
@@ -268,7 +269,7 @@ export function sf_boolean() {
 
 // sf-list
 //       = list-member *( OWS "," OWS list-member )
-export function sf_list() {
+function sf_list() {
   return (rest) => {
     const result = list([
       list_member(),
@@ -285,7 +286,7 @@ export function sf_list() {
 
 // [repeat of list member]
 //   = *( OWS "," OWS list-member )
-export function _repeat_list_member() {
+function _repeat_list_member() {
   function fn() {
     return (rest) => {
       const result = list([
@@ -306,7 +307,7 @@ export function _repeat_list_member() {
 // list-member
 //       = sf-item
 //       / inner-list
-export function list_member() {
+function list_member() {
   return alt([
     sf_item(),
     inner_list(),
@@ -315,7 +316,7 @@ export function list_member() {
 
 // inner-list
 //       = "(" *SP [ sf-item *( 1*SP sf-item ) *SP ] ")" parameters
-export function inner_list() {
+function inner_list() {
   return (rest) => {
     const result = list([
       token(/^\( */),
@@ -334,7 +335,7 @@ export function inner_list() {
 }
 
 // [ sf-item *( 1*SP sf-item ) *SP ]
-export function _optional_inner_item() {
+function _optional_inner_item() {
   return (rest) => {
     const result = repeat(0, 1, list([
       sf_item(),
@@ -352,7 +353,7 @@ export function _optional_inner_item() {
   }
 }
 
-export function _repeat_inner_item() {
+function _repeat_inner_item() {
   function fn() {
     return (rest) => {
       const result = list([
@@ -372,7 +373,7 @@ export function _repeat_inner_item() {
 
 // sf-dictionary
 //       = dict-member *( OWS "," OWS dict-member )
-export function sf_dictionary() {
+function sf_dictionary() {
   return (rest) => {
     const result = list([
       dict_member(),
@@ -389,7 +390,7 @@ export function sf_dictionary() {
 }
 
 // repeat of dict member
-export function _repeat_dict_member() {
+function _repeat_dict_member() {
   function fn() {
     return (rest) => {
       const result = list([
@@ -413,14 +414,14 @@ export function _repeat_dict_member() {
 //       = member-name [ ( "=" member-value ) / parameters ] TODO: https://github.com/httpwg/http-extensions/issues/1273
 // member-name
 //       = key
-export function dict_member() {
+function dict_member() {
   return list([
     sf_key(),
     repeat(0, 1, _optional_member_value())
   ])
 }
 
-export function _optional_member_value() {
+function _optional_member_value() {
   return (rest) => {
     const result = alt([
       list([
@@ -446,7 +447,7 @@ export function _optional_member_value() {
 // member-value
 //       = sf-item
 //       / inner-list
-export function member_value() {
+function member_value() {
   return alt([
     sf_item(),
     inner_list()
@@ -455,7 +456,7 @@ export function member_value() {
 
 // sf-item
 //       = bare-item parameters
-export function sf_item() {
+function sf_item() {
   return (rest) => {
     const result = list([
       bare_item(),
@@ -477,7 +478,7 @@ export function sf_item() {
 //       / sf-token
 //       / sf-binary
 //       / sf-boolean
-export function bare_item() {
+function bare_item() {
   return alt([
     sf_decimal(),
     sf_integer(),
@@ -490,7 +491,7 @@ export function bare_item() {
 
 // parameters
 //       = *( ";" *SP parameter )
-export function parameters() {
+function parameters() {
   return (rest) => {
     const result = repeat(0, 256, _inner_parameters())(rest)
 
@@ -502,7 +503,7 @@ export function parameters() {
   }
 }
 
-export function _inner_parameters() {
+function _inner_parameters() {
   return (rest) => {
     const result = list([
       token(/^; */),
@@ -523,7 +524,7 @@ export function _inner_parameters() {
 //       = key
 // param-value
 //       = bare-item
-export function parameter() {
+function parameter() {
   return list([
     sf_key(),
     param_value(),
@@ -531,7 +532,7 @@ export function parameter() {
 }
 
 // [ "=" param-value ]
-export function param_value() {
+function param_value() {
   return (rest) => {
     const result = repeat(0, 1, list([
       token(/^=/),
@@ -558,6 +559,43 @@ export function param_value() {
 //         *( lcalpha / DIGIT / "_" / "-" / "." / "*" )
 // lcalpha
 //       = %x61-7A ; a-z
-export function sf_key() {
+function sf_key() {
   return token(/^([a-z\*])([a-z0-9\_\-\.\*]){0,64}/)
+}
+
+
+module.exports = {
+  parseItem,
+  parseList,
+  parseDict,
+  token,
+  alt,
+  list,
+  repeat,
+  base64decode,
+  base64encode,
+  sf_integer,
+  sf_decimal,
+  sf_string,
+  char,
+  unescaped,
+  escaped,
+  sf_token,
+  sf_binary,
+  sf_boolean,
+  sf_list,
+  _repeat_list_member,
+  list_member,
+  inner_list,
+  _optional_inner_item,
+  _repeat_inner_item,
+  sf_dictionary,
+  _repeat_dict_member,
+  dict_member,
+  member_value,
+  sf_item,
+  bare_item,
+  parameters,
+  parameter,
+  sf_key,
 }
