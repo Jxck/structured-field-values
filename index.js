@@ -47,7 +47,7 @@ export function parseList(value) {
 export function parseDict(value) {
   // return if empty
   // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
-  if (value === ``) return []
+  if (value === ``) return {}
 
   const result = sf_dictionary()(value.trim())
   if (result.ok === false) {
@@ -338,7 +338,7 @@ export function inner_list() {
     if (result.ok) {
       // [ "(", repeat, ")", param ] => [repeat, param]
       const [_open, inner_list, _close, params] = result.value
-      result.value = {inner_list, params}
+      result.value = {value: inner_list, params}
     }
     return result
   }
