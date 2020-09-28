@@ -456,7 +456,7 @@ function structured_field_tests() {
       ]
       if (ignore.includes(suite.name)) return
 
-      // console.log(suite.name)
+      console.log(suite.name)
 
       try {
         let result, expected;
