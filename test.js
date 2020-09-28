@@ -304,7 +304,7 @@ function test_member_value() {
 }
 
 function test_sf_item() {
-  assert.deepStrictEqual(sf_item()(`123;a=1;b`), {ok, value: [123,[['a',1],['b',true]]], rest: ``})
+  assert.deepStrictEqual(sf_item()(`123;a=1;b`), {ok, value: {value: 123, params: {"a":1, "b":true}}, rest: ``})
   assert.deepStrictEqual(sf_item()(``),          {ok: false, rest: ``})
 }
 
@@ -426,7 +426,7 @@ function structured_field_tests() {
 // test_repeat_dict_member()
 // test_dict_member()
 // test_member_value()
-// test_sf_item()
+test_sf_item()
 // test_bare_item()
 test_parameters()
 // test_parameter()

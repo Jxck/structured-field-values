@@ -466,10 +466,18 @@ export function member_value() {
 // sf-item
 //       = bare-item parameters
 export function sf_item() {
-  return list([
-    bare_item(),
-    parameters()
-  ])
+  return (rest) => {
+    const result = list([
+      bare_item(),
+      parameters()
+    ])(rest)
+
+    if (result.ok) {
+      const [value, params] = result.value
+      result.value = {value, params}
+    }
+    return result
+  }
 }
 
 // bare-item
