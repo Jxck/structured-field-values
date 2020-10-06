@@ -6,6 +6,14 @@ const ok = true
 /////////////////////////
 // public interface
 /////////////////////////
+function decodeItem(value) { return parseItem(value) }
+function decodeList(value) { return parseList(value) }
+function decodeDict(value) { return parseDict(value) }
+function encodeItem(value) { return serializeItem(value) }
+function encodeList(value) { return serializeList(value) }
+function encodeDict(value) { return serializeDict(value) }
+
+
 function parseItem(value) {
   // trim leading/trailing space
   // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2
@@ -49,6 +57,14 @@ function parseDict(value) {
   return result.value
 }
 
+function encodeItem(value) {
+}
+
+function encodeList(value) {
+}
+
+function encodeDict(value) {
+}
 
 /////////////////////////
 // BFN utility
@@ -565,6 +581,13 @@ function sf_key() {
 
 
 module.exports = {
+  encodeItem,
+  encodeList,
+  encodeDict,
+  decodeItem,
+  decodeList,
+  decodeDict,
+
   parseItem,
   parseList,
   parseDict,

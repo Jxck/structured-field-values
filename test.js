@@ -3,6 +3,9 @@ const fs     = require("fs");
 const base32 = require("hi-base32")
 
 const {
+  decodeItem,
+  decodeList,
+  decodeDict,
   parseItem,
   parseList,
   parseDict,
@@ -461,15 +464,15 @@ function structured_field_tests() {
       try {
         let result, expected;
         if (suite.header_type === `item`) {
-          result   = parseItem(suite.raw[0])
+          result   = decodeItem(suite.raw[0])
           expected = formatItem(suite.expected)
         }
         if (suite.header_type === `list`) {
-          result   = parseList(suite.raw[0])
+          result   = decodeList(suite.raw[0])
           expected = formatList(suite.expected)
         }
         if (suite.header_type === `dictionary`) {
-          result   = parseDict(suite.raw[0])
+          result   = decodeDict(suite.raw[0])
           expected = formatDict(suite.expected)
         }
         assert.deepStrictEqual(result, expected, suite.name)

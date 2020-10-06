@@ -16,10 +16,10 @@ npm install structured-field-values
 ```js
 const sfv = require("structured-field-values")
 
-sfv.parseItem("a;x=?1")
+sfv.decodeItem("a;x=?1")
 // { value: 'a', params: { x: true } }
 
-sfv.parseList("a,b,(1 2)")
+sfv.decodeList("a,b,(1 2)")
 // [
 //   { value: 'a', params: {} },
 //   { value: 'b', params: {} },
@@ -31,7 +31,7 @@ sfv.parseList("a,b,(1 2)")
 //   }
 // ]
 
-parseDict("a=(1 2); q=1.0")
+sfv.decodeDict("a=(1 2); q=1.0")
 // {
 //   'a': {
 //     value: [
