@@ -2,6 +2,14 @@
 const fs = require("fs");
 
 const ok = true
+function log(...arg) {
+  try {
+    throw new Error()
+  } catch (err) {
+    const line = err.stack.split(`\n`)[2].split(`/`).pop()
+    console.log(line, ...arg)
+  }
+}
 
 /////////////////////////
 // public interface
@@ -57,14 +65,64 @@ function parseDict(value) {
   return result.value
 }
 
-function encodeItem(value) {
+function encodeItem(item) {
+  return serializeItem(item)
 }
 
-function encodeList(value) {
+function encodeList(list) {
 }
 
-function encodeDict(value) {
+function encodeDict(dict) {
 }
+
+
+
+function serializeItem({value, params}) {
+  return `${serializeBareItem(value)}${serializeParams(params)}`
+}
+
+function serializeBareItem(value) {
+  switch (typeof value) {
+    case "number":
+      // Serializing an Integer/Decimal
+      // 1.  If input_integer is not an integer in the range of -999,999,999,999,999 to 999,999,999,999,999 inclusive, fail serialization.
+      if (value < -999999999999999n || 999999999999999n < value) throw new Error(`fail serialization: ${value}`)
+      return value.toString()
+    case "string":
+      // Serializing an String
+      if (/[\x00-\x1f\x7f]+/.test(value)) throw new Error(`fail serialization: ${value}`)
+      return `"${value.replace(/\\/g, `\\\\`).replace(/"/g, `\\\"`)}"`
+    case "boolean":
+      // Serializing an Boolean
+      return value ? "?1" : "?0"
+    case "symbol":
+      // Serializing an Token
+      return Symbol.keyFor(value)
+    case "object":
+      if (value instanceof Uint8Array) {
+        return `:${base64encode(value)}:`
+      }
+    default:
+      break;
+  }
+}
+
+function serializeKey(key) {
+  // 1.  Convert input_key into a sequence of ASCII characters; if
+  //     conversion fails, fail serialization.
+  // 2.  If input_key contains characters not in lcalpha, DIGIT, "_", "-",
+  //     ".", or "*" fail serialization.
+  // 3.  If the first character of input_key is not lcalpha or "*", fail
+  //     serialization.
+  return key
+}
+
+function serializeParams(params) {
+  return Object.entries(params).map(([key, value]) => {
+    return `;${serializeKey(key)}=${serializeBareItem(value)}`
+  }).join("")
+}
+
 
 /////////////////////////
 // BFN utility

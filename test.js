@@ -3,6 +3,9 @@ const fs     = require("fs");
 const base32 = require("hi-base32")
 
 const {
+  encodeItem,
+  encodeList,
+  encodeDict,
   decodeItem,
   decodeList,
   decodeDict,
@@ -426,22 +429,22 @@ function structured_field_tests() {
     const suites = [
       ...read(`binary`),
       ...read(`boolean`),
-      ...read(`dictionary`),
-      ...read(`examples`),
-      ...read(`item`),
-      ...read(`key-generated`),
-      ...read(`large-generated`),
-      ...read(`list`),
-      ...read(`listlist`),
-      ...read(`number-generated`),
+      //...read(`dictionary`),
+      //...read(`examples`),
+      //...read(`item`),
+      //...read(`key-generated`),
+      //...read(`large-generated`),
+      //...read(`list`),
+      //...read(`listlist`),
+      // ...read(`number-generated`),
       ...read(`number`),
-      ...read(`param-dict`),
-      ...read(`param-list`),
-      ...read(`param-listlist`),
+      //...read(`param-dict`),
+      //...read(`param-list`),
+      //...read(`param-listlist`),
       ...read(`string-generated`),
       ...read(`string`),
-      ...read(`token-generated`),
-      ...read(`token`),
+      //...read(`token-generated`),
+      //...read(`token`),
     ]
     suites.forEach((suite) => {
       const ignore = [
@@ -459,23 +462,31 @@ function structured_field_tests() {
       ]
       if (ignore.includes(suite.name)) return
 
-      console.log(suite.name)
+      console.log(suite)
 
       try {
-        let result, expected;
         if (suite.header_type === `item`) {
-          result   = decodeItem(suite.raw[0])
-          expected = formatItem(suite.expected)
+          const str     = suite?.canonical?.[0] || suite.raw[0]
+          const obj     = formatItem(suite.expected)
+          log(str,obj)
+          const decoded = decodeItem(suite.raw[0])
+          const encoded = encodeItem(obj)
+          log(encoded, decoded)
+          assert.deepStrictEqual(str, encoded, suite.name)
+          assert.deepStrictEqual(obj, decoded, suite.name)
         }
         if (suite.header_type === `list`) {
+          let result, expected;
           result   = decodeList(suite.raw[0])
           expected = formatList(suite.expected)
+          assert.deepStrictEqual(result, expected, suite.name)
         }
         if (suite.header_type === `dictionary`) {
+          let result, expected;
           result   = decodeDict(suite.raw[0])
           expected = formatDict(suite.expected)
+          assert.deepStrictEqual(result, expected, suite.name)
         }
-        assert.deepStrictEqual(result, expected, suite.name)
       } catch(err) {
         assert.deepStrictEqual(suite.must_fail, true)
       }
@@ -512,3 +523,4 @@ test_parameters()
 test_parameter()
 test_sf_key()
 structured_field_tests()
+
