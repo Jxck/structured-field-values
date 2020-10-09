@@ -479,16 +479,26 @@ function structured_field_tests() {
           assert.deepStrictEqual(str, encoded, suite.name)
         }
         if (suite.header_type === `list`) {
-          let result, expected;
-          result   = decodeList(suite.raw[0])
-          expected = formatList(suite.expected)
-          assert.deepStrictEqual(result, expected, suite.name)
+          // decode
+          const obj     = formatList(suite.expected)
+          const decoded = decodeList(suite.raw[0])
+          assert.deepStrictEqual(obj, decoded, suite.name)
+
+          // encode
+          // const str     = suite?.canonical?.[0] || suite.raw[0]
+          // const encoded = encodeList(obj)
+          // assert.deepStrictEqual(str, encoded, suite.name)
         }
         if (suite.header_type === `dictionary`) {
-          let result, expected;
-          result   = decodeDict(suite.raw[0])
-          expected = formatDict(suite.expected)
-          assert.deepStrictEqual(result, expected, suite.name)
+          // decode
+          const obj     = formatDict(suite.expected)
+          const decoded = decodeDict(suite.raw[0])
+          assert.deepStrictEqual(obj, decoded, suite.name)
+
+          // encode
+          // const str     = suite?.canonical?.[0] || suite.raw[0]
+          // const encoded = encodeDict(obj)
+          // assert.deepStrictEqual(str, encoded, suite.name)
         }
       } catch(err) {
         assert.deepStrictEqual(suite.must_fail, true, err)
