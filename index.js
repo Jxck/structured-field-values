@@ -1,15 +1,5 @@
 `use strict`;
-const fs = require("fs");
-
 const ok = true
-function log(...arg) {
-  try {
-    throw new Error()
-  } catch (err) {
-    const line = err.stack.split(`\n`)[2].split(`/`).pop()
-    console.log(line, ...arg)
-  }
-}
 
 /////////////////////////
 // public interface
@@ -21,63 +11,7 @@ function encodeItem(value) { return serializeItem(value) }
 function encodeList(value) { return serializeList(value) }
 function encodeDict(value) { return serializeDict(value) }
 
-
-function parseItem(value) {
-  // trim leading/trailing space
-  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2
-  const result = sf_item()(value.trim())
-  if (result.ok === false) {
-    throw new Error(`failed to parse`)
-  }
-  if (result.rest.length > 0) {
-    throw new Error(`failed to parse: trailing values ${result.rest}`)
-  }
-  return result.value
-}
-
-function parseList(value) {
-  // return if empty
-  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
-  if (value === ``) return []
-
-  const result = sf_list()(value.trim())
-  if (result.ok === false) {
-    throw new Error(`failed to parse`)
-  }
-  if (result.rest.length > 0) {
-    throw new Error(`failed to parse: trailing values ${result.rest}`)
-  }
-  return result.value
-}
-
-function parseDict(value) {
-  // return if empty
-  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
-  if (value === ``) return {}
-
-  const result = sf_dictionary()(value.trim())
-  if (result.ok === false) {
-    throw new Error(`failed to parse`)
-  }
-  if (result.rest.length > 0) {
-    throw new Error(`failed to parse: trailing values ${result.rest}`)
-  }
-  return result.value
-}
-
-function encodeItem(item) {
-  return serializeItem(item)
-}
-
-function encodeList(list) {
-  return serializeList(list)
-}
-
-function encodeDict(dict) {
-  return serializeDict(dict)
-}
-
-
+/// serializer
 function serializeDict(dict) {
   return Object.entries(dict).map(([key, {value, params}]) => {
     let output = serializeKey(key)
@@ -155,6 +89,51 @@ function serializeParams(params) {
     if (value === true) return `;${key}` // omit true
     return `;${serializeKey(key)}=${serializeBareItem(value)}`
   }).join("")
+}
+
+
+/// parser
+function parseItem(value) {
+  // trim leading/trailing space
+  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2
+  const result = sf_item()(value.trim())
+  if (result.ok === false) {
+    throw new Error(`failed to parse`)
+  }
+  if (result.rest.length > 0) {
+    throw new Error(`failed to parse: trailing values ${result.rest}`)
+  }
+  return result.value
+}
+
+function parseList(value) {
+  // return if empty
+  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
+  if (value === ``) return []
+
+  const result = sf_list()(value.trim())
+  if (result.ok === false) {
+    throw new Error(`failed to parse`)
+  }
+  if (result.rest.length > 0) {
+    throw new Error(`failed to parse: trailing values ${result.rest}`)
+  }
+  return result.value
+}
+
+function parseDict(value) {
+  // return if empty
+  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
+  if (value === ``) return {}
+
+  const result = sf_dictionary()(value.trim())
+  if (result.ok === false) {
+    throw new Error(`failed to parse`)
+  }
+  if (result.rest.length > 0) {
+    throw new Error(`failed to parse: trailing values ${result.rest}`)
+  }
+  return result.value
 }
 
 
