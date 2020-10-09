@@ -74,8 +74,26 @@ function encodeList(list) {
 }
 
 function encodeDict(dict) {
+  return serializeDict(dict)
 }
 
+
+function serializeDict(dict) {
+  return Object.entries(dict).map(([key, {value, params}]) => {
+    let output = serializeKey(key)
+    if (value === true) {
+      output += serializeParams(params)
+    } else {
+      output += "="
+      if (Array.isArray(value)) {
+        output += serializeInnerList({value, params})
+      } else {
+        output += serializeItem({value, params})
+      }
+    }
+    return output
+  }).join(", ")
+}
 
 
 function serializeItem({value, params}) {
