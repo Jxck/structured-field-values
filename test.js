@@ -464,7 +464,8 @@ function structured_field_tests() {
       ]
       if (ignore.includes(suite.name)) return
 
-      console.log(suite.name)
+      console.log("\n\n")
+      console.log(suite)
 
       try {
         if (suite.header_type === `item`) {
@@ -485,9 +486,15 @@ function structured_field_tests() {
           assert.deepStrictEqual(obj, decoded, suite.name)
 
           // encode
-          // const str     = suite?.canonical?.[0] || suite.raw[0]
-          // const encoded = encodeList(obj)
-          // assert.deepStrictEqual(str, encoded, suite.name)
+          if ([
+            // 1.0 is 1 in JS
+            `single item parameterised list`,
+            `missing parameter value parameterised list`,
+            `missing terminal parameter value parameterised list`,
+          ].includes(suite.name)) return
+          const str     = suite?.canonical?.[0] || suite.raw[0]
+          const encoded = encodeList(obj)
+          assert.deepStrictEqual(str, encoded, suite.name)
         }
         if (suite.header_type === `dictionary`) {
           // decode

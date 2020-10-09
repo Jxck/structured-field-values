@@ -70,6 +70,7 @@ function encodeItem(item) {
 }
 
 function encodeList(list) {
+  return serializeList(list)
 }
 
 function encodeDict(dict) {
@@ -80,6 +81,20 @@ function encodeDict(dict) {
 function serializeItem({value, params}) {
   return `${serializeBareItem(value)}${serializeParams(params)}`
 }
+
+function serializeList(list) {
+  return list.map(({value, params}) => {
+    if (Array.isArray(value)) {
+      return serializeInnerList({value, params})
+    }
+    return serializeItem({value, params})
+  }).join(", ")
+}
+
+function serializeInnerList({value, params}) {
+  return `(${value.map(serializeItem).join(" ")})${serializeParams(params)}`
+}
+
 
 function serializeBareItem(value) {
   switch (typeof value) {
