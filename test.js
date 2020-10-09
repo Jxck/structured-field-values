@@ -55,6 +55,8 @@ function log(...arg) {
 
 const j = JSON.stringify.bind(JSON)
 
+const  s = (value)  => Symbol.for(value)
+const ss = (values) => values.map((value) => Symbol.for(value))
 
 // utility const
 const ok = true;
@@ -73,7 +75,7 @@ function format(e) {
     case `binary`:
       return Uint8Array.from(e.value === `` ? [] : base32.decode.asBytes(e.value))
     case `token`:
-      return e.value
+      return Symbol.for(e.value)
     default:
       return e
   }
@@ -206,9 +208,9 @@ function test_escaped() {
 }
 
 function test_sf_token() {
-  assert.deepStrictEqual(sf_token()(`*foo123/456`),             {ok, value: `*foo123/456`, rest: ``})
-  assert.deepStrictEqual(sf_token()(`foo123;456`),              {ok, value: `foo123`, rest: `;456`})
-  assert.deepStrictEqual(sf_token()(`ABC!#$%&'*+-.^_'|~:/012`), {ok, value: `ABC!#$%&'*+-.^_'|~:/012`, rest: ``})
+  assert.deepStrictEqual(sf_token()(`*foo123/456`),             {ok, value: s(`*foo123/456`),             rest: ``})
+  assert.deepStrictEqual(sf_token()(`foo123;456`),              {ok, value: s(`foo123`),                  rest: `;456`})
+  assert.deepStrictEqual(sf_token()(`ABC!#$%&'*+-.^_'|~:/012`), {ok, value: s(`ABC!#$%&'*+-.^_'|~:/012`), rest: ``})
   assert.deepStrictEqual(sf_token()(``), {ok: false, rest: ``})
 }
 
@@ -240,8 +242,8 @@ function test_sf_list() {
   assert.deepStrictEqual(
     sf_list()(`foo, bar`),
     {ok, value: [
-      { value: `foo`, params: {} },
-      { value: `bar`, params: {} },
+      { value: s(`foo`), params: {} },
+      { value: s(`bar`), params: {} },
     ], rest: ``}
   )
   assert.deepStrictEqual(
@@ -337,15 +339,15 @@ function test_sf_dictionary() {
   assert.deepEqual(sf_dictionary()(`a=?0, b, c; foo=bar`), {ok, value: {
     "a": { value: false, params: {} },
     "b": { value: true,  params: {} },
-    "c": { value: true,  params: {"foo": "bar"} }
+    "c": { value: true,  params: { "foo": s("bar") } }
   }, rest: `` })
 
   assert.deepStrictEqual(sf_dictionary()(`rating=1.5, feelings=(joy sadness)`), {ok, value: {
     "rating": { value: 1.5, params: {} },
     "feelings": {
       value: [
-        { value: "joy",     params: {} },
-        { value: "sadness", params: {} }
+        { value: s("joy"),     params: {} },
+        { value: s("sadness"), params: {} }
       ],
       params: {}
     }
@@ -365,7 +367,7 @@ function test_sf_dictionary() {
     },
     "c": {
       value: 4,
-      params: { "aa": "bb" },
+      params: { "aa": s("bb") },
     },
     "d": {
       value: [
@@ -395,11 +397,11 @@ function test_sf_item() {
 }
 
 function test_bare_item() {
-  assert.deepStrictEqual(bare_item()(`123`),        {ok, value: 123,      rest: ``})
-  assert.deepStrictEqual(bare_item()(`3.14`),       {ok, value: 3.14,     rest: ``})
-  assert.deepStrictEqual(bare_item()(`string`),     {ok, value: `string`, rest: ``})
-  assert.deepStrictEqual(bare_item()(`string`),     {ok, value: `string`, rest: ``})
-  assert.deepStrictEqual(bare_item()(`foo123;456`), {ok, value: `foo123`, rest: `;456`})
+  assert.deepStrictEqual(bare_item()(`123`),        {ok, value: 123,         rest: ``})
+  assert.deepStrictEqual(bare_item()(`3.14`),       {ok, value: 3.14,        rest: ``})
+  assert.deepStrictEqual(bare_item()(`string`),     {ok, value: s(`string`), rest: ``})
+  assert.deepStrictEqual(bare_item()(`string`),     {ok, value: s(`string`), rest: ``})
+  assert.deepStrictEqual(bare_item()(`foo123;456`), {ok, value: s(`foo123`), rest: `;456`})
   const binary = new Uint8Array([1,2,3,4,5])
   assert.deepStrictEqual(bare_item()(`:${base64encode(binary)}:`), {ok, value: binary, rest: ``})
   assert.deepStrictEqual(bare_item()(`?1`),         {ok, value: true,     rest: ``})
@@ -469,6 +471,8 @@ function structured_field_tests() {
           // decode
           const obj     = formatItem(suite.expected)
           const decoded = decodeItem(suite.raw[0])
+          log(obj)
+          log(decoded)
           assert.deepStrictEqual(obj, decoded, suite.name)
 
           // encode
@@ -477,16 +481,16 @@ function structured_field_tests() {
           // assert.deepStrictEqual(str, encoded, suite.name)
         }
         if (suite.header_type === `list`) {
-          // let result, expected;
-          // result   = decodeList(suite.raw[0])
-          // expected = formatList(suite.expected)
-          // assert.deepStrictEqual(result, expected, suite.name)
+          let result, expected;
+          result   = decodeList(suite.raw[0])
+          expected = formatList(suite.expected)
+          assert.deepStrictEqual(result, expected, suite.name)
         }
         if (suite.header_type === `dictionary`) {
-          // let result, expected;
-          // result   = decodeDict(suite.raw[0])
-          // expected = formatDict(suite.expected)
-          // assert.deepStrictEqual(result, expected, suite.name)
+          let result, expected;
+          result   = decodeDict(suite.raw[0])
+          expected = formatDict(suite.expected)
+          assert.deepStrictEqual(result, expected, suite.name)
         }
       } catch(err) {
         assert.deepStrictEqual(suite.must_fail, true, err)

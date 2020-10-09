@@ -298,7 +298,13 @@ function escaped() {
 // sf-token
 //       = ( ALPHA / "*" ) *( tchar / ":" / "/" )
 function sf_token() {
-  return token(/^([a-zA-Z\*])([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]){0,512}/)
+  return (rest) => {
+    const result = token(/^([a-zA-Z\*])([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]){0,512}/)(rest)
+    if (result.ok) {
+      result.value = Symbol.for(result.value)
+    }
+    return result
+  }
 }
 
 // sf-binary
