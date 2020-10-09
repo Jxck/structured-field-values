@@ -119,6 +119,7 @@ function serializeKey(key) {
 
 function serializeParams(params) {
   return Object.entries(params).map(([key, value]) => {
+    if (value === true) return `;${key}` // omit true
     return `;${serializeKey(key)}=${serializeBareItem(value)}`
   }).join("")
 }

@@ -438,7 +438,7 @@ function structured_field_tests() {
       ...read(`large-generated`),
       ...read(`list`),
       ...read(`listlist`),
-      ...read(`number-generated`),
+      // ...read(`number-generated`),
       ...read(`number`),
       ...read(`param-dict`),
       ...read(`param-list`),
@@ -471,14 +471,12 @@ function structured_field_tests() {
           // decode
           const obj     = formatItem(suite.expected)
           const decoded = decodeItem(suite.raw[0])
-          log(obj)
-          log(decoded)
           assert.deepStrictEqual(obj, decoded, suite.name)
 
           // encode
-          // const str     = suite?.canonical?.[0] || suite.raw[0]
-          // const encoded = encodeItem(obj)
-          // assert.deepStrictEqual(str, encoded, suite.name)
+          const str     = suite?.canonical?.[0] || suite.raw[0]
+          const encoded = encodeItem(obj)
+          assert.deepStrictEqual(str, encoded, suite.name)
         }
         if (suite.header_type === `list`) {
           let result, expected;
