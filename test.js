@@ -471,7 +471,7 @@ function structured_field_tests() {
           // decode
           const obj     = formatItem(suite.expected)
           const decoded = decodeItem(suite.raw[0])
-          assert.deepStrictEqual(obj, decoded, suite.name)
+          assert.deepStrictEqual(decoded, obj, suite.name)
 
           // encode
           const str     = suite?.canonical?.[0] || suite.raw[0]
@@ -482,7 +482,7 @@ function structured_field_tests() {
           // decode
           const obj     = formatList(suite.expected)
           const decoded = decodeList(suite.raw[0])
-          assert.deepStrictEqual(obj, decoded, suite.name)
+          assert.deepStrictEqual(decoded, obj, suite.name)
 
           // encode
           if ([
@@ -499,7 +499,7 @@ function structured_field_tests() {
           // decode
           const obj     = formatDict(suite.expected)
           const decoded = decodeDict(suite.raw[0])
-          assert.deepStrictEqual(obj, decoded, suite.name)
+          assert.deepStrictEqual(decoded, obj, suite.name)
 
           // encode
           if ([
@@ -547,4 +547,3 @@ test_parameters()
 test_parameter()
 test_sf_key()
 structured_field_tests()
-
