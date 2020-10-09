@@ -1,15 +1,18 @@
 # Structured Field Values
 
+
 ## What is this ?
 
-This is a implementation of [RFCXXXX]() a Structured Field Values in JavaScript.
+This is a implementation of a [Structured Field Values Draft-19](https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19) JavaScript.
 
 
 ## Install
 
+
 ```sh
 npm install structured-field-values
 ```
+
 
 ## API
 
@@ -23,10 +26,13 @@ npm install structured-field-values
 
 ## Primitives
 
+
 ### Item
 
 SFV has *string* and *token* and this module use Symbol for token.
+
 And SFV has params for every item, so decoded token are always object with `value` & `params`.
+
 
 ```js
 decodeItem(`a`)    // { value: Symbol(a), params: {} }
@@ -40,12 +46,22 @@ decodeItem(`"a";x;y=?0;z=10`) // { value: `a`, params: { x: true, y: false, z: 1
 
 Note: Symbol generated in decoder is registered globally as Shared Symbol, so you can handle them like.
 
+
 ```js
 const a = decodeItem(`a`).value // Symbol(a)
 console.log(Symbol.keyFor(a)) // "a" (string)
 ```
 
+Note: JavaScript only supports number
+
+
+```js
+encodeItem(docodeItem('1.0')) // '1' not '1.0'
+```
+
+
 ### List
+
 
 ```js
 decodeList(`1,2,3`)
@@ -67,7 +83,9 @@ decodeList(`a;x,"b";y=?0,10,(1 2)`)
 // ]
 ```
 
+
 ### Dict
+
 
 ```js
 decodeDict(`a=x, b="y", c=10, d=?0, e=(1 2)`)
@@ -91,6 +109,7 @@ test includes unittest & httpwg's test.
 - https://github.com/httpwg/structured-field-tests.git
 
 you can run all test like below.
+
 
 ```sh
 $ git submodule init && git submodule update
