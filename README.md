@@ -56,7 +56,7 @@ Note: JavaScript only supports number
 
 
 ```js
-encodeItem(docodeItem('1.0')) // '1' not '1.0'
+encodeItem(decodeItem('1.0')) // '1' not '1.0'
 ```
 
 

@@ -4,15 +4,15 @@ const ok = true
 /////////////////////////
 // public interface
 /////////////////////////
-function decodeItem(value) { return parseItem(value) }
-function decodeList(value) { return parseList(value) }
-function decodeDict(value) { return parseDict(value) }
-function encodeItem(value) { return serializeItem(value) }
-function encodeList(value) { return serializeList(value) }
-function encodeDict(value) { return serializeDict(value) }
+export function decodeItem(value) { return parseItem(value) }
+export function decodeList(value) { return parseList(value) }
+export function decodeDict(value) { return parseDict(value) }
+export function encodeItem(value) { return serializeItem(value) }
+export function encodeList(value) { return serializeList(value) }
+export function encodeDict(value) { return serializeDict(value) }
 
 /// serializer
-function serializeDict(dict) {
+export function serializeDict(dict) {
   return Object.entries(dict).map(([key, {value, params}]) => {
     let output = serializeKey(key)
     if (value === true) {
@@ -30,11 +30,11 @@ function serializeDict(dict) {
 }
 
 
-function serializeItem({value, params}) {
+export function serializeItem({value, params}) {
   return `${serializeBareItem(value)}${serializeParams(params)}`
 }
 
-function serializeList(list) {
+export function serializeList(list) {
   return list.map(({value, params}) => {
     if (Array.isArray(value)) {
       return serializeInnerList({value, params})
@@ -43,12 +43,12 @@ function serializeList(list) {
   }).join(", ")
 }
 
-function serializeInnerList({value, params}) {
+export function serializeInnerList({value, params}) {
   return `(${value.map(serializeItem).join(" ")})${serializeParams(params)}`
 }
 
 
-function serializeBareItem(value) {
+export function serializeBareItem(value) {
   switch (typeof value) {
     case "number":
       // Serializing an Integer/Decimal
@@ -74,7 +74,7 @@ function serializeBareItem(value) {
   }
 }
 
-function serializeKey(key) {
+export function serializeKey(key) {
   // 1.  Convert input_key into a sequence of ASCII characters; if
   //     conversion fails, fail serialization.
   // 2.  If input_key contains characters not in lcalpha, DIGIT, "_", "-",
@@ -84,7 +84,7 @@ function serializeKey(key) {
   return key
 }
 
-function serializeParams(params) {
+export function serializeParams(params) {
   return Object.entries(params).map(([key, value]) => {
     if (value === true) return `;${key}` // omit true
     return `;${serializeKey(key)}=${serializeBareItem(value)}`
@@ -93,7 +93,7 @@ function serializeParams(params) {
 
 
 /// parser
-function parseItem(value) {
+export function parseItem(value) {
   // trim leading/trailing space
   // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2
   const result = sf_item()(value.trim())
@@ -106,7 +106,7 @@ function parseItem(value) {
   return result.value
 }
 
-function parseList(value) {
+export function parseList(value) {
   // return if empty
   // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
   if (value === ``) return []
@@ -121,7 +121,7 @@ function parseList(value) {
   return result.value
 }
 
-function parseDict(value) {
+export function parseDict(value) {
   // return if empty
   // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
   if (value === ``) return {}
@@ -142,7 +142,7 @@ function parseDict(value) {
 /////////////////////////
 
 // a => token(/^a/)
-function token(reg) {
+export function token(reg) {
   return (rest) => {
     const result = reg.exec(rest)
     if (result === null) {
@@ -155,7 +155,7 @@ function token(reg) {
 }
 
 // (a / b) => alt([a(), b()])
-function alt(fns) {
+export function alt(fns) {
   return (rest) => {
     for (let i = 0; i < fns.length; i ++) {
       const result = fns[i](rest)
@@ -168,7 +168,7 @@ function alt(fns) {
 }
 
 // (a b c) => list([a(), b(), c()])
-function list(fns) {
+export function list(fns) {
   return (rest) => {
     const value = []
     const orig  = rest
@@ -185,7 +185,7 @@ function list(fns) {
 }
 
 // *(a b) => repeat(0, Infinity, list([a(), b()]))
-function repeat(min, max, fn) {
+export function repeat(min, max, fn) {
   return (rest) => {
     const value = []
     const found = 0
@@ -212,7 +212,7 @@ function repeat(min, max, fn) {
 /////////////////////////
 // base64 uility
 /////////////////////////
-function base64decode(str) {
+export function base64decode(str) {
   if (typeof window === `undefined`) {
     return Uint8Array.from(Buffer.from(str, `base64`))
   } else {
@@ -220,7 +220,7 @@ function base64decode(str) {
   }
 }
 
-function base64encode(binary) {
+export function base64encode(binary) {
   if (typeof window === `undefined`) {
     return Buffer.from(binary).toString(`base64`)
   } else {
@@ -235,7 +235,7 @@ function base64encode(binary) {
 
 // sf-integer
 //       = ["-"] 1*15DIGIT
-function sf_integer() {
+export function sf_integer() {
   return (rest) => {
     const result = token(/^\-{0,1}\d{1,15}/)(rest)
     if (result.ok) {
@@ -247,7 +247,7 @@ function sf_integer() {
 
 // sf-decimal
 //       = ["-"] 1*12DIGIT "." 1*3DIGIT
-function sf_decimal() {
+export function sf_decimal() {
   return (rest) => {
     const result = token(/^\-{0,1}\d{1,12}\.\d{1,3}/)(rest)
     if (result.ok) {
@@ -259,7 +259,7 @@ function sf_decimal() {
 
 // sf-string
 //       = DQUOTE *chr DQUOTE
-function sf_string() {
+export function sf_string() {
   return function(rest) {
     const fn = list([
       token(/^"/),
@@ -280,7 +280,7 @@ function sf_string() {
 // chr
 //       = unescaped
 //       / escaped
-function char() {
+export function char() {
   return alt([
     escaped(),
     unescaped(),
@@ -291,13 +291,13 @@ function char() {
 //       = %x20-21  (x22 is ")
 //       / %x23-5B  (x5c is \)
 //       / %x5D-7E
-function unescaped() {
+export function unescaped() {
   return token(/^([\x20-\x21\x23-\x5B\x5D-\x7E])/)
 }
 
 // escaped
 //       = "\" ( DQUOTE / "\" )
-function escaped() {
+export function escaped() {
   return (rest) => {
     const result = token(/^((\\\")|(\\\\))/)(rest)
     if (result.ok) {
@@ -310,7 +310,7 @@ function escaped() {
 
 // sf-token
 //       = ( ALPHA / "*" ) *( tchar / ":" / "/" )
-function sf_token() {
+export function sf_token() {
   return (rest) => {
     const result = token(/^([a-zA-Z\*])([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]){0,512}/)(rest)
     if (result.ok) {
@@ -328,7 +328,7 @@ function sf_token() {
 //       / "+"
 //       / "/"
 //       / "="
-function sf_binary() {
+export function sf_binary() {
   return (rest) => {
     const result = list([
       token(/^:/),
@@ -349,7 +349,7 @@ function sf_binary() {
 // boolean
 //       = "0"
 //       / "1"
-function sf_boolean() {
+export function sf_boolean() {
   return (rest) => {
     const result = token(/^((\?0)|(\?1))/)(rest)
     if (result.ok) {
@@ -362,7 +362,7 @@ function sf_boolean() {
 
 // sf-list
 //       = list-member *( OWS "," OWS list-member )
-function sf_list() {
+export function sf_list() {
   return (rest) => {
     const result = list([
       list_member(),
@@ -379,7 +379,7 @@ function sf_list() {
 
 // [repeat of list member]
 //   = *( OWS "," OWS list-member )
-function _repeat_list_member() {
+export function _repeat_list_member() {
   function fn() {
     return (rest) => {
       const result = list([
@@ -400,7 +400,7 @@ function _repeat_list_member() {
 // list-member
 //       = sf-item
 //       / inner-list
-function list_member() {
+export function list_member() {
   return alt([
     sf_item(),
     inner_list(),
@@ -409,7 +409,7 @@ function list_member() {
 
 // inner-list
 //       = "(" *SP [ sf-item *( 1*SP sf-item ) *SP ] ")" parameters
-function inner_list() {
+export function inner_list() {
   return (rest) => {
     const result = list([
       token(/^\( */),
@@ -428,7 +428,7 @@ function inner_list() {
 }
 
 // [ sf-item *( 1*SP sf-item ) *SP ]
-function _optional_inner_item() {
+export function _optional_inner_item() {
   return (rest) => {
     const result = repeat(0, 1, list([
       sf_item(),
@@ -446,7 +446,7 @@ function _optional_inner_item() {
   }
 }
 
-function _repeat_inner_item() {
+export function _repeat_inner_item() {
   function fn() {
     return (rest) => {
       const result = list([
@@ -466,7 +466,7 @@ function _repeat_inner_item() {
 
 // sf-dictionary
 //       = dict-member *( OWS "," OWS dict-member )
-function sf_dictionary() {
+export function sf_dictionary() {
   return (rest) => {
     const result = list([
       dict_member(),
@@ -483,7 +483,7 @@ function sf_dictionary() {
 }
 
 // repeat of dict member
-function _repeat_dict_member() {
+export function _repeat_dict_member() {
   function fn() {
     return (rest) => {
       const result = list([
@@ -507,14 +507,14 @@ function _repeat_dict_member() {
 //       = member-name [ ( "=" member-value ) / parameters ] TODO: https://github.com/httpwg/http-extensions/issues/1273
 // member-name
 //       = key
-function dict_member() {
+export function dict_member() {
   return list([
     sf_key(),
     repeat(0, 1, _optional_member_value())
   ])
 }
 
-function _optional_member_value() {
+export function _optional_member_value() {
   return (rest) => {
     const result = alt([
       list([
@@ -540,7 +540,7 @@ function _optional_member_value() {
 // member-value
 //       = sf-item
 //       / inner-list
-function member_value() {
+export function member_value() {
   return alt([
     sf_item(),
     inner_list()
@@ -549,7 +549,7 @@ function member_value() {
 
 // sf-item
 //       = bare-item parameters
-function sf_item() {
+export function sf_item() {
   return (rest) => {
     const result = list([
       bare_item(),
@@ -571,7 +571,7 @@ function sf_item() {
 //       / sf-token
 //       / sf-binary
 //       / sf-boolean
-function bare_item() {
+export function bare_item() {
   return alt([
     sf_decimal(),
     sf_integer(),
@@ -584,7 +584,7 @@ function bare_item() {
 
 // parameters
 //       = *( ";" *SP parameter )
-function parameters() {
+export function parameters() {
   return (rest) => {
     const result = repeat(0, 256, _inner_parameters())(rest)
 
@@ -596,7 +596,7 @@ function parameters() {
   }
 }
 
-function _inner_parameters() {
+export function _inner_parameters() {
   return (rest) => {
     const result = list([
       token(/^; */),
@@ -617,7 +617,7 @@ function _inner_parameters() {
 //       = key
 // param-value
 //       = bare-item
-function parameter() {
+export function parameter() {
   return list([
     sf_key(),
     param_value(),
@@ -625,7 +625,7 @@ function parameter() {
 }
 
 // [ "=" param-value ]
-function param_value() {
+export function param_value() {
   return (rest) => {
     const result = repeat(0, 1, list([
       token(/^=/),
@@ -652,50 +652,6 @@ function param_value() {
 //         *( lcalpha / DIGIT / "_" / "-" / "." / "*" )
 // lcalpha
 //       = %x61-7A ; a-z
-function sf_key() {
+export function sf_key() {
   return token(/^([a-z\*])([a-z0-9\_\-\.\*]){0,64}/)
-}
-
-
-module.exports = {
-  encodeItem,
-  encodeList,
-  encodeDict,
-  decodeItem,
-  decodeList,
-  decodeDict,
-
-  parseItem,
-  parseList,
-  parseDict,
-  token,
-  alt,
-  list,
-  repeat,
-  base64decode,
-  base64encode,
-  sf_integer,
-  sf_decimal,
-  sf_string,
-  char,
-  unescaped,
-  escaped,
-  sf_token,
-  sf_binary,
-  sf_boolean,
-  sf_list,
-  _repeat_list_member,
-  list_member,
-  inner_list,
-  _optional_inner_item,
-  _repeat_inner_item,
-  sf_dictionary,
-  _repeat_dict_member,
-  dict_member,
-  member_value,
-  sf_item,
-  bare_item,
-  parameters,
-  parameter,
-  sf_key,
 }

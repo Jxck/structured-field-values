@@ -15,6 +15,7 @@
     "structured headers",
     "http header structur"
   ],
+  "type": "module",
   "author": "Jxck",
   "license": "MIT",
   "devDependencies": {

@@ -1,8 +1,8 @@
-const assert = require("assert")
-const fs     = require("fs");
-const base32 = require("hi-base32")
+import assert from "assert"
+import fs     from "fs"
+import base32 from "hi-base32"
 
-const {
+import {
   encodeItem,
   encodeList,
   encodeDict,
@@ -42,7 +42,7 @@ const {
   parameters,
   parameter,
   sf_key,
-} = require("./index.js")
+} from "./index.js"
 
 function log(...arg) {
   try {

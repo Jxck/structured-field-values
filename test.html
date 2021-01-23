@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<meta charset=utf-8>
+<meta name=viewport content="width=device-width,initial-scale=1">
+<title>Test</title>
+
+<script type=module>
+ import {
+   decodeItem,
+   decodeList,
+   decodeDict,
+   encodeItem,
+   encodeList,
+   encodeDict,
+ } from "./index.js"
+
+ console.log(decodeItem(`a`))    // { value: Symbol(a), params: {} }
+ console.log(decodeItem(`"a"`))  // { value: `a`,       params: {} }
+ console.log(decodeItem(`10`))   // { value: 10,        params: {} }
+ console.log(decodeItem(`3.14`)) // { value: 3.14,      params: {} }
+ console.log(decodeItem(`?0`))   // { value: false,     params: {} }
+
+ console.log(decodeItem(`"a";x;y=?0;z=10`)) // { value: `a`, params: { x: true, y: false, z: 10 } }
+
+ const a = decodeItem(`a`).value // Symbol(a)
+ console.log(Symbol.keyFor(a))   // "a" (string)
+
+ console.log(encodeItem(decodeItem('1.0'))) // '1' not '1.0'
+ console.log(decodeList(`1,2,3`))
+ // [
+ //   { value: 1, params: {} },
+ //   { value: 2, params: {} },
+ //   { value: 3, params: {} }
+ // ]
+
+ console.log(decodeList(`a;x,"b";y=?0,10,(1 2)`))
+ // [
+ //   { value: Symbol(a), params: { x: true } },
+ //   { value: `b`, params: { y: false } },
+ //   { value: 10, params: {} },
+ //   { value: [
+ //              { value: 1, params: {} }
+ //              { value: 2, params: {} }
+ //            ], params: {} }
+ // ]
+
+ console.log(decodeDict(`a=x, b="y", c=10, d=?0, e=(1 2)`))
+ // {
+ //   a: { value: Symbol(x), params: {} },
+ //   b: { value: 'y', params: {} },
+ //   c: { value: 10, params: {} },
+ //   d: { value: false, params: {} },
+ //   e: { value: [
+ //                 { value: 1, params: {} }
+ //                 { value: 2, params: {} }
+ //               ], params: {} }
+ // }
+</script>
