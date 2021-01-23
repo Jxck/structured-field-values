@@ -6,6 +6,11 @@
 This is a implementation of a [Structured Field Values Draft-19](https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19) JavaScript.
 
 
+## DEMO
+
+https://jxck.github.io/structured-field-values/demo.html
+
+
 ## Install
 
 
