@@ -963,3 +963,494 @@ export function param_value() {
 export function sf_key() {
   return token(/^([a-z\*])([a-z0-9\_\-\.\*]){0,64}/)
 }
+
+
+// 4.2.  Parsing Structured Fields
+//
+// When a receiving implementation parses HTTP fields that are known to
+// be Structured Fields, it is important that care be taken, as there
+// are a number of edge cases that can cause interoperability or even
+// security problems.  This section specifies the algorithm for doing
+// so.
+//
+// Given an array of bytes input_bytes that represents the chosen
+// field's field-value (which is empty if that field is not present),
+// and field_type (one of "dictionary", "list", or "item"), return the
+// parsed header value.
+//
+// 1.  Convert input_bytes into an ASCII string input_string; if
+//     conversion fails, fail parsing.
+//
+// 2.  Discard any leading SP characters from input_string.
+//
+// 3.  If field_type is "list", let output be the result of running
+//     Parsing a List (Section 4.2.1) with input_string.
+//
+// 4.  If field_type is "dictionary", let output be the result of
+//     running Parsing a Dictionary (Section 4.2.2) with input_string.
+//
+// 5.  If field_type is "item", let output be the result of running
+//     Parsing an Item (Section 4.2.3) with input_string.
+//
+// 6.  Discard any leading SP characters from input_string.
+//
+// 7.  If input_string is not empty, fail parsing.
+//
+// 8.  Otherwise, return output.
+//
+// When generating input_bytes, parsers MUST combine all field lines in
+// the same section (header or trailer) that case-insensitively match
+// the field name into one comma-separated field-value, as per
+// [RFC7230], Section 3.2.2; this assures that the entire field value is
+// processed correctly.
+//
+// For Lists and Dictionaries, this has the effect of correctly
+// concatenating all of the field's lines, as long as individual members
+// of the top-level data structure are not split across multiple header
+// instances.  The parsing algorithms for both types allow tab
+// characters, since these might be used to combine field lines by some
+// implementations.
+//
+// Strings split across multiple field lines will have unpredictable
+// results, because comma(s) and whitespace inserted upon combination
+// will become part of the string output by the parser.  Since
+// concatenation might be done by an upstream intermediary, the results
+// are not under the control of the serializer or the parser, even when
+// they are both under the control of the same party.
+//
+// Tokens, Integers, Decimals and Byte Sequences cannot be split across
+// multiple field lines because the inserted commas will cause parsing
+// to fail.
+//
+// Parsers MAY fail when processing a field value spread across multiple
+// field lines, when one of those lines does not parse as that field.
+// For example, a parsing handling an Example-String field that's
+// defined as a sf-string is allowed to fail when processing this field
+// section:
+//
+// Example-String: "foo
+// Example-String: bar"
+//
+// If parsing fails - including when calling another algorithm - the
+// entire field value MUST be ignored (i.e., treated as if the field
+// were not present in the section).  This is intentionally strict, to
+// improve interoperability and safety, and specifications referencing
+// this document are not allowed to loosen this requirement.
+//
+// Note that this requirement does not apply to an implementation that
+// is not parsing the field; for example, an intermediary is not
+// required to strip a failing field from a message before forwarding
+// it.
+//
+// 4.2.1.  Parsing a List
+//
+// Given an ASCII string as input_string, return an array of
+// (item_or_inner_list, parameters) tuples. input_string is modified to
+// remove the parsed value.
+//
+// 1.  Let members be an empty array.
+//
+// 2.  While input_string is not empty:
+//
+//     1.  Append the result of running Parsing an Item or Inner List
+//         (Section 4.2.1.1) with input_string to members.
+//
+//     2.  Discard any leading OWS characters from input_string.
+//
+//     3.  If input_string is empty, return members.
+//
+//     4.  Consume the first character of input_string; if it is not
+//         ",", fail parsing.
+//
+//     5.  Discard any leading OWS characters from input_string.
+//
+//     6.  If input_string is empty, there is a trailing comma; fail
+//         parsing.
+//
+// 3.  No structured data has been found; return members (which is
+//     empty).
+//
+// 4.2.1.1.  Parsing an Item or Inner List
+//
+// Given an ASCII string as input_string, return the tuple
+// (item_or_inner_list, parameters), where item_or_inner_list can be
+// either a single bare item, or an array of (bare_item, parameters)
+// tuples. input_string is modified to remove the parsed value.
+//
+// 1.  If the first character of input_string is "(", return the result
+//     of running Parsing an Inner List (Section 4.2.1.2) with
+//     input_string.
+//
+// 2.  Return the result of running Parsing an Item (Section 4.2.3) with
+//     input_string.
+//
+// 4.2.1.2.  Parsing an Inner List
+//
+// Given an ASCII string as input_string, return the tuple (inner_list,
+// parameters), where inner_list is an array of (bare_item, parameters)
+// tuples. input_string is modified to remove the parsed value.
+//
+// 1.  Consume the first character of input_string; if it is not "(",
+//     fail parsing.
+//
+// 2.  Let inner_list be an empty array.
+//
+// 3.  While input_string is not empty:
+//
+//     1.  Discard any leading SP characters from input_string.
+//
+//     2.  If the first character of input_string is ")":
+//
+//         1.  Consume the first character of input_string.
+//
+//         2.  Let parameters be the result of running Parsing
+//             Parameters (Section 4.2.3.2) with input_string.
+//
+//         3.  Return the tuple (inner_list, parameters).
+//
+//     3.  Let item be the result of running Parsing an Item
+//         (Section 4.2.3) with input_string.
+//
+//     4.  Append item to inner_list.
+//
+//     5.  If the first character of input_string is not SP or ")", fail
+//         parsing.
+//
+// 4.  The end of the inner list was not found; fail parsing.
+//
+// 4.2.2.  Parsing a Dictionary
+//
+// Given an ASCII string as input_string, return an ordered map whose
+// values are (item_or_inner_list, parameters) tuples. input_string is
+// modified to remove the parsed value.
+//
+// 1.  Let dictionary be an empty, ordered map.
+//
+// 2.  While input_string is not empty:
+//
+//     1.  Let this_key be the result of running Parsing a Key
+//         (Section 4.2.3.3) with input_string.
+//
+//     2.  If the first character of input_string is "=":
+//
+//         1.  Consume the first character of input_string.
+//
+//         2.  Let member be the result of running Parsing an Item or
+//             Inner List (Section 4.2.1.1) with input_string.
+//
+//     3.  Otherwise:
+//
+//         1.  Let value be Boolean true.
+//
+//         2.  Let parameters be the result of running Parsing
+//             Parameters Section 4.2.3.2 with input_string.
+//
+//         3.  Let member be the tuple (value, parameters).
+//
+//     4.  Add name this_key with value member to dictionary.  If
+//         dictionary already contains a name this_key (comparing
+//         character-for-character), overwrite its value.
+//
+//     5.  Discard any leading OWS characters from input_string.
+//
+//     6.  If input_string is empty, return dictionary.
+//
+//     7.  Consume the first character of input_string; if it is not
+//         ",", fail parsing.
+//
+//     8.  Discard any leading OWS characters from input_string.
+//
+//     9.  If input_string is empty, there is a trailing comma; fail
+//         parsing.
+//
+// 3.  No structured data has been found; return dictionary (which is
+//     empty).
+//
+// Note that when duplicate Dictionary keys are encountered, this has
+// the effect of ignoring all but the last instance.
+//
+// 4.2.3.  Parsing an Item
+//
+// Given an ASCII string as input_string, return a (bare_item,
+// parameters) tuple. input_string is modified to remove the parsed
+// value.
+//
+// 1.  Let bare_item be the result of running Parsing a Bare Item
+//     (Section 4.2.3.1) with input_string.
+//
+// 2.  Let parameters be the result of running Parsing Parameters
+//     (Section 4.2.3.2) with input_string.
+//
+// 3.  Return the tuple (bare_item, parameters).
+//
+// 4.2.3.1.  Parsing a Bare Item
+//
+// Given an ASCII string as input_string, return a bare Item.
+// input_string is modified to remove the parsed value.
+//
+// 1.  If the first character of input_string is a "-" or a DIGIT,
+//     return the result of running Parsing an Integer or Decimal
+//     (Section 4.2.4) with input_string.
+//
+// 2.  If the first character of input_string is a DQUOTE, return the
+//     result of running Parsing a String (Section 4.2.5) with
+//     input_string.
+//
+// 3.  If the first character of input_string is ":", return the result
+//     of running Parsing a Byte Sequence (Section 4.2.7) with
+//     input_string.
+//
+// 4.  If the first character of input_string is "?", return the result
+//     of running Parsing a Boolean (Section 4.2.8) with input_string.
+//
+// 5.  If the first character of input_string is an ALPHA or "*", return
+//     the result of running Parsing a Token (Section 4.2.6) with
+//     input_string.
+//
+// 6.  Otherwise, the item type is unrecognized; fail parsing.
+//
+// 4.2.3.2.  Parsing Parameters
+//
+// Given an ASCII string as input_string, return an ordered map whose
+// values are bare Items. input_string is modified to remove the parsed
+// value.
+//
+// 1.  Let parameters be an empty, ordered map.
+//
+// 2.  While input_string is not empty:
+//
+//     1.  If the first character of input_string is not ";", exit the
+//         loop.
+//
+//     2.  Consume a ";" character from the beginning of input_string.
+//
+//     3.  Discard any leading SP characters from input_string.
+//
+//     4.  let param_name be the result of running Parsing a Key
+//         (Section 4.2.3.3) with input_string.
+//
+//     5.  Let param_value be Boolean true.
+//
+//     6.  If the first character of input_string is "=":
+//
+//         1.  Consume the "=" character at the beginning of
+//             input_string.
+//
+//         2.  Let param_value be the result of running Parsing a Bare
+//             Item (Section 4.2.3.1) with input_string.
+//
+//     7.  Append key param_name with value param_value to parameters.
+//         If parameters already contains a name param_name (comparing
+//         character-for-character), overwrite its value.
+//
+// 3.  Return parameters.
+//
+// Note that when duplicate Parameter keys are encountered, this has the
+// effect of ignoring all but the last instance.
+//
+// 4.2.3.3.  Parsing a Key
+//
+// Given an ASCII string as input_string, return a key. input_string is
+// modified to remove the parsed value.
+//
+// 1.  If the first character of input_string is not lcalpha or "*",
+//     fail parsing.
+//
+// 2.  Let output_string be an empty string.
+//
+// 3.  While input_string is not empty:
+//
+//     1.  If the first character of input_string is not one of lcalpha,
+//         DIGIT, "_", "-", ".", or "*", return output_string.
+//
+//     2.  Let char be the result of consuming the first character of
+//         input_string.
+//
+//     3.  Append char to output_string.
+//
+// 4.  Return output_string.
+//
+// 4.2.4.  Parsing an Integer or Decimal
+//
+// Given an ASCII string as input_string, return an Integer or Decimal.
+// input_string is modified to remove the parsed value.
+//
+// NOTE: This algorithm parses both Integers (Section 3.3.1) and
+// Decimals (Section 3.3.2), and returns the corresponding structure.
+//
+// 1.   Let type be "integer".
+//
+// 2.   Let sign be 1.
+//
+// 3.   Let input_number be an empty string.
+//
+// 4.   If the first character of input_string is "-", consume it and
+//      set sign to -1.
+//
+// 5.   If input_string is empty, there is an empty integer; fail
+//      parsing.
+//
+// 6.   If the first character of input_string is not a DIGIT, fail
+//      parsing.
+//
+// 7.   While input_string is not empty:
+//
+//      1.  Let char be the result of consuming the first character of
+//          input_string.
+//
+//      2.  If char is a DIGIT, append it to input_number.
+//
+//      3.  Else, if type is "integer" and char is ".":
+//
+//          1.  If input_number contains more than 12 characters, fail
+//              parsing.
+//
+//          2.  Otherwise, append char to input_number and set type to
+//              "decimal".
+//
+//      4.  Otherwise, prepend char to input_string, and exit the loop.
+//
+//      5.  If type is "integer" and input_number contains more than 15
+//          characters, fail parsing.
+//
+//      6.  If type is "decimal" and input_number contains more than 16
+//          characters, fail parsing.
+//
+// 8.   If type is "integer":
+//
+//      1.  Parse input_number as an integer and let output_number be
+//          the product of the result and sign.
+//
+//      2.  If output_number is outside the range -999,999,999,999,999
+//          to 999,999,999,999,999 inclusive, fail parsing.
+//
+// 9.   Otherwise:
+//
+//      1.  If the final character of input_number is ".", fail parsing.
+//
+//      2.  If the number of characters after "." in input_number is
+//          greater than three, fail parsing.
+//
+//      3.  Parse input_number as a decimal number and let output_number
+//          be the product of the result and sign.
+//
+// 10.  Return output_number.
+//
+// 4.2.5.  Parsing a String
+//
+// Given an ASCII string as input_string, return an unquoted String.
+// input_string is modified to remove the parsed value.
+//
+// 1.  Let output_string be an empty string.
+//
+// 2.  If the first character of input_string is not DQUOTE, fail
+//     parsing.
+//
+// 3.  Discard the first character of input_string.
+//
+// 4.  While input_string is not empty:
+//
+//     1.  Let char be the result of consuming the first character of
+//         input_string.
+//
+//     2.  If char is a backslash ("\"):
+//
+//         1.  If input_string is now empty, fail parsing.
+//
+//         2.  Let next_char be the result of consuming the first
+//             character of input_string.
+//
+//         3.  If next_char is not DQUOTE or "\", fail parsing.
+//
+//         4.  Append next_char to output_string.
+//
+//     3.  Else, if char is DQUOTE, return output_string.
+//
+//     4.  Else, if char is in the range %x00-1f or %x7f (i.e., is not
+//         in VCHAR or SP), fail parsing.
+//
+//     5.  Else, append char to output_string.
+//
+// 5.  Reached the end of input_string without finding a closing DQUOTE;
+//     fail parsing.
+//
+// 4.2.6.  Parsing a Token
+//
+// Given an ASCII string as input_string, return a Token. input_string
+// is modified to remove the parsed value.
+//
+// 1.  If the first character of input_string is not ALPHA or "*", fail
+//     parsing.
+//
+// 2.  Let output_string be an empty string.
+//
+// 3.  While input_string is not empty:
+//
+//     1.  If the first character of input_string is not in tchar, ":"
+//         or "/", return output_string.
+//
+//     2.  Let char be the result of consuming the first character of
+//         input_string.
+//
+//     3.  Append char to output_string.
+//
+// 4.  Return output_string.
+//
+// 4.2.7.  Parsing a Byte Sequence
+//
+// Given an ASCII string as input_string, return a Byte Sequence.
+// input_string is modified to remove the parsed value.
+//
+// 1.  If the first character of input_string is not ":", fail parsing.
+//
+// 2.  Discard the first character of input_string.
+//
+// 3.  If there is not a ":" character before the end of input_string,
+//     fail parsing.
+//
+// 4.  Let b64_content be the result of consuming content of
+//     input_string up to but not including the first instance of the
+//     character ":".
+//
+// 5.  Consume the ":" character at the beginning of input_string.
+//
+// 6.  If b64_content contains a character not included in ALPHA, DIGIT,
+//     "+", "/" and "=", fail parsing.
+//
+// 7.  Let binary_content be the result of Base 64 Decoding [RFC4648]
+//     b64_content, synthesizing padding if necessary (note the
+//     requirements about recipient behavior below).
+//
+// 8.  Return binary_content.
+//
+// Because some implementations of base64 do not allow rejection of
+// encoded data that is not properly "=" padded (see [RFC4648],
+// Section 3.2), parsers SHOULD NOT fail when "=" padding is not
+// present, unless they cannot be configured to do so.
+//
+// Because some implementations of base64 do not allow rejection of
+// encoded data that has non-zero pad bits (see [RFC4648], Section 3.5),
+// parsers SHOULD NOT fail when non-zero pad bits are present, unless
+// they cannot be configured to do so.
+//
+// This specification does not relax the requirements in [RFC4648],
+// Section 3.1 and 3.3; therefore, parsers MUST fail on characters
+// outside the base64 alphabet, and on line feeds in encoded data.
+//
+//
+// 4.2.8.  Parsing a Boolean
+//
+// Given an ASCII string as input_string, return a Boolean. input_string
+// is modified to remove the parsed value.
+//
+// 1.  If the first character of input_string is not "?", fail parsing.
+//
+// 2.  Discard the first character of input_string.
+//
+// 3.  If the first character of input_string matches "1", discard the
+//     first character, and return true.
+//
+// 4.  If the first character of input_string matches "0", discard the
+//     first character, and return false.
+//
+// 5.  No value has matched; fail parsing.
