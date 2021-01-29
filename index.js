@@ -251,8 +251,10 @@ export function serializeItem({value, params}) {
 export function serializeBareItem(value) {
   switch (typeof value) {
     case "number":
-      // serializeInteger / Decimal
-      return serializeNumber(value)
+      if (Number.isInteger(value)) {
+        return serializeInteger(value)
+      }
+      return serializeDecimal(value)
     case "string":
       return serializeString(value)
     case "symbol":
@@ -286,7 +288,11 @@ export function serializeBareItem(value) {
 //     only decimal digits to output.
 //
 // 5.  Return output.
-//
+function serializeInteger(value) {
+  if (value < -999999999999999n || 999999999999999n < value) throw new Error(`fail to serialize integer: ${value}`)
+  return value.toString()
+}
+
 // 4.1.5.  Serializing a Decimal
 //
 // Given a decimal number as input_decimal, return an ASCII string
@@ -321,8 +327,7 @@ export function serializeBareItem(value) {
 //      digits) to output.
 //
 // 10.  Return output.
-function serializeNumber(value) {
-  if (value < -999999999999999n || 999999999999999n < value) throw new Error(`fail to serialize integer: ${value}`)
+function serializeDecimal(value) {
   return value.toString()
 }
 
