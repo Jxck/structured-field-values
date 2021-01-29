@@ -941,8 +941,36 @@ console.assert(parseString(`"a\\\\c"`) === `a\\c`)
 //     3.  Append char to output_string.
 //
 // 4.  Return output_string.
-function parseToken(input) {
+function parseToken(input_string) {
+  let i = 0
+  if (/^[a-zA-Z\*]$/.test(input_string[i]) === false) {
+    throw new Error(`failed to parse ${input_string}`)
+  }
+  let output_string = ""
+  while(input_string.length > i) {
+    if (/^[\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]$/.test(input_string[i]) === false) {
+      // TODO: to Symbol
+      return output_string
+    }
+    output_string += input_string[i]
+    i ++
+  }
+  // TODO: to Symbol
+  return output_string
 }
+
+console.assert(parseToken(`*foo123/456`)             === `*foo123/456`)
+console.assert(parseToken(`foo123`)                  === `foo123`)
+console.assert(parseToken(`ABC!#$%&'*+-.^_'|~:/012`) === `ABC!#$%&'*+-.^_'|~:/012`)
+
+try {
+  console.log(parseToken(``))
+  console.assert(false)
+} catch(err) {
+  console.assert(true)
+}
+
+
 
 // 4.2.7.  Parsing a Byte Sequence
 //
@@ -984,7 +1012,12 @@ function parseToken(input) {
 // This specification does not relax the requirements in [RFC4648],
 // Section 3.1 and 3.3; therefore, parsers MUST fail on characters
 // outside the base64 alphabet, and on line feeds in encoded data.
-function parseByteSequence(input) {
+function parseByteSequence(input_string) {
+  let i = 0
+  if (input_string[i] !== ":") {
+    throw new Error(`failed to parse ${input_string}`)
+  }
+  i ++
 }
 
 // 4.2.8.  Parsing a Boolean
@@ -1003,12 +1036,29 @@ function parseByteSequence(input) {
 //     first character, and return false.
 //
 // 5.  No value has matched; fail parsing.
-function parseBoolean(input) {
-  if (input.startsWith("?1")) {
-    return {ok, value: true, rest: input.substr(2)}
+function parseBoolean(input_string) {
+  let i = 0
+  if (input_string[i] !== "?") {
+    throw new Error(`failed to parse ${input_string}`)
   }
-  return {ok: false}
+  i ++
+  if (input_string[i] === "1") {
+    return true
+  }
+  if (input_string[i] === "0") {
+    return false
+  }
+  throw new Error(`failed to parse ${input_string}`)
 }
 
-const INPUT = "?1adsf"
-console.log(parseBoolean(INPUT))
+console.assert(parseBoolean("?1") === true)
+console.assert(parseBoolean("?0") === false)
+
+try {
+  parseBoolean("1")
+  console.assert(false)
+} catch(err) {
+  console.assert(true)
+}
+
+console.log({ok})
