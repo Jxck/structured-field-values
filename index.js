@@ -622,24 +622,41 @@ function parseItem(input) {
 //     input_string.
 //
 // 6.  Otherwise, the item type is unrecognized; fail parsing.
-function parseBareItem(input) {
-  if (/^[\-0-9]/.test(input)) {
-    return parseIntegerOrDecimal(input)
+function parseBareItem(input_string) {
+  let i = 0
+  if (input_string[i] === `"`) {
+    return parseString(input_string)
   }
-  if (input.startsWith(`"`)) {
-    return parseString(input)
+  if (input_string[i] === `:`) {
+    return parseByteSequence(input_string)
   }
-  if (input.startsWith(`:`)) {
-    return parseByteSequence(input)
+  if (input_string[i] === `?`) {
+    return parseBoolean(input_string)
   }
-  if (input.startsWith(`?`)) {
-    return parseBoolean(input)
+  if (/^[\-0-9]/.test(input_string[i])) {
+    return parseIntegerOrDecimal(input_string)
   }
-  if (/^[a-zA-Z\*]/.test(input)) {
-    return parseToken(input)
+  if (/^[a-zA-Z\*]/.test(input_string[i])) {
+    return parseToken(input_string)
   }
-  return {ok: false}
+  throw new Error(`failed to parse ${input_string}`)
 }
+
+
+console.assert(parseBareItem(`a123_-.*`)                === `a123_-.*`)
+console.assert(parseBareItem(`*a123`)                   === `*a123`)
+console.assert(parseBareItem("0")                       === 0)
+console.assert(parseBareItem("123")                     === 123)
+console.assert(parseBareItem("123.456")                 === 123.456)
+console.assert(parseBareItem(`"asdf"`)                  === `asdf`)
+console.assert(parseBareItem(`"a\\""`)                  === `a\"`)
+console.assert(parseBareItem(`"a\\\\"`)                 === `a\\`)
+console.assert(parseBareItem(`"a\\\\c"`)                === `a\\c`)
+console.assert(parseBareItem(`*foo123/456`)             === `*foo123/456`)
+console.assert(parseBareItem(`foo123`)                  === `foo123`)
+console.assert(parseBareItem(`ABC!#$%&'*+-.^_'|~:/012`) === `ABC!#$%&'*+-.^_'|~:/012`)
+console.assert(parseBareItem("?1")                      === true)
+console.assert(parseBareItem("?0")                      === false)
 
 
 // 4.2.3.2.  Parsing Parameters
