@@ -328,7 +328,8 @@ function serializeInteger(value) {
 //
 // 10.  Return output.
 function serializeDecimal(value) {
-  return value.toString()
+  if (value > 999999999999) throw new Error(`fail to serialze decimal: ${value}`)
+  return (Math.round(value*1000)/1000).toString()
 }
 
 // 4.1.6.  Serializing a String
