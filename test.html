@@ -11,23 +11,26 @@
    encodeItem,
    encodeList,
    encodeDict,
+   parseString,
  } from "./index.js"
 
 
- ;[`a`, `"a"`, `10`, `3.14`, `?0`, `"a";x;y=?0;z=10`, `:AQIDBA==:`].forEach((value) => {
-   console.assert(encodeItem(decodeItem(value)) === value)
- })
+console.log(parseString(`"asdf\\\\"`))
 
- const a = decodeItem(`a`).value // Symbol(a)
- console.log(Symbol.keyFor(a))   // "a" (string)
+ // ;[`a`, `"a"`, `10`, `3.14`, `?0`, `"a";x;y=?0;z=10`, `:AQIDBA==:`].forEach((value) => {
+ //   console.assert(encodeItem(decodeItem(value)) === value)
+ // })
 
- console.assert(encodeItem(decodeItem('1.0')) === '1') // '1' not '1.0'
+ // const a = decodeItem(`a`).value // Symbol(a)
+ // console.log(Symbol.keyFor(a))   // "a" (string)
 
- ;[`1, 2, 3`, `a;x, "b";y=?0, 10, (1 2)`].forEach((value) => {
-   console.assert(encodeList(decodeList(value)) === value)
- })
+ // console.assert(encodeItem(decodeItem('1.0')) === '1') // '1' not '1.0'
 
- ;[`a=x, b="y", c=10, d=?0, e=(1 2)`].forEach((value) => {
-   console.assert(encodeDict(decodeDict(value)) === value)
- })
+ // ;[`1, 2, 3`, `a;x, "b";y=?0, 10, (1 2)`].forEach((value) => {
+ //   console.assert(encodeList(decodeList(value)) === value)
+ // })
+
+ // ;[`a=x, b="y", c=10, d=?0, e=(1 2)`].forEach((value) => {
+ //   console.assert(encodeDict(decodeDict(value)) === value)
+ // })
 </script>

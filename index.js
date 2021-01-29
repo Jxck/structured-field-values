@@ -875,27 +875,50 @@ console.assert(parseIntegerOrDecimal("123.456") === 123.456)
 //
 // 5.  Reached the end of input_string without finding a closing DQUOTE;
 //     fail parsing.
-function parseString(input_string) {
+export function parseString(input_string) {
   let output_string = ""
   let i = 0
   if (input_string[i] !== `"`) {
     throw new Error(`failed to parse ${input_string}`)
   }
   i ++
-
   while(input_string.length > i ) {
-    if (input_string[0] === `\\`) {
+    // console.log(i, input_string[i], output_string)
+    if (input_string[i] === `\\`) {
       if (input_string.length <= i+1) {
         throw new Error(`failed to parse ${input_string}`)
       }
-      // TODO
-
-
-
+      i++
+      if (input_string[i] !== `"` && input_string[i] !== `\\`) {
+        throw new Error(`failed to parse ${input_string}`)
+      }
+      output_string += input_string[i]
+    } else if (input_string[i] === `"`) {
+      return output_string
+    } else if (/[\x00-\x1f\x7f]+/.test(input_string[i])) {
+      throw new Error(`failed to parse ${input_string}`)
+    } else {
+      output_string += input_string[i]
     }
-
+    i++
   }
+  throw new Error(`failed to parse ${input_string}`)
 }
+
+
+console.assert(parseString(`"asdf"`)   === `asdf`)
+console.assert(parseString(`"a\\""`)   === `a\"`)
+console.assert(parseString(`"a\\\\"`)  === `a\\`)
+console.assert(parseString(`"a\\\\c"`) === `a\\c`)
+
+;[`"a\\"`, ``].forEach((sfv) => {
+  try {
+    console.log(parseString(sfv))
+    console.assert(false)
+  } catch (err) {
+    console.assert(true)
+  }
+})
 
 // 4.2.6.  Parsing a Token
 //
