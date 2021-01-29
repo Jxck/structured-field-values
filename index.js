@@ -431,83 +431,6 @@ function serializeByteSequence(value) {
 }
 
 
-// 4.2.  Parsing Structured Fields
-//
-// When a receiving implementation parses HTTP fields that are known to
-// be Structured Fields, it is important that care be taken, as there
-// are a number of edge cases that can cause interoperability or even
-// security problems.  This section specifies the algorithm for doing
-// so.
-//
-// Given an array of bytes input_bytes that represents the chosen
-// field's field-value (which is empty if that field is not present),
-// and field_type (one of "dictionary", "list", or "item"), return the
-// parsed header value.
-//
-// 1.  Convert input_bytes into an ASCII string input_string; if
-//     conversion fails, fail parsing.
-//
-// 2.  Discard any leading SP characters from input_string.
-//
-// 3.  If field_type is "list", let output be the result of running
-//     Parsing a List (Section 4.2.1) with input_string.
-//
-// 4.  If field_type is "dictionary", let output be the result of
-//     running Parsing a Dictionary (Section 4.2.2) with input_string.
-//
-// 5.  If field_type is "item", let output be the result of running
-//     Parsing an Item (Section 4.2.3) with input_string.
-//
-// 6.  Discard any leading SP characters from input_string.
-//
-// 7.  If input_string is not empty, fail parsing.
-//
-// 8.  Otherwise, return output.
-//
-// When generating input_bytes, parsers MUST combine all field lines in
-// the same section (header or trailer) that case-insensitively match
-// the field name into one comma-separated field-value, as per
-// [RFC7230], Section 3.2.2; this assures that the entire field value is
-// processed correctly.
-//
-// For Lists and Dictionaries, this has the effect of correctly
-// concatenating all of the field's lines, as long as individual members
-// of the top-level data structure are not split across multiple header
-// instances.  The parsing algorithms for both types allow tab
-// characters, since these might be used to combine field lines by some
-// implementations.
-//
-// Strings split across multiple field lines will have unpredictable
-// results, because comma(s) and whitespace inserted upon combination
-// will become part of the string output by the parser.  Since
-// concatenation might be done by an upstream intermediary, the results
-// are not under the control of the serializer or the parser, even when
-// they are both under the control of the same party.
-//
-// Tokens, Integers, Decimals and Byte Sequences cannot be split across
-// multiple field lines because the inserted commas will cause parsing
-// to fail.
-//
-// Parsers MAY fail when processing a field value spread across multiple
-// field lines, when one of those lines does not parse as that field.
-// For example, a parsing handling an Example-String field that's
-// defined as a sf-string is allowed to fail when processing this field
-// section:
-//
-// Example-String: "foo
-// Example-String: bar"
-//
-// If parsing fails - including when calling another algorithm - the
-// entire field value MUST be ignored (i.e., treated as if the field
-// were not present in the section).  This is intentionally strict, to
-// improve interoperability and safety, and specifications referencing
-// this document are not allowed to loosen this requirement.
-//
-// Note that this requirement does not apply to an implementation that
-// is not parsing the field; for example, an intermediary is not
-// required to strip a failing field from a message before forwarding
-// it.
-//
 // 4.2.1.  Parsing a List
 //
 // Given an ASCII string as input_string, return an array of
@@ -535,7 +458,16 @@ function serializeByteSequence(value) {
 //
 // 3.  No structured data has been found; return members (which is
 //     empty).
-//
+export function parseList(input) {
+  const members = []
+  while(value !== '') {
+    parseItemOrInnerList()
+  }
+  return members
+}
+
+
+
 // 4.2.1.1.  Parsing an Item or Inner List
 //
 // Given an ASCII string as input_string, return the tuple
@@ -549,7 +481,13 @@ function serializeByteSequence(value) {
 //
 // 2.  Return the result of running Parsing an Item (Section 4.2.3) with
 //     input_string.
-//
+function parseItemOrInnerList(input) {
+  if (input === "(") {
+    return parseInnerList(input)
+  }
+  return parseItem(input)
+}
+
 // 4.2.1.2.  Parsing an Inner List
 //
 // Given an ASCII string as input_string, return the tuple (inner_list,
@@ -581,7 +519,11 @@ function serializeByteSequence(value) {
 //
 //     5.  If the first character of input_string is not SP or ")", fail
 //         parsing.
-//
+function parseInnerList(input) {
+}
+
+
+
 // 4.  The end of the inner list was not found; fail parsing.
 //
 // 4.2.2.  Parsing a Dictionary
@@ -634,7 +576,7 @@ function serializeByteSequence(value) {
 //
 // Note that when duplicate Dictionary keys are encountered, this has
 // the effect of ignoring all but the last instance.
-//
+
 // 4.2.3.  Parsing an Item
 //
 // Given an ASCII string as input_string, return a (bare_item,
@@ -648,7 +590,13 @@ function serializeByteSequence(value) {
 //     (Section 4.2.3.2) with input_string.
 //
 // 3.  Return the tuple (bare_item, parameters).
-//
+function parseItem(input) {
+
+}
+
+
+
+
 // 4.2.3.1.  Parsing a Bare Item
 //
 // Given an ASCII string as input_string, return a bare Item.
@@ -674,7 +622,26 @@ function serializeByteSequence(value) {
 //     input_string.
 //
 // 6.  Otherwise, the item type is unrecognized; fail parsing.
-//
+function parseBareItem(input) {
+  if (/^[\-0-9]/.test(input)) {
+    return parseIntegerOrDecimal(input)
+  }
+  if (input.startsWith(`"`)) {
+    return parseString(input)
+  }
+  if (input.startsWith(`:`)) {
+    return parseByteSequence(input)
+  }
+  if (input.startsWith(`?`)) {
+    return parseBoolean(input)
+  }
+  if (/^[a-zA-Z\*]/.test(input)) {
+    return parseToken(input)
+  }
+  return {ok: false}
+}
+
+
 // 4.2.3.2.  Parsing Parameters
 //
 // Given an ASCII string as input_string, return an ordered map whose
@@ -713,7 +680,9 @@ function serializeByteSequence(value) {
 //
 // Note that when duplicate Parameter keys are encountered, this has the
 // effect of ignoring all but the last instance.
-//
+function parseParameters(input) {
+}
+
 // 4.2.3.3.  Parsing a Key
 //
 // Given an ASCII string as input_string, return a key. input_string is
@@ -735,7 +704,9 @@ function serializeByteSequence(value) {
 //     3.  Append char to output_string.
 //
 // 4.  Return output_string.
-//
+function parseKey(input) {
+}
+
 // 4.2.4.  Parsing an Integer or Decimal
 //
 // Given an ASCII string as input_string, return an Integer or Decimal.
@@ -801,7 +772,72 @@ function serializeByteSequence(value) {
 //          be the product of the result and sign.
 //
 // 10.  Return output_number.
-//
+function parseIntegerOrDecimal(input_string) {
+  let type = "integer"
+  let sign = 1
+  let input_number = ""
+  let i = 0
+
+  if (input_string[i] === "-") {
+    sign = -1
+    i ++
+  }
+  if (input_string.length <= i || /^\d$/.test(input_string[i]) === false) {
+    throw new Error(`failed to parse ${input_string}`)
+  }
+
+  while (input_string.length > i ) {
+    if (/^\d$/.test(input_string[i])) {
+      input_number += input_string[i]
+    } else if (type === "integer" && /\./.test(input_string[i])) {
+      if (input_number.length > 12) throw new Error(`failed to parse ${input_string}`)
+      input_number += input_string[i]
+      type = "decimal"
+    } else {
+      i--
+      break
+    }
+    if (type === "integer" && input_number.length > 15) {
+      throw new Error(`failed to parse ${input_string}`)
+    }
+    if (type === "decimal" && input_number.length > 16) {
+      throw new Error(`failed to parse ${input_string}`)
+    }
+    i ++
+  }
+
+  let output_number
+  if (type === "integer") {
+    output_number = parseInt(input_number) * sign
+    if (output_number < -999999999999999n || 999999999999999n < output_number) throw new Error(`fail to parse integer: ${input_number}`)
+  } else {
+    if (/\.\d{1,3}$/.test(input_number) === false) throw new Error(`fail to parse decimal: ${input_number}`)
+    output_number = parseFloat(input_number) * sign
+  }
+  return output_number
+}
+
+console.assert(parseIntegerOrDecimal("0")       === 0)
+console.assert(parseIntegerOrDecimal("123")     === 123)
+console.assert(parseIntegerOrDecimal("123.456") === 123.456)
+
+;[
+  "123.",
+  "123.4567",
+  "9999999999999999",
+  "-9999999999999999",
+  "1234567890123456",
+  "1.234567890123456",
+  "1234567890123.4",
+].forEach((sfv) => {
+  try {
+    console.log(parseIntegerOrDecimal(sfv))
+    console.assert(false)
+  } catch (err) {
+    console.assert(true)
+  }
+})
+
 // 4.2.5.  Parsing a String
 //
 // Given an ASCII string as input_string, return an unquoted String.
@@ -839,7 +875,28 @@ function serializeByteSequence(value) {
 //
 // 5.  Reached the end of input_string without finding a closing DQUOTE;
 //     fail parsing.
-//
+function parseString(input_string) {
+  let output_string = ""
+  let i = 0
+  if (input_string[i] !== `"`) {
+    throw new Error(`failed to parse ${input_string}`)
+  }
+  i ++
+
+  while(input_string.length > i ) {
+    if (input_string[0] === `\\`) {
+      if (input_string.length <= i+1) {
+        throw new Error(`failed to parse ${input_string}`)
+      }
+      // TODO
+
+
+
+    }
+
+  }
+}
+
 // 4.2.6.  Parsing a Token
 //
 // Given an ASCII string as input_string, return a Token. input_string
@@ -861,7 +918,9 @@ function serializeByteSequence(value) {
 //     3.  Append char to output_string.
 //
 // 4.  Return output_string.
-//
+function parseToken(input) {
+}
+
 // 4.2.7.  Parsing a Byte Sequence
 //
 // Given an ASCII string as input_string, return a Byte Sequence.
@@ -902,8 +961,9 @@ function serializeByteSequence(value) {
 // This specification does not relax the requirements in [RFC4648],
 // Section 3.1 and 3.3; therefore, parsers MUST fail on characters
 // outside the base64 alphabet, and on line feeds in encoded data.
-//
-//
+function parseByteSequence(input) {
+}
+
 // 4.2.8.  Parsing a Boolean
 //
 // Given an ASCII string as input_string, return a Boolean. input_string
@@ -920,3 +980,12 @@ function serializeByteSequence(value) {
 //     first character, and return false.
 //
 // 5.  No value has matched; fail parsing.
+function parseBoolean(input) {
+  if (input.startsWith("?1")) {
+    return {ok, value: true, rest: input.substr(2)}
+  }
+  return {ok: false}
+}
+
+const INPUT = "?1adsf"
+console.log(parseBoolean(INPUT))
