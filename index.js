@@ -119,7 +119,7 @@ export function serializeInnerList({value, params}) {
 // 3.  Return output.
 export function serializeParams(params) {
   return Object.entries(params).map(([key, value]) => {
-    if (value === true) return `;${key}` // omit true
+    if (value === true) return `;${serializeKey(key)}` // omit true
     return `;${serializeKey(key)}=${serializeBareItem(value)}`
   }).join("")
 }
@@ -143,7 +143,11 @@ export function serializeParams(params) {
 // 5.  Append input_key to output.
 //
 // 6.  Return output.
+const KEY_FORMAT = /^[a-z\*][a-z0-9\-\_\.\*]*$/
 export function serializeKey(key) {
+  if (KEY_FORMAT.test(key) === false) {
+    throw new Error("serialization fail")
+  }
   return key
 }
 
