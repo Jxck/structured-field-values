@@ -563,7 +563,7 @@ export function base64encode(binary) {
   if (typeof window === `undefined`) {
     return Buffer.from(binary).toString(`base64`)
   } else {
-    // TODO: browser base64
+    return btoa(String.fromCharCode(...binary));
   }
 }
 
