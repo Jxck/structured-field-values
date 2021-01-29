@@ -704,8 +704,25 @@ function parseParameters(input) {
 //     3.  Append char to output_string.
 //
 // 4.  Return output_string.
-function parseKey(input) {
+function parseKey(input_string) {
+  let i = 0
+  if (/^[a-z\*]$/.test(input_string[i]) === false) {
+    throw new Error(`failed to parse ${input_string}`)
+  }
+  let output_string = ""
+  while(input_string.length > i) {
+    if (/^[a-z0-9\_\-\.\*]$/.test(input_string[i]) === false) {
+      return output_string
+    }
+    output_string += input_string[i]
+    i ++
+  }
+  return output_string
 }
+
+console.assert(parseKey(`a123_-.*`) === `a123_-.*`)
+console.assert(parseKey(`*a123`)    === `*a123`)
+
 
 // 4.2.4.  Parsing an Integer or Decimal
 //
