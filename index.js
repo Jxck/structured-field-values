@@ -29,7 +29,7 @@ const ok = true
 
 export function decodeItem(value) { return parseItem(value) }
 export function decodeList(value) { return parseList(value) }
-export function decodeDict(value) { return parseDict(value) }
+export function decodeDict(value) { return parseDictionary(value) }
 export function encodeItem(value) { return serializeItem(value) }
 export function encodeList(value) { return serializeList(value) }
 export function encodeDict(value) { return serializeDict(value) }
@@ -458,11 +458,11 @@ function serializeByteSequence(value) {
 //
 // 3.  No structured data has been found; return members (which is
 //     empty).
-export function parseList({input_string}) {
+export function parseList(input_string) {
   const members = []
   while(input_string.length > 0) {
     debugger
-    const parsedItemOrInnerList = parseItemOrInnerList({input_string})
+    const parsedItemOrInnerList = parseItemOrInnerList(input_string)
     members.push(parsedItemOrInnerList.value)
     input_string = parsedItemOrInnerList.input_string.trim()
     if (input_string.length === 0) return {input_string: '', value: members}
@@ -490,11 +490,11 @@ export function parseList({input_string}) {
 //
 // 2.  Return the result of running Parsing an Item (Section 4.2.3) with
 //     input_string.
-function parseItemOrInnerList({input_string}) {
+function parseItemOrInnerList(input_string) {
   if (input_string === "(") {
-    return parseInnerList({input_string})
+    return parseInnerList(input_string)
   }
-  return parseItem({input_string})
+  return parseItem(input_string)
 }
 
 // 4.2.1.2.  Parsing an Inner List
@@ -530,8 +530,7 @@ function parseItemOrInnerList({input_string}) {
 //         parsing.
 //
 // 4.  The end of the inner list was not found; fail parsing.
-function parseInnerList({input_string}) {
-  debugger
+function parseInnerList(input_string) {
   if (input_string[0] !== "(") throw new Error(`failed to parse ${input_string}`)
   input_string = input_string.substr(1)
   const inner_list = []
@@ -539,7 +538,7 @@ function parseInnerList({input_string}) {
     input_string = input_string.trim()
     if (input_string[0] === ")") {
       input_string = input_string.substr(1)
-      const parsedParameters = parseParameters({input_string})
+      const parsedParameters = parseParameters(input_string)
       let params = parsedParameters.value
       return {
         value: {
@@ -549,7 +548,7 @@ function parseInnerList({input_string}) {
         input_string: parsedParameters.input_string,
       }
     }
-    const parsedItem = parseItem({input_string})
+    const parsedItem = parseItem(input_string)
     inner_list.push(parsedItem.value)
     input_string = parsedItem.input_string
     if (input_string[0] !== " " && input_string[0] !== ")") throw new Error(`failed to parse ${input_string}`)
@@ -557,7 +556,7 @@ function parseInnerList({input_string}) {
   throw new Error(`failed to parse ${input_string}`)
 }
 
-console.log(parseInnerList({input_string:`( "1" "2" "3" )`}))
+//console.log(parseInnerList({input_string:`( "1" "2" "3" )`}))
 
 // 4.2.2.  Parsing a Dictionary
 //
@@ -619,7 +618,7 @@ function parseDictionary({input_string, option}) {
 
   while (input_string.length > 0) {
     let member;
-    const parsedKey = parseKey({input_string})
+    const parsedKey = parseKey(input_string)
     let this_key = parsedKey.value
     input_string = parsedKey.input_string
     if (input_string[0] === "=") {
@@ -627,7 +626,7 @@ function parseDictionary({input_string, option}) {
       member = parsedItemOrInnerList.value
       input_string = parsedItemOrInnerList.input_string
     } else {
-      const parsedParameters = parseParameters({input_string})
+      const parsedParameters = parseParameters(input_string)
       member = {
         value: true,
         params: parsedParameters.value
@@ -659,11 +658,11 @@ function parseDictionary({input_string, option}) {
 //     (Section 4.2.3.2) with input_string.
 //
 // 3.  Return the tuple (bare_item, parameters).
-function parseItem({input_string}) {
-  const parsedBareItem  = parseBareItem({input_string})
+function parseItem(input_string) {
+  const parsedBareItem  = parseBareItem(input_string)
   const value = parsedBareItem.value
   input_string = parsedBareItem.input_string
-  let parsedParameters = parseParameters({input_string})
+  let parsedParameters = parseParameters(input_string)
   const params = parsedParameters.value
   input_string = parsedParameters.input_string
   return {
@@ -699,22 +698,22 @@ function parseItem({input_string}) {
 //     input_string.
 //
 // 6.  Otherwise, the item type is unrecognized; fail parsing.
-function parseBareItem({input_string}) {
+function parseBareItem(input_string) {
   let i = 0
   if (input_string[i] === `"`) {
-    return parseString({input_string})
+    return parseString(input_string)
   }
   if (input_string[i] === `:`) {
-    return parseByteSequence({input_string})
+    return parseByteSequence(input_string)
   }
   if (input_string[i] === `?`) {
-    return parseBoolean({input_string})
+    return parseBoolean(input_string)
   }
   if (/^[\-0-9]/.test(input_string[i])) {
-    return parseIntegerOrDecimal({input_string})
+    return parseIntegerOrDecimal(input_string)
   }
   if (/^[a-zA-Z\*]/.test(input_string[i])) {
-    return parseToken({input_string})
+    return parseToken(input_string)
   }
   throw new Error(`failed to parse ${input_string}`)
 }
@@ -774,18 +773,18 @@ function parseBareItem({input_string}) {
 //
 // Note that when duplicate Parameter keys are encountered, this has the
 // effect of ignoring all but the last instance.
-function parseParameters({input_string}) {
+function parseParameters(input_string) {
   const parameters = {}
   while (input_string.length > 0) {
     if (input_string[0] !== ";") break
     input_string = input_string.substr(1).trim()
-    const parsedKey = parseKey({input_string})
+    const parsedKey = parseKey(input_string)
     let param_name = parsedKey.value
     let param_value = true
     input_string = parsedKey.input_string
     if (input_string[0] === "=") {
       input_string = input_string.substr(1)
-      const parsedBareItem = parseBareItem({input_string})
+      const parsedBareItem = parseBareItem(input_string)
       param_value = parsedBareItem.value
       input_string = parsedBareItem.input_string
     }
@@ -819,7 +818,7 @@ function parseParameters({input_string}) {
 //     3.  Append char to output_string.
 //
 // 4.  Return output_string.
-function parseKey({input_string}) {
+function parseKey(input_string) {
   let i = 0
   if (/^[a-z\*]$/.test(input_string[i]) === false) {
     throw new Error(`failed to parse ${input_string}`)
@@ -1013,7 +1012,7 @@ function parseIntegerOrDecimal(input_string) {
 //
 // 5.  Reached the end of input_string without finding a closing DQUOTE;
 //     fail parsing.
-export function parseString({input_string}) {
+export function parseString(input_string) {
   let output_string = ""
   let i = 0
   if (input_string[i] !== `"`) {
@@ -1172,7 +1171,7 @@ function parseByteSequence(input_string) {
 //     first character, and return false.
 //
 // 5.  No value has matched; fail parsing.
-function parseBoolean({input_string}) {
+function parseBoolean(input_string) {
   let i = 0
   if (input_string[i] !== "?") {
     throw new Error(`failed to parse ${input_string.substr(i)}`)
@@ -1193,7 +1192,7 @@ function parseBoolean({input_string}) {
   throw new Error(`failed to parse ${input_string.substr(i)}`)
 }
 
-(parseBoolean({input_string: "?1;a=10"}))
+//(parseBoolean({input_string: "?1;a=10"}))
 
 //console.assert(parseBoolean("?1") === true)
 //console.assert(parseBoolean("?0") === false)
