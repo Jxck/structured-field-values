@@ -25,15 +25,47 @@ const ok = true
 //
 // 6.  Return output_string converted into an array of bytes, using
 //     ASCII encoding [RFC0020].
-
-
-export function decodeItem(value) { return parseItem(value) }
-export function decodeList(value) { return parseList(value) }
-export function decodeDict(value) { return parseDictionary(value) }
 export function encodeItem(value) { return serializeItem(value) }
 export function encodeList(value) { return serializeList(value) }
 export function encodeDict(value) { return serializeDict(value) }
 
+
+// 4.2.  Parsing Structured Fields
+//
+// 1.  Convert input_bytes into an ASCII string input_string; if
+//     conversion fails, fail parsing.
+//
+// 2.  Discard any leading SP characters from input_string.
+//
+// 3.  If field_type is "list", let output be the result of running
+//     Parsing a List (Section 4.2.1) with input_string.
+//
+// 4.  If field_type is "dictionary", let output be the result of
+//     running Parsing a Dictionary (Section 4.2.2) with input_string.
+//
+// 5.  If field_type is "item", let output be the result of running
+//     Parsing an Item (Section 4.2.3) with input_string.
+//
+// 6.  Discard any leading SP characters from input_string.
+//
+// 7.  If input_string is not empty, fail parsing.
+//
+// 8.  Otherwise, return output.
+export function decodeItem(input) {
+  const {input_string, value} = parseItem(input.trim())
+  if (input_string !== '') throw new Error(`failed to parse ${input_string}`)
+  return value
+}
+export function decodeList(input) {
+  const {input_string, value} = parseList(input.trim())
+  if (input_string !== '') throw new Error(`failed to parse ${input_string}`)
+  return value
+}
+export function decodeDict(input) {
+  const {input_string, value} = parseDictionary(input.trim())
+  if (input_string !== '') throw new Error(`failed to parse ${input_string}`)
+  return value
+}
 
 // 4.1.1.  Serializing a List
 //
@@ -608,7 +640,7 @@ function parseInnerList(input_string) {
 //
 // Note that when duplicate Dictionary keys are encountered, this has
 // the effect of ignoring all but the last instance.
-function parseDictionary({input_string, option}) {
+function parseDictionary(input_string, option = {}) {
   const value = [] // ordered map
 
   function toDict(entries) {
@@ -622,7 +654,7 @@ function parseDictionary({input_string, option}) {
     let this_key = parsedKey.value
     input_string = parsedKey.input_string
     if (input_string[0] === "=") {
-      const parsedItemOrInnerList = parseItemOrInnerList({input_string: input_string.substr(1)})
+      const parsedItemOrInnerList = parseItemOrInnerList(input_string.substr(1))
       member = parsedItemOrInnerList.value
       input_string = parsedItemOrInnerList.input_string
     } else {
@@ -1046,11 +1078,11 @@ export function parseString(input_string) {
 }
 
 
-// console.log(parseString({input_string: `"asdf"`})) //  === `asdf`)
-//console.assert(parseString(`"a\\""`)   === `a\"`)
-//console.assert(parseString(`"a\\\\"`)  === `a\\`)
-//console.assert(parseString(`"a\\\\c"`) === `a\\c`)
-//
+//console.log(parseString(`"asdf",`)) //  === `asdf`)
+//console.log(parseString(`"a\\"",`)  )
+//console.log(parseString(`"a\\\\",`) )
+//console.log(parseString(`"a\\\\c",`))
+
 //;[`"a\\"`, ``].forEach((sfv) => {
 //  try {
 //    console.log(parseString(sfv))
@@ -1082,26 +1114,23 @@ export function parseString(input_string) {
 //
 // 4.  Return output_string.
 function parseToken(input_string) {
-  let i = 0
-  if (/^[a-zA-Z\*]$/.test(input_string[i]) === false) {
+  if (/^[a-zA-Z\*]$/.test(input_string[0]) === false) {
     throw new Error(`failed to parse ${input_string}`)
   }
-  let output_string = ""
-  while(input_string.length > i) {
-    if (/^[\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]$/.test(input_string[i]) === false) {
-      // TODO: to Symbol
-      return output_string
-    }
-    output_string += input_string[i]
-    i ++
-  }
+
+  const re = /^([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]+)/g
+  const output_string = re.exec(input_string)[1]
+  input_string = input_string.substr(re.lastIndex)
   // TODO: to Symbol
-  return output_string
+  return {
+    input_string,
+    value: Symbol.for(output_string)
+  }
 }
 
-//console.assert(parseToken(`*foo123/456`)             === `*foo123/456`)
-//console.assert(parseToken(`foo123`)                  === `foo123`)
-//console.assert(parseToken(`ABC!#$%&'*+-.^_'|~:/012`) === `ABC!#$%&'*+-.^_'|~:/012`)
+//console.log(parseToken(`*foo123/456,`)            )
+//console.log(parseToken(`foo123,`)                 )
+//console.log(parseToken(`ABC!#$%&'*+-.^_'|~:/012,`))
 
 // try {
 //   console.log(parseToken(``))
