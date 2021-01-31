@@ -1,6 +1,6 @@
 {
   "name": "structured-field-values",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Implementation of Structured Field Values from IETF httpbis https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19",
   "main": "index.js",
   "scripts": {

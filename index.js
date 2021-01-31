@@ -328,7 +328,7 @@ function serializeInteger(value) {
 //
 // 10.  Return output.
 function serializeDecimal(value) {
-  if (value > 999999999999) throw new Error(`fail to serialze decimal: ${value}`)
+  if (value > 999999999999) throw new Error(`fail to serialize decimal: ${value}`)
   return (Math.round(value*1000)/1000).toString()
 }
 
@@ -357,7 +357,7 @@ function serializeDecimal(value) {
 //
 // 6.  Return output.
 function serializeString(value) {
-  if (/[\x00-\x1f\x7f]+/.test(value)) throw new Error(`fail to serialze string: ${value}`)
+  if (/[\x00-\x1f\x7f]+/.test(value)) throw new Error(`fail to serialize string: ${value}`)
   return `"${value.replace(/\\/g, `\\\\`).replace(/"/g, `\\\"`)}"`
 }
 
