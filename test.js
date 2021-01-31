@@ -90,7 +90,12 @@ function test_serializeDecimal() {
 }
 
 function test_serializeString() {
-  // TODO:
+  assert.deepStrictEqual(serializeString("string"), `"string"`)
+  assert.deepStrictEqual(serializeString("str\\ing"), `"str\\\\ing"`)
+  assert.deepStrictEqual(serializeString("str\"ing"), `"str\\"ing"`)
+  assert.throws(() => serializeString("str\x00ing"))
+  assert.throws(() => serializeString("str\x1fing"))
+  assert.throws(() => serializeString("str\x7fing"))
 }
 function test_serializeToken() {
   // TODO:
@@ -472,7 +477,6 @@ function structured_field_tests() {
 }
 
 ;[
-
   test_serializeKey,
   test_serializeBareItem,
   test_serializeInteger,
