@@ -176,7 +176,7 @@ export function serializeParams(params) {
 // 6.  Return output.
 export function serializeKey(value) {
   if (/^[a-z\*][a-z0-9\-\_\.\*]*$/.test(value) === false) {
-    throw new Error(`failed to serialize ${value} as key`)
+    throw new Error(`failed to serialize ${value} as Key`)
   }
   return value
 }
@@ -296,7 +296,7 @@ export function serializeBareItem(value) {
         return serializeByteSequence(value)
       }
     default:
-      break;
+      throw new Error(`failed to serialize ${value} as Bare Item`)
   }
 }
 
@@ -319,7 +319,7 @@ export function serializeBareItem(value) {
 //
 // 5.  Return output.
 export function serializeInteger(value) {
-  if (value < -999999999999999n || 999999999999999n < value) throw new Error(`failed to serialize ${value} as integer`)
+  if (value < -999999999999999n || 999999999999999n < value) throw new Error(`failed to serialize ${value} as Integer`)
   return value.toString()
 }
 
@@ -358,7 +358,7 @@ export function serializeInteger(value) {
 //
 // 10.  Return output.
 export function serializeDecimal(value) {
-  if (value > 999999999999) throw new Error(`failed to serialize ${value} decimal`)
+  if (value > 999999999999) throw new Error(`failed to serialize ${value} as Decimal`)
   return (Math.round(value*1000)/1000).toString()
 }
 
