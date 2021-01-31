@@ -434,6 +434,7 @@ export function serializeToken(value) {
 //
 // 6.  Return output.
 export function serializeBoolean(value) {
+  if (typeof value !== "boolean") throw new Error(`failed to serialize ${value} as boolean`)
   return value ? "?1" : "?0"
 }
 

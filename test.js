@@ -138,8 +138,13 @@ function test_serializeToken() {
 }
 
 function test_serializeBoolean() {
-  // TODO:
+  assert.deepStrictEqual(serializeBoolean(true),  `?1`)
+  assert.deepStrictEqual(serializeBoolean(false), `?0`)
+  assert.throws(() => serializeBoolean(0))
+  assert.throws(() => serializeBoolean(null))
+  assert.throws(() => serializeBoolean(undefined))
 }
+
 function test_serializeByteSequence() {
   // TOOD:
 }
