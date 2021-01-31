@@ -1,3 +1,6 @@
+import fs from "fs"
+import base32 from "hi-base32"
+
 export function log(...arg) {
   try {
     throw new Error()

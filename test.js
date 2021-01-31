@@ -1,6 +1,4 @@
 import assert from "assert"
-import fs     from "fs"
-import base32 from "hi-base32"
 
 import {
   encodeItem,
@@ -14,153 +12,19 @@ import {
 } from "./index.js"
 
 import {
-  token,
-  alt,
-  list,
-  repeat,
-  sf_integer,
-  sf_decimal,
-  sf_string,
-  char,
-  unescaped,
-  escaped,
-  sf_token,
-  sf_binary,
-  sf_boolean,
-  sf_list,
-  _repeat_list_member,
-  list_member,
-  inner_list,
-  _optional_inner_item,
-  _repeat_inner_item,
-  sf_dictionary,
-  _repeat_dict_member,
-  dict_member,
-  member_value,
-  sf_item,
-  bare_item,
-  parameters,
-  parameter,
-  sf_key,
-} from "./bnf.js"
-
-
-function log(...arg) {
-  try {
-    throw new Error()
-  } catch (err) {
-    const line = err.stack.split(`\n`)[2].split(`/`).pop()
-    console.log(line, ...arg)
-  }
-}
-
-const j = JSON.stringify.bind(JSON)
-
-const  s = (value)  => Symbol.for(value)
-const ss = (values) => values.map((value) => Symbol.for(value))
+  log,
+  j,
+  s,
+  ss,
+  read,
+  format,
+  formatItem,
+  formatList,
+  formatDict,
+} from "./test.util.js"
 
 // utility const
 const ok = true;
-
-// read json test suite
-function read(name) {
-  return JSON.parse(fs.readFileSync(`./structured-field-tests/${name}.json`).toString())
-}
-
-// convert "expected" in test.json into JS Primitive
-function format(e) {
-  if (Array.isArray(e)) {
-    return e.map(format)
-  }
-  switch(e[`__type`]) {
-    case `binary`:
-      return Uint8Array.from(e.value === `` ? [] : base32.decode.asBytes(e.value))
-    case `token`:
-      return Symbol.for(e.value)
-    default:
-      return e
-  }
-}
-function formatItem(expected) {
-  const [_value, _params] = expected
-  const value  = format(_value)
-  const params = Object.fromEntries(_params.map(format))
-  return {value, params}
-}
-
-function formatList(expected) {
-  return expected.map(([value, params]) => {
-    if (Array.isArray(value)) {
-      return {
-        value: value.map(formatItem),
-        params: Object.fromEntries(params.map(format))
-      }
-    } else {
-      return {
-        value: format(value),
-        params: Object.fromEntries(params.map(format))
-      }
-    }
-  })
-}
-
-function formatDict(expected) {
-  return Object.fromEntries(expected.map(([name, member]) => {
-    const [value, params] = member
-    if (Array.isArray(value[0])) {
-      return [name, {
-        value: value.map(formatItem),
-        params: Object.fromEntries(params.map(format))
-      }]
-    } else {
-      return [name, {
-        value: format(value),
-        params: Object.fromEntries(params.map(format)),
-      }]
-    }
-  }))
-}
-
-function test_token() {
-  const fn = token(/^abc/)
-  assert.deepStrictEqual(fn(`abc`), {ok, value: `abc`, rest: ``})
-  assert.deepStrictEqual(fn(`abd`), {ok: false, rest: `abd`})
-  assert.deepStrictEqual(fn(``),    {ok: false, rest: ``})
-}
-
-function test_alt() {
-  // a / b
-  const fn = alt([token(/^a/), token(/^b/)])
-  assert.deepStrictEqual(fn(`a`), {ok, value: `a`, rest: ``})
-  assert.deepStrictEqual(fn(`b`), {ok, value: `b`, rest: ``})
-  assert.deepStrictEqual(fn(`c`), {ok: false, rest: `c`})
-  assert.deepStrictEqual(fn(``),  {ok: false, rest: ``})
-}
-
-function test_list() {
-  // [a, b, c]
-  let fn = list([token(/^a/), token(/^b/), token(/^c/)])
-  assert.deepStrictEqual(fn(`abc`), {ok, value: [`a`, `b`, `c`], rest: ``})
-  assert.deepStrictEqual(fn(`axc`), {ok: false, rest: `axc`})
-  assert.deepStrictEqual(fn(``),    {ok: false, rest: ``})
-
-  // [ab, cde, f]
-  fn = list([token(/^ab/), token(/^cde/), token(/^f/)])
-  assert.deepStrictEqual(fn(`abcdef`), {ok, value: [`ab`, `cde`, `f`], rest: ``})
-  assert.deepStrictEqual(fn(`abcde`),  {ok: false, rest: `abcde`})
-}
-
-function test_repeat() {
-  // (a / b){1,5}
-  let fn = repeat(1, 5, alt([token(/^a/), token(/^b/)]))
-  assert.deepStrictEqual(fn(`a`),       {ok, value: [`a`],      rest: ``})
-  assert.deepStrictEqual(fn(`ab`),      {ok, value: [`a`, `b`], rest: ``})
-  assert.deepStrictEqual(fn(`b`),       {ok, value: [`b`],      rest: ``})
-  assert.deepStrictEqual(fn(`aabaab`),  {ok, value: [`a`, `a`, `b`, `a`, `a`], rest: `b`})
-  assert.deepStrictEqual(fn(`aacaaab`), {ok, value: [`a`, `a`], rest: `caaab`})
-  assert.deepStrictEqual(fn(`c`),       {ok: false, rest: `c`})
-  assert.deepStrictEqual(fn(``),        {ok: false, rest: ``})
-}
 
 function test_sf_integer() {
   assert.deepStrictEqual(sf_integer()(`42`),  {ok, value: 42,  rest: ``})
@@ -519,32 +383,4 @@ function structured_field_tests() {
   })();
 }
 
-test_token()
-test_alt()
-test_list()
-test_repeat()
-test_sf_integer()
-test_sf_decimal()
-test_sf_string()
-test_char()
-test_unescaped()
-test_escaped()
-test_sf_token()
-test_sf_binary()
-test_sf_boolean()
-test_sf_list()
-test_repeat_list_member()
-test_list_member()
-test_inner_list()
-test_optional_inner_item()
-test_repeat_inner_item()
-test_sf_dictionary()
-test_repeat_dict_member()
-test_dict_member()
-test_member_value()
-test_sf_item()
-test_bare_item()
-test_parameters()
-test_parameter()
-test_sf_key()
 structured_field_tests()

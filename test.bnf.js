@@ -1,5 +1,4 @@
 import assert from "assert"
-import fs     from "fs"
 import base32 from "hi-base32"
 
 import {
