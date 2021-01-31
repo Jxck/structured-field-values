@@ -4,7 +4,7 @@
   "description": "Implementation of Structured Field Values from IETF httpbis https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19",
   "main": "index.js",
   "scripts": {
-    "test": "node test/test.js",
+    "test": "node test/test.js && npx tsc",
     "test:bnf": "node test/test.bnf.js"
   },
   "repository": {
@@ -20,6 +20,7 @@
   "author": "Jxck",
   "license": "MIT",
   "devDependencies": {
-    "hi-base32": "^0.5.0"
+    "hi-base32": "^0.5.0",
+    "typescript": "^4.1.3"
   }
 }
