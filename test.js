@@ -53,6 +53,17 @@ import {
   formatDict,
 } from "./test.util.js"
 
+function test_serializeKey() {
+  assert.deepStrictEqual((`a`), "a")
+  assert.deepStrictEqual((`*`), "*")
+  assert.deepStrictEqual((`*-_.*`), "*-_.*")
+  assert.deepStrictEqual((`****`), "****")
+  assert.deepStrictEqual((`a*`), "a*")
+  assert.deepStrictEqual((`a*0-_.*`), "a*0-_.*")
+  assert.throws(() => serializeKey(`#`))
+  assert.throws(() => serializeKey(`?`))
+}
+
 function test_decode() {
   assert.throws(() => decodeItem(`1;`))
   assert.throws(() => decodeList(`1,2,3)`))
@@ -423,6 +434,10 @@ function structured_field_tests() {
 }
 
 ;[
+
+  test_serializeKey,
+
+
   test_decode,
   test_parseIntegerOrDecimal,
   test_parseString,
