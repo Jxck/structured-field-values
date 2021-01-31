@@ -319,7 +319,7 @@ export function serializeBareItem(value) {
 //
 // 5.  Return output.
 export function serializeInteger(value) {
-  if (value < -999999999999999n || 999999999999999n < value) throw new Error(`failed to serialize ${value} as Integer`)
+  if (value < -999_999_999_999_999n || 999_999_999_999_999n < value) throw new Error(`failed to serialize ${value} as Integer`)
   return value.toString()
 }
 
@@ -358,8 +358,9 @@ export function serializeInteger(value) {
 //
 // 10.  Return output.
 export function serializeDecimal(value) {
-  if (value > 999999999999) throw new Error(`failed to serialize ${value} as Decimal`)
-  return (Math.round(value*1000)/1000).toString()
+  value = (Math.round(value*1000)/1000)
+  if (value < -1_000_000_000_000 || 1_000_000_000_000 < value) throw new Error(`failed to serialize ${value} as Decimal`)
+  return value.toString()
 }
 
 // 4.1.6.  Serializing a String

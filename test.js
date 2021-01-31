@@ -73,10 +73,20 @@ function test_serializeInteger() {
   assert.deepStrictEqual(serializeInteger(0), "0")
   assert.deepStrictEqual(serializeInteger(1), "1")
   assert.deepStrictEqual(serializeInteger(-1), "-1")
-  assert.deepStrictEqual(serializeInteger(-999999999999999n), "-999999999999999")
-  assert.deepStrictEqual(serializeInteger(999999999999999n),  "999999999999999")
-  assert.throws(() => serializeInteger(-999999999999999.1))
-  assert.throws(() => serializeInteger(999999999999999.1))
+  assert.deepStrictEqual(serializeInteger( 999_999_999_999_999),  "999999999999999")
+  assert.deepStrictEqual(serializeInteger(-999_999_999_999_999), "-999999999999999")
+  assert.throws(() => serializeInteger( 1_000_000_000_000_000))
+  assert.throws(() => serializeInteger(-1_000_000_000_000_000))
+}
+
+function test_serializeDecimal() {
+  assert.deepStrictEqual(serializeDecimal(0), "0") // 0.0 is 0 in JS
+  assert.deepStrictEqual(serializeDecimal(1.0), "1") // 1.0 is 1 in JS
+  assert.deepStrictEqual(serializeDecimal(1.01), "1.01")
+  assert.deepStrictEqual(serializeDecimal( 999_999_999_999.999),  "999999999999.999")
+  assert.deepStrictEqual(serializeDecimal(-999_999_999_999.999), "-999999999999.999")
+  assert.throws(() => serializeInteger( 1_000_000_000_000_000.1))
+  assert.throws(() => serializeInteger(-1_000_000_000_000_000.1))
 }
 
 function test_decode() {
@@ -453,6 +463,7 @@ function structured_field_tests() {
   test_serializeKey,
   test_serializeBareItem,
   test_serializeInteger,
+  test_serializeDecimal,
 
   test_decode,
   test_parseIntegerOrDecimal,
