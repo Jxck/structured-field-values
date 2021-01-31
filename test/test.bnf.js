@@ -30,7 +30,7 @@ import {
   parameters,
   parameter,
   sf_key,
-} from "../bnf.js"
+} from "../bnf/bnf.js"
 
 import {
   base64decode,

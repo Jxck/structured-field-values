@@ -1,6 +1,6 @@
 const ok = true
 
-import {base64decode, base64encode} from "./index.js"
+import {base64decode, base64encode} from "../index.js"
 
 /// parser
 export function parseItem(value) {
