@@ -473,7 +473,7 @@ export function parseList({input_string}) {
   return members
 }
 
-console.log(parseList({input_string: `"?0", "?1", "?0"`}))
+// console.log(parseList({input_string: `"?0", "?1", "?0"`}))
 
 
 
@@ -528,13 +528,11 @@ function parseItemOrInnerList({input_string}) {
 //
 //     5.  If the first character of input_string is not SP or ")", fail
 //         parsing.
+//
+// 4.  The end of the inner list was not found; fail parsing.
 function parseInnerList(input) {
 }
 
-
-
-// 4.  The end of the inner list was not found; fail parsing.
-//
 // 4.2.2.  Parsing a Dictionary
 //
 // Given an ASCII string as input_string, return an ordered map whose
@@ -585,9 +583,42 @@ function parseInnerList(input) {
 //
 // Note that when duplicate Dictionary keys are encountered, this has
 // the effect of ignoring all but the last instance.
-function parseDictionary(input_string) {
+function parseDictionary({input_string, option}) {
+  const value = [] // ordered map
 
+  function toDict(entries) {
+    if (option?.use_map === true) return new Map(entries)
+    return Object.fromEntries(entries)
+  }
+
+  while (input_string.length > 0) {
+    let member;
+    const parsedKey = parseKey({input_string})
+    let this_key = parsedKey.value
+    input_string = parsedKey.input_string
+    if (input_string[0] === "=") {
+      const parsedItemOrInnerList = parseItemOrInnerList({input_string: input_string.substr(1)})
+      member = parsedItemOrInnerList.value
+      input_string = parsedItemOrInnerList.input_string
+    } else {
+      const parsedParameters = parseParameters({input_string})
+      member = {
+        value: true,
+        params: parsedParameters.value
+      }
+      input_string = parsedParameters.input_string
+    }
+    value.push([this_key, member])
+    input_string = input_string.trim()
+    if (input_string.length === 0) return {input_string, value: toDict(value)}
+    if (input_string[0] !== ",") throw new Error(`failed to parse ${input_string}`)
+    input_string = input_string.substr(1).trim()
+    if (input_string.length === 0 || input_string[0] === ",") throw new Error(`failed to parse ${input_string}`)
+  }
+  return {input_string, value: toDict(value)}
 }
+
+//console.log(parseDictionary({input_string:`a="b",c=?0`}))
 
 // 4.2.3.  Parsing an Item
 //
