@@ -53,8 +53,11 @@ import {
   formatDict,
 } from "./test.util.js"
 
-// utility const
-const ok = true;
+function test_decode() {
+  assert.throws(() => decodeItem(`1;`))
+  assert.throws(() => decodeList(`1,2,3)`))
+  assert.throws(() => decodeDiect(`a=1, b=2)`))
+}
 
 function test_parseIntegerOrDecimal() {
   assert.deepStrictEqual(parseIntegerOrDecimal(`42`),   {value: 42,   input_string: ``})
@@ -420,6 +423,7 @@ function structured_field_tests() {
 }
 
 ;[
+  test_decode,
   test_parseIntegerOrDecimal,
   test_parseString,
   test_parseToken,
@@ -432,6 +436,7 @@ function structured_field_tests() {
   test_bareItem,
   test_parseParameters,
   test_parseKey,
+
   structured_field_tests,
 ].forEach((t) => {
   console.log(t.name)
