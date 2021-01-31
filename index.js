@@ -462,7 +462,6 @@ function serializeByteSequence(value) {
   return `:${base64encode(value)}:`
 }
 
-
 // 4.2.1.  Parsing a List
 //
 // Given an ASCII string as input_string, return an array of
@@ -493,21 +492,16 @@ function serializeByteSequence(value) {
 export function parseList(input_string) {
   const members = []
   while(input_string.length > 0) {
-    debugger
     const parsedItemOrInnerList = parseItemOrInnerList(input_string)
     members.push(parsedItemOrInnerList.value)
     input_string = parsedItemOrInnerList.input_string.trim()
-    if (input_string.length === 0) return {input_string: '', value: members}
+    if (input_string.length === 0) return {input_string, value: members}
     if (input_string[0] !== ",") throw new Error(`failed to parse ${input_string}`)
     input_string = input_string.substr(1).trim()
     if (input_string.length === 0 || input_string[0] === ",") throw new Error(`failed to parse ${input_string}`)
   }
-  return members
+  return {input_string, value: members}
 }
-
-// console.log(parseList({input_string: `"?0", "?1", "?0"`}))
-
-
 
 // 4.2.1.1.  Parsing an Item or Inner List
 //
@@ -523,7 +517,7 @@ export function parseList(input_string) {
 // 2.  Return the result of running Parsing an Item (Section 4.2.3) with
 //     input_string.
 function parseItemOrInnerList(input_string) {
-  if (input_string === "(") {
+  if (input_string[0] === "(") {
     return parseInnerList(input_string)
   }
   return parseItem(input_string)
@@ -587,8 +581,6 @@ function parseInnerList(input_string) {
   }
   throw new Error(`failed to parse ${input_string}`)
 }
-
-//console.log(parseInnerList({input_string:`( "1" "2" "3" )`}))
 
 // 4.2.2.  Parsing a Dictionary
 //
@@ -675,8 +667,6 @@ function parseDictionary(input_string, option = {}) {
   return {input_string, value: toDict(value)}
 }
 
-//console.log(parseDictionary({input_string:`a="b",c=?0`}))
-
 // 4.2.3.  Parsing an Item
 //
 // Given an ASCII string as input_string, return a (bare_item,
@@ -701,9 +691,6 @@ function parseItem(input_string) {
     input_string, value: { value, params }
   }
 }
-
-//console.log(parseItem("?1;b=?0"))
-
 
 // 4.2.3.1.  Parsing a Bare Item
 //
@@ -749,23 +736,6 @@ function parseBareItem(input_string) {
   }
   throw new Error(`failed to parse ${input_string}`)
 }
-
-
-// console.assert(parseBareItem(`a123_-.*`)                === `a123_-.*`)
-// console.assert(parseBareItem(`*a123`)                   === `*a123`)
-// console.assert(parseBareItem("0")                       === 0)
-// console.assert(parseBareItem("123")                     === 123)
-// console.assert(parseBareItem("123.456")                 === 123.456)
-// console.assert(parseBareItem(`"asdf"`)                  === `asdf`)
-// console.assert(parseBareItem(`"a\\""`)                  === `a\"`)
-// console.assert(parseBareItem(`"a\\\\"`)                 === `a\\`)
-// console.assert(parseBareItem(`"a\\\\c"`)                === `a\\c`)
-// console.assert(parseBareItem(`*foo123/456`)             === `*foo123/456`)
-// console.assert(parseBareItem(`foo123`)                  === `foo123`)
-// console.assert(parseBareItem(`ABC!#$%&'*+-.^_'|~:/012`) === `ABC!#$%&'*+-.^_'|~:/012`)
-// console.assert(parseBareItem("?1")                      === true)
-// console.assert(parseBareItem("?0")                      === false)
-
 
 // 4.2.3.2.  Parsing Parameters
 //
@@ -826,9 +796,6 @@ function parseParameters(input_string) {
   return {input_string, value: parameters}
 }
 
-//console.log(parseParameters({input_string: ";a;b"}))
-//console.log(parseParameters({input_string: ";a=?0;b,"}))
-
 // 4.2.3.3.  Parsing a Key
 //
 // Given an ASCII string as input_string, return a key. input_string is
@@ -871,10 +838,6 @@ function parseKey(input_string) {
     value: output_string
   }
 }
-
-// console.log(parseKey({input_string: `a123_-.*`})) // === `a123_-.*`)
-// console.log(parseKey({input_string: `*a123`   })) // === `*a123`)
-
 
 // 4.2.4.  Parsing an Integer or Decimal
 //
@@ -985,28 +948,6 @@ function parseIntegerOrDecimal(input_string) {
   }
 }
 
-//console.log(parseIntegerOrDecimal("0")      )
-//console.log(parseIntegerOrDecimal("123")    )
-//console.log(parseIntegerOrDecimal("123.456"))
-//console.log(parseIntegerOrDecimal("0.123.456"))
-//
-//;[
-//  "123.",
-//  "123.4567",
-//  "9999999999999999",
-//  "-9999999999999999",
-//  "1234567890123456",
-//  "1.234567890123456",
-//  "1234567890123.4",
-//].forEach((sfv) => {
-//  try {
-//    console.log(parseIntegerOrDecimal(sfv))
-//    console.assert(false)
-//  } catch (err) {
-//    console.assert(true)
-//  }
-//})
-
 // 4.2.5.  Parsing a String
 //
 // Given an ASCII string as input_string, return an unquoted String.
@@ -1077,21 +1018,6 @@ export function parseString(input_string) {
   throw new Error(`failed to parse ${input_string}`)
 }
 
-
-//console.log(parseString(`"asdf",`)) //  === `asdf`)
-//console.log(parseString(`"a\\"",`)  )
-//console.log(parseString(`"a\\\\",`) )
-//console.log(parseString(`"a\\\\c",`))
-
-//;[`"a\\"`, ``].forEach((sfv) => {
-//  try {
-//    console.log(parseString(sfv))
-//    console.assert(false)
-//  } catch (err) {
-//    console.assert(true)
-//  }
-//})
-
 // 4.2.6.  Parsing a Token
 //
 // Given an ASCII string as input_string, return a Token. input_string
@@ -1127,19 +1053,6 @@ function parseToken(input_string) {
     value: Symbol.for(output_string)
   }
 }
-
-//console.log(parseToken(`*foo123/456,`)            )
-//console.log(parseToken(`foo123,`)                 )
-//console.log(parseToken(`ABC!#$%&'*+-.^_'|~:/012,`))
-
-// try {
-//   console.log(parseToken(``))
-//   console.assert(false)
-// } catch(err) {
-//   console.assert(true)
-// }
-
-
 
 // 4.2.7.  Parsing a Byte Sequence
 //
@@ -1233,21 +1146,6 @@ function parseBoolean(input_string) {
   throw new Error(`failed to parse ${input_string.substr(i)}`)
 }
 
-//(parseBoolean({input_string: "?1;a=10"}))
-
-//console.assert(parseBoolean("?1") === true)
-//console.assert(parseBoolean("?0") === false)
-
-// try {
-//   const input = {input_string: "1", i: 0}
-//   parseBoolean(input)
-//   console.assert(false)
-// } catch(err) {
-//   console.assert(true)
-// }
-
-console.log({ok})
-
 /////////////////////////
 // base64 uility
 /////////////////////////
@@ -1266,4 +1164,3 @@ export function base64encode(binary) {
     return btoa(String.fromCharCode(...binary));
   }
 }
-
