@@ -576,6 +576,9 @@ function parseInnerList(input) {
 //
 // Note that when duplicate Dictionary keys are encountered, this has
 // the effect of ignoring all but the last instance.
+function parseDictionary(input_string) {
+
+}
 
 // 4.2.3.  Parsing an Item
 //
@@ -590,11 +593,19 @@ function parseInnerList(input) {
 //     (Section 4.2.3.2) with input_string.
 //
 // 3.  Return the tuple (bare_item, parameters).
-function parseItem(input) {
-
+function parseItem(input_string) {
+  const parsedBareItem  = parseBareItem({input_string})
+  const value = parsedBareItem.value
+  input_string = parsedBareItem.input_string
+  let parsedParameters = parseParameters({input_string})
+  const params = parsedParameters.value
+  input_string = parsedParameters.input_string
+  return {
+    input_string, value: { value, params }
+  }
 }
 
-
+console.log(parseItem("?1;b=?0"))
 
 
 // 4.2.3.1.  Parsing a Bare Item
@@ -622,41 +633,41 @@ function parseItem(input) {
 //     input_string.
 //
 // 6.  Otherwise, the item type is unrecognized; fail parsing.
-function parseBareItem(input_string) {
+function parseBareItem({input_string}) {
   let i = 0
   if (input_string[i] === `"`) {
-    return parseString(input_string)
+    return parseString({input_string})
   }
   if (input_string[i] === `:`) {
-    return parseByteSequence(input_string)
+    return parseByteSequence({input_string})
   }
   if (input_string[i] === `?`) {
-    return parseBoolean(input_string)
+    return parseBoolean({input_string})
   }
   if (/^[\-0-9]/.test(input_string[i])) {
-    return parseIntegerOrDecimal(input_string)
+    return parseIntegerOrDecimal({input_string})
   }
   if (/^[a-zA-Z\*]/.test(input_string[i])) {
-    return parseToken(input_string)
+    return parseToken({input_string})
   }
   throw new Error(`failed to parse ${input_string}`)
 }
 
 
-console.assert(parseBareItem(`a123_-.*`)                === `a123_-.*`)
-console.assert(parseBareItem(`*a123`)                   === `*a123`)
-console.assert(parseBareItem("0")                       === 0)
-console.assert(parseBareItem("123")                     === 123)
-console.assert(parseBareItem("123.456")                 === 123.456)
-console.assert(parseBareItem(`"asdf"`)                  === `asdf`)
-console.assert(parseBareItem(`"a\\""`)                  === `a\"`)
-console.assert(parseBareItem(`"a\\\\"`)                 === `a\\`)
-console.assert(parseBareItem(`"a\\\\c"`)                === `a\\c`)
-console.assert(parseBareItem(`*foo123/456`)             === `*foo123/456`)
-console.assert(parseBareItem(`foo123`)                  === `foo123`)
-console.assert(parseBareItem(`ABC!#$%&'*+-.^_'|~:/012`) === `ABC!#$%&'*+-.^_'|~:/012`)
-console.assert(parseBareItem("?1")                      === true)
-console.assert(parseBareItem("?0")                      === false)
+// console.assert(parseBareItem(`a123_-.*`)                === `a123_-.*`)
+// console.assert(parseBareItem(`*a123`)                   === `*a123`)
+// console.assert(parseBareItem("0")                       === 0)
+// console.assert(parseBareItem("123")                     === 123)
+// console.assert(parseBareItem("123.456")                 === 123.456)
+// console.assert(parseBareItem(`"asdf"`)                  === `asdf`)
+// console.assert(parseBareItem(`"a\\""`)                  === `a\"`)
+// console.assert(parseBareItem(`"a\\\\"`)                 === `a\\`)
+// console.assert(parseBareItem(`"a\\\\c"`)                === `a\\c`)
+// console.assert(parseBareItem(`*foo123/456`)             === `*foo123/456`)
+// console.assert(parseBareItem(`foo123`)                  === `foo123`)
+// console.assert(parseBareItem(`ABC!#$%&'*+-.^_'|~:/012`) === `ABC!#$%&'*+-.^_'|~:/012`)
+// console.assert(parseBareItem("?1")                      === true)
+// console.assert(parseBareItem("?0")                      === false)
 
 
 // 4.2.3.2.  Parsing Parameters
@@ -697,8 +708,29 @@ console.assert(parseBareItem("?0")                      === false)
 //
 // Note that when duplicate Parameter keys are encountered, this has the
 // effect of ignoring all but the last instance.
-function parseParameters(input) {
+function parseParameters({input_string}) {
+  const parameters = {}
+  while (input_string.length > 0) {
+    if (input_string[0] !== ";") break
+    input_string = input_string.substr(1).trim()
+    const parsedKey = parseKey({input_string})
+    let param_name = parsedKey.value
+    let param_value = true
+    input_string = parsedKey.input_string
+    if (input_string[0] === "=") {
+      input_string = input_string.substr(1)
+      const parsedBareItem = parseBareItem({input_string})
+      param_value = parsedBareItem.value
+      input_string = parsedBareItem.input_string
+    }
+    // override if param_name exists
+    parameters[param_name] = param_value
+  }
+  return {input_string, value: parameters}
 }
+
+//console.log(parseParameters({input_string: ";a;b"}))
+//console.log(parseParameters({input_string: ";a=?0;b,"}))
 
 // 4.2.3.3.  Parsing a Key
 //
@@ -721,7 +753,7 @@ function parseParameters(input) {
 //     3.  Append char to output_string.
 //
 // 4.  Return output_string.
-function parseKey(input_string) {
+function parseKey({input_string}) {
   let i = 0
   if (/^[a-z\*]$/.test(input_string[i]) === false) {
     throw new Error(`failed to parse ${input_string}`)
@@ -729,16 +761,22 @@ function parseKey(input_string) {
   let output_string = ""
   while(input_string.length > i) {
     if (/^[a-z0-9\_\-\.\*]$/.test(input_string[i]) === false) {
-      return output_string
+      return {
+        input_string: input_string.substr(i),
+        value: output_string
+      }
     }
     output_string += input_string[i]
     i ++
   }
-  return output_string
+  return {
+    input_string: input_string.substr(i),
+    value: output_string
+  }
 }
 
-console.assert(parseKey(`a123_-.*`) === `a123_-.*`)
-console.assert(parseKey(`*a123`)    === `*a123`)
+// console.log(parseKey({input_string: `a123_-.*`})) // === `a123_-.*`)
+// console.log(parseKey({input_string: `*a123`   })) // === `*a123`)
 
 
 // 4.2.4.  Parsing an Integer or Decimal
@@ -909,7 +947,7 @@ console.assert(parseIntegerOrDecimal("123.456") === 123.456)
 //
 // 5.  Reached the end of input_string without finding a closing DQUOTE;
 //     fail parsing.
-export function parseString(input_string) {
+export function parseString({input_string}) {
   let output_string = ""
   let i = 0
   if (input_string[i] !== `"`) {
@@ -928,7 +966,10 @@ export function parseString(input_string) {
       }
       output_string += input_string[i]
     } else if (input_string[i] === `"`) {
-      return output_string
+      return {
+        input_string: input_string.substr(++i),
+        value: output_string
+      }
     } else if (/[\x00-\x1f\x7f]+/.test(input_string[i])) {
       throw new Error(`failed to parse ${input_string}`)
     } else {
@@ -940,19 +981,19 @@ export function parseString(input_string) {
 }
 
 
-console.assert(parseString(`"asdf"`)   === `asdf`)
-console.assert(parseString(`"a\\""`)   === `a\"`)
-console.assert(parseString(`"a\\\\"`)  === `a\\`)
-console.assert(parseString(`"a\\\\c"`) === `a\\c`)
-
-;[`"a\\"`, ``].forEach((sfv) => {
-  try {
-    console.log(parseString(sfv))
-    console.assert(false)
-  } catch (err) {
-    console.assert(true)
-  }
-})
+// console.log(parseString({input_string: `"asdf"`})) //  === `asdf`)
+//console.assert(parseString(`"a\\""`)   === `a\"`)
+//console.assert(parseString(`"a\\\\"`)  === `a\\`)
+//console.assert(parseString(`"a\\\\c"`) === `a\\c`)
+//
+//;[`"a\\"`, ``].forEach((sfv) => {
+//  try {
+//    console.log(parseString(sfv))
+//    console.assert(false)
+//  } catch (err) {
+//    console.assert(true)
+//  }
+//})
 
 // 4.2.6.  Parsing a Token
 //
@@ -1047,11 +1088,6 @@ try {
 // Section 3.1 and 3.3; therefore, parsers MUST fail on characters
 // outside the base64 alphabet, and on line feeds in encoded data.
 function parseByteSequence(input_string) {
-  let i = 0
-  if (input_string[i] !== ":") {
-    throw new Error(`failed to parse ${input_string}`)
-  }
-  i ++
 }
 
 // 4.2.8.  Parsing a Boolean
@@ -1070,26 +1106,35 @@ function parseByteSequence(input_string) {
 //     first character, and return false.
 //
 // 5.  No value has matched; fail parsing.
-function parseBoolean(input_string) {
+function parseBoolean({input_string}) {
   let i = 0
   if (input_string[i] !== "?") {
-    throw new Error(`failed to parse ${input_string}`)
+    throw new Error(`failed to parse ${input_string.substr(i)}`)
   }
   i ++
   if (input_string[i] === "1") {
-    return true
+    return {
+      input_string: input_string.substr(++i),
+      value: true
+    }
   }
   if (input_string[i] === "0") {
-    return false
+    return {
+      input_string: input_string.substr(++i),
+      value: false
+    }
   }
-  throw new Error(`failed to parse ${input_string}`)
+  throw new Error(`failed to parse ${input_string.substr(i)}`)
 }
 
-console.assert(parseBoolean("?1") === true)
-console.assert(parseBoolean("?0") === false)
+(parseBoolean({input_string: "?1;a=10"}))
+
+//console.assert(parseBoolean("?1") === true)
+//console.assert(parseBoolean("?0") === false)
 
 try {
-  parseBoolean("1")
+  const input = {input_string: "1", i: 0}
+  parseBoolean(input)
   console.assert(false)
 } catch(err) {
   console.assert(true)
