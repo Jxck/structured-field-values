@@ -1,3 +1,7 @@
+const ok = true
+
+import {base64decode, base64encode} from "./index.js"
+
 /// parser
 export function parseItem(value) {
   // trim leading/trailing space

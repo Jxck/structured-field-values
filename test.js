@@ -9,15 +9,15 @@ import {
   decodeItem,
   decodeList,
   decodeDict,
-  parseItem,
-  parseList,
-  parseDict,
+  base64decode,
+  base64encode,
+} from "./index.js"
+
+import {
   token,
   alt,
   list,
   repeat,
-  base64decode,
-  base64encode,
   sf_integer,
   sf_decimal,
   sf_string,
@@ -42,7 +42,8 @@ import {
   parameters,
   parameter,
   sf_key,
-} from "./index.js"
+} from "./bnf.js"
+
 
 function log(...arg) {
   try {
