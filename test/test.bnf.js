@@ -30,12 +30,12 @@ import {
   parameters,
   parameter,
   sf_key,
-} from "./bnf.js"
+} from "../bnf.js"
 
 import {
   base64decode,
   base64encode,
-} from "./index.js"
+} from "../index.js"
 
 import {
   log,

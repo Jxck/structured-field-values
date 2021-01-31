@@ -4,7 +4,8 @@
   "description": "Implementation of Structured Field Values from IETF httpbis https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19",
   "main": "index.js",
   "scripts": {
-    "test": "node test.js"
+    "test": "node test/test.js",
+    "test:bnf": "node test/test.bnf.js"
   },
   "repository": {
     "type": "git",

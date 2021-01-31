@@ -38,8 +38,7 @@ import {
 
   base64decode,
   base64encode,
-
-} from "./index.js"
+} from "../index.js"
 
 import {
   log,
