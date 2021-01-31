@@ -410,7 +410,11 @@ export function serializeString(value) {
 //
 // 5.  Return output.
 export function serializeToken(value) {
-  return Symbol.keyFor(value)
+  value = Symbol.keyFor(value)
+  if (/^([a-zA-Z\*])([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]*)$/.test(value) === false) {
+    throw new Error(`failed to serialize ${value} as token`)
+  }
+  return value
 }
 
 // 4.1.9.  Serializing a Boolean

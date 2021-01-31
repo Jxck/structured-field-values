@@ -97,9 +97,46 @@ function test_serializeString() {
   assert.throws(() => serializeString("str\x1fing"))
   assert.throws(() => serializeString("str\x7fing"))
 }
+
 function test_serializeToken() {
-  // TODO:
+  assert.deepStrictEqual(serializeToken(s("token")),  `token`)
+
+  assert.deepStrictEqual(serializeToken(s(`to!ken`)), `to!ken`)
+  assert.deepStrictEqual(serializeToken(s(`to#ken`)), `to#ken`)
+  assert.deepStrictEqual(serializeToken(s(`to$ken`)), `to$ken`)
+  assert.deepStrictEqual(serializeToken(s(`to%ken`)), `to%ken`)
+  assert.deepStrictEqual(serializeToken(s(`to&ken`)), `to&ken`)
+  assert.deepStrictEqual(serializeToken(s(`to'ken`)), `to'ken`)
+  assert.deepStrictEqual(serializeToken(s(`to*ken`)), `to*ken`)
+  assert.deepStrictEqual(serializeToken(s(`to+ken`)), `to+ken`)
+  assert.deepStrictEqual(serializeToken(s(`to-ken`)), `to-ken`)
+  assert.deepStrictEqual(serializeToken(s(`to.ken`)), `to.ken`)
+  assert.deepStrictEqual(serializeToken(s(`to^ken`)), `to^ken`)
+  assert.deepStrictEqual(serializeToken(s(`to_ken`)), `to_ken`)
+  assert.deepStrictEqual(serializeToken(s('to`ken')), 'to`ken')
+  assert.deepStrictEqual(serializeToken(s(`to|ken`)), `to|ken`)
+  assert.deepStrictEqual(serializeToken(s(`to~ken`)), `to~ken`)
+  assert.deepStrictEqual(serializeToken(s(`towken`)), `towken`)
+  assert.deepStrictEqual(serializeToken(s(`to:ken`)), `to:ken`)
+  assert.deepStrictEqual(serializeToken(s(`to/ken`)), `to/ken`)
+
+  assert.throws(() => serializeToken(s(`to"ken`)))
+  assert.throws(() => serializeToken(s(`to(ken`)))
+  assert.throws(() => serializeToken(s(`to)ken`)))
+  assert.throws(() => serializeToken(s(`to,ken`)))
+  assert.throws(() => serializeToken(s(`to;ken`)))
+  assert.throws(() => serializeToken(s(`to<ken`)))
+  assert.throws(() => serializeToken(s(`to=ken`)))
+  assert.throws(() => serializeToken(s(`to>ken`)))
+  assert.throws(() => serializeToken(s(`to?ken`)))
+  assert.throws(() => serializeToken(s(`to@ken`)))
+  assert.throws(() => serializeToken(s(`to[ken`)))
+  assert.throws(() => serializeToken(s(`to\\ken`)))
+  assert.throws(() => serializeToken(s(`to]ken`)))
+  assert.throws(() => serializeToken(s(`to{ken`)))
+  assert.throws(() => serializeToken(s(`to}ken`)))
 }
+
 function test_serializeBoolean() {
   // TODO:
 }
