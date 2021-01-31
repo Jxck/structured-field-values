@@ -463,6 +463,7 @@ export function serializeBoolean(value) {
 // [RFC4648], Section 3.5, unless it is not possible to do so due to
 // implementation constraints.
 export function serializeByteSequence(value) {
+  if (ArrayBuffer.isView(value) === false) throw new Error(`failed to serialize ${value} as Byte Sequence`)
   return `:${base64encode(value)}:`
 }
 
