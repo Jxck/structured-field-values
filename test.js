@@ -7,8 +7,38 @@ import {
   decodeItem,
   decodeList,
   decodeDict,
+
+  serializeList,
+  serializeInnerList,
+  serializeParams,
+  serializeKey,
+  serializeDict,
+  serializeItem,
+  serializeBareItem,
+  serializeInteger,
+  serializeDecimal,
+  serializeString,
+  serializeToken,
+  serializeBoolean,
+  serializeByteSequence,
+
+  parseList,
+  parseItemOrInnerList,
+  parseInnerList,
+  parseDictionary,
+  parseItem,
+  parseBareItem,
+  parseParameters,
+  parseKey,
+  parseIntegerOrDecimal,
+  parseString,
+  parseToken,
+  parseByteSequence,
+  parseBoolean,
+
   base64decode,
   base64encode,
+
 } from "./index.js"
 
 import {
@@ -26,94 +56,71 @@ import {
 // utility const
 const ok = true;
 
-function test_sf_integer() {
-  assert.deepStrictEqual(sf_integer()(`42`),  {ok, value: 42,  rest: ``})
-  assert.deepStrictEqual(sf_integer()(`-42`), {ok, value: -42, rest: ``})
-  assert.deepStrictEqual(sf_integer()(`4.2`), {ok, value: 4,   rest: `.2`})
-  assert.deepStrictEqual(sf_integer()(`4a`),  {ok, value: 4,   rest: `a`})
-  assert.deepStrictEqual(sf_integer()(`a`),   {ok: false, rest: `a`})
-  assert.deepStrictEqual(sf_integer()(``),    {ok: false, rest: ``})
+function test_parseIntegerOrDecimal() {
+  assert.deepStrictEqual(parseIntegerOrDecimal(`42`),   {value: 42,   input_string: ``})
+  assert.deepStrictEqual(parseIntegerOrDecimal(`-42`),  {value: -42,  input_string: ``})
+  assert.deepStrictEqual(parseIntegerOrDecimal(`4.2`),  {value: 4.2,  input_string: ``})
+  assert.deepStrictEqual(parseIntegerOrDecimal(`4a`),   {value: 4,    input_string: `a`})
+  assert.deepStrictEqual(parseIntegerOrDecimal(`4.5`),  {value: 4.5,  input_string: ``})
+  assert.deepStrictEqual(parseIntegerOrDecimal(`-4.5`), {value: -4.5, input_string: ``})
+  assert.deepStrictEqual(parseIntegerOrDecimal(`4.0`),  {value: 4,    input_string: ``})
+  assert.throws(() => parseIntegerOrDecimal(`a`))
+  assert.throws(() => parseIntegerOrDecimal(``))
 }
 
-function test_sf_decimal() {
-  assert.deepStrictEqual(sf_decimal()(`4.5`),  {ok, value: 4.5,  rest: ``})
-  assert.deepStrictEqual(sf_decimal()(`-4.5`), {ok, value: -4.5, rest: ``})
-  assert.deepStrictEqual(sf_decimal()(`4.0`),  {ok, value: 4,    rest: ``})
-  assert.deepStrictEqual(sf_decimal()(`45`),   {ok: false, rest: `45`})
-  assert.deepStrictEqual(sf_decimal()(``),     {ok: false, rest: ``})
+function test_parseString() {
+  assert.deepStrictEqual(parseString(`"asdf"`),   {value: `asdf`, input_string: ``})
+  assert.deepStrictEqual(parseString(`"!#[]"`),   {value: `!#[]`, input_string: ``})
+  assert.deepStrictEqual(parseString(`"a""`),     {value: `a`,    input_string: `"`})
+  assert.deepStrictEqual(parseString(`"a\\\""`),  {value: `a"`,   input_string: ``})
+  assert.deepStrictEqual(parseString(`"a\\\\c"`), {value: `a\\c`, input_string: ``})
+  assert.throws(() => parseString(`"a\\"`))
+  assert.throws(() => parseString(`"\\a"`))
+  assert.throws(() => parseString(``))
 }
 
-function test_sf_string() {
-  assert.deepStrictEqual(sf_string()(`"asdf"`),  {ok, value: `asdf`, rest: ``})
-  assert.deepStrictEqual(sf_string()(`"a""`),    {ok, value: `a`,    rest: `"`})
-  assert.deepStrictEqual(sf_string()(`"a\\\""`), {ok, value: `a"`,   rest: ``})
-  assert.deepStrictEqual(sf_string()(`"a\\\\c"`),{ok, value: `a\\c`, rest: ``})
-  assert.deepStrictEqual(sf_string()(`"a\\"`),   {ok: false, rest: `"a\\"`})
-  assert.deepStrictEqual(sf_string()(``),        {ok: false, rest: ``})
+function test_parseToken() {
+  assert.deepStrictEqual(parseToken(`*foo123/456`),             {value: s(`*foo123/456`),             input_string: ``})
+  assert.deepStrictEqual(parseToken(`foo123;456`),              {value: s(`foo123`),                  input_string: `;456`})
+  assert.deepStrictEqual(parseToken(`ABC!#$%&'*+-.^_'|~:/012`), {value: s(`ABC!#$%&'*+-.^_'|~:/012`), input_string: ``})
+  assert.throws(() => parsetoken(``))
 }
 
-function test_char() {
-  // test_unescaped / test_escaped
-}
-
-function test_unescaped() {
-  assert.deepStrictEqual(unescaped()(` `),  {ok, value: ` `, rest: ``})   // x20
-  assert.deepStrictEqual(unescaped()(`!`),  {ok, value: `!`, rest: ``})   // x21
-  assert.deepStrictEqual(unescaped()(`"`),  {ok: false,      rest: `"`})  // x22
-  assert.deepStrictEqual(unescaped()(`#`),  {ok, value: `#`, rest: ``})   // x23
-  assert.deepStrictEqual(unescaped()(`[`),  {ok, value: `[`, rest: ``})   // x5B
-  assert.deepStrictEqual(unescaped()(`\\`), {ok: false,      rest: `\\`}) // x5C
-  assert.deepStrictEqual(unescaped()(`]`),  {ok, value: `]`, rest: ``})   // x5D
-}
-
-function test_escaped() {
-  assert.deepStrictEqual(escaped()(`\\"`),  {ok, value: `"`,  rest: ``})
-  assert.deepStrictEqual(escaped()(`\\\\`), {ok, value: `\\`, rest: ``})
-  assert.deepStrictEqual(escaped()(`\\a`),  {ok: false,       rest: `\\a`})
-}
-
-function test_sf_token() {
-  assert.deepStrictEqual(sf_token()(`*foo123/456`),             {ok, value: s(`*foo123/456`),             rest: ``})
-  assert.deepStrictEqual(sf_token()(`foo123;456`),              {ok, value: s(`foo123`),                  rest: `;456`})
-  assert.deepStrictEqual(sf_token()(`ABC!#$%&'*+-.^_'|~:/012`), {ok, value: s(`ABC!#$%&'*+-.^_'|~:/012`), rest: ``})
-  assert.deepStrictEqual(sf_token()(``), {ok: false, rest: ``})
-}
-
-function test_sf_binary() {
+function test_parseByteSequence() {
   const value = Uint8Array.from([
     112, 114, 101, 116, 101, 110, 100, 32, 116, 104, 105, 115, 32,
     105, 115, 32, 98, 105, 110, 97, 114, 121, 32, 99, 111, 110, 116,
     101, 110, 116, 46
   ])
-  assert.deepStrictEqual(sf_binary()(`:cHJldGVuZCB0aGlzIGlzIGJpbmFyeSBjb250ZW50Lg==:`), {ok, value, rest: ``})
-  assert.deepStrictEqual(sf_binary()(``), {ok:false, rest: ``})
+  assert.deepStrictEqual(parseByteSequence(`:cHJldGVuZCB0aGlzIGlzIGJpbmFyeSBjb250ZW50Lg==:`), {value, input_string: ``})
+  assert.throws(() => parseByteSequence(``))
 }
 
-function test_sf_boolean() {
-  assert.deepStrictEqual(sf_boolean()(`?0`), {ok, value: false, rest: ``})
-  assert.deepStrictEqual(sf_boolean()(`?1`), {ok, value: true,  rest: ``})
-  assert.deepStrictEqual(sf_boolean()(``),   {ok: false,        rest: ``})
+function test_parseBoolean() {
+  assert.deepStrictEqual(parseBoolean(`?0`), {value: false, input_string: ``})
+  assert.deepStrictEqual(parseBoolean(`?1`), {value: true,  input_string: ``})
+  assert.throws(() => parseBoolean(``))
 }
 
-function test_sf_list() {
+function test_parseList() {
   assert.deepStrictEqual(
-    sf_list()(`"foo", "bar", "It was the best of times."`),
-    {ok, value: [
+    parseList(`"foo", "bar", "It was the best of times."`),
+    { value: [
       { value: `foo`, params: {} },
       { value: `bar`, params: {} },
       { value: `It was the best of times.`, params: {} }
-    ], rest: ``}
+    ], input_string: ``}
   )
   assert.deepStrictEqual(
-    sf_list()(`foo, bar`),
-    {ok, value: [
+    parseList(`foo, bar`),
+    { value: [
       { value: s(`foo`), params: {} },
       { value: s(`bar`), params: {} },
-    ], rest: ``}
+    ], input_string: ``}
   )
   assert.deepStrictEqual(
-    sf_list()(`("foo" "bar"), ("baz"), ("bat" "one"), ()`),
-    {ok, value: [
+    parseList(`("foo" "bar"), ("baz"), ("bat" "one"), ()`),
+    { value: [
       {
         value: [
           { value: "foo", params: {} },
@@ -138,9 +145,9 @@ function test_sf_list() {
         value: [],
         params: {}
       }
-    ], rest: ``}
+    ], input_string: ``}
   )
-  assert.deepStrictEqual(sf_list()(`("foo"; a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), {ok, value: [
+  assert.deepStrictEqual(parseList(`("foo"; a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), {value: [
     {
       value: [
         { value: "foo", params: { "a": 1, "b": 2 } }
@@ -154,141 +161,123 @@ function test_sf_list() {
       ],
       params: { "lvl": 1 }
     }
-  ], rest: ``})
-  assert.deepStrictEqual(sf_list()(``), {ok: false, rest: ``})
+  ], input_string: ``})
 }
 
-function test_repeat_list_member() {
-  // omit
-}
-
-function test_list_member() {
-  // test_sf_item / test_inner_list
-}
-
-function test_inner_list() {
-  assert.deepStrictEqual(inner_list()(`( 1 2 3 )`), {ok, value: {
-    value: [
-      { value: 1, params: {} },
-      { value: 2, params: {} },
-      { value: 3, params: {} }
-    ],
-    params: {}
-  }, rest: ``})
-  assert.deepStrictEqual(inner_list()(`(1)`), {ok, value: {
-    value: [
-      { value: 1, params: {} },
-    ],
-    params: {}
-  }, rest: ``})
-  assert.deepStrictEqual(inner_list()(`()`), {ok, value: {
-    value: [],
-    params: {}
-  }, rest: ``})
-}
-
-function test_optional_inner_item() {
-  // omit
-}
-
-function test_repeat_inner_item() {
-  // omit
-}
-
-function test_sf_dictionary() {
-  assert.deepStrictEqual(sf_dictionary()(`en="Applepie", da=:w4ZibGV0w6ZydGU=:`), {ok, value: {
-    "en": { value: `Applepie`, params: {} },
-    "da": { value: new Uint8Array([195,134,98,108,101,116,195,166,114,116,101]), params: {} }
-  }, rest: ``})
-
-  assert.deepEqual(sf_dictionary()(`a=?0, b, c; foo=bar`), {ok, value: {
-    "a": { value: false, params: {} },
-    "b": { value: true,  params: {} },
-    "c": { value: true,  params: { "foo": s("bar") } }
-  }, rest: `` })
-
-  assert.deepStrictEqual(sf_dictionary()(`rating=1.5, feelings=(joy sadness)`), {ok, value: {
-    "rating": { value: 1.5, params: {} },
-    "feelings": {
-      value: [
-        { value: s("joy"),     params: {} },
-        { value: s("sadness"), params: {} }
-      ],
-      params: {}
-    }
-  }, rest:``})
-
-  assert.deepStrictEqual(sf_dictionary()(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {ok, value: {
-    "a": {
+function test_parseInnerList() {
+  assert.deepStrictEqual(parseInnerList(`( 1 2 3 )`), {
+    value: {
       value: [
         { value: 1, params: {} },
-        { value: 2, params: {} }
+        { value: 2, params: {} },
+        { value: 3, params: {} }
       ],
       params: {}
     },
-    "b": {
-      value: 3,
-      params: {},
-    },
-    "c": {
-      value: 4,
-      params: { "aa": s("bb") },
-    },
-    "d": {
+    input_string: ``})
+  assert.deepStrictEqual(parseInnerList(`(1)`), {
+    value: {
       value: [
-        { value: 5, params: {} },
-        { value: 6, params: {} }
+        { value: 1, params: {} },
       ],
-      params: { "valid": true }
+      params: {}
     },
-  }, rest: ``})
+    input_string: ``})
+  assert.deepStrictEqual(parseInnerList(`()`), {
+    value: {
+      value: [],
+      params: {}
+    },
+    input_string: ``})
 }
 
-function test_repeat_dict_member() {
-  // omit
+function test_parseDictionary() {
+  assert.deepStrictEqual(parseDictionary(`en="Applepie", da=:w4ZibGV0w6ZydGU=:`), {
+    value: {
+      "en": { value: `Applepie`, params: {} },
+      "da": { value: new Uint8Array([195,134,98,108,101,116,195,166,114,116,101]), params: {} }
+    },
+    input_string: ``
+  })
+
+  assert.deepEqual(parseDictionary(`a=?0, b, c; foo=bar`), {
+    value: {
+      "a": { value: false, params: {} },
+      "b": { value: true,  params: {} },
+      "c": { value: true,  params: { "foo": s("bar") } }
+    },
+    input_string: ``
+  })
+
+  assert.deepStrictEqual(parseDictionary(`rating=1.5, feelings=(joy sadness)`), {
+    value: {
+      "rating": { value: 1.5, params: {} },
+      "feelings": {
+        value: [
+          { value: s("joy"),     params: {} },
+          { value: s("sadness"), params: {} }
+        ],
+        params: {}
+      }
+    },
+    input_string:``
+  })
+
+  assert.deepStrictEqual(parseDictionary(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {
+    value: {
+      "a": {
+        value: [
+          { value: 1, params: {} },
+          { value: 2, params: {} }
+        ],
+        params: {}
+      },
+      "b": {
+        value: 3,
+        params: {},
+      },
+      "c": {
+        value: 4,
+        params: { "aa": s("bb") },
+      },
+      "d": {
+        value: [
+          { value: 5, params: {} },
+          { value: 6, params: {} }
+        ],
+        params: { "valid": true }
+      },
+    },
+    input_string: ``
+  })
 }
 
-function test_dict_member() {
-  // omit
+function test_parseItem() {
+  assert.deepStrictEqual(parseItem(`123;a=1;b`), {value: {value: 123, params: {"a":1, "b":true}}, input_string: ``})
+  assert.throws(() => parseItem(``))
 }
 
-function test_member_value() {
-  // test_sf_item / test_inner_list
-}
-
-function test_sf_item() {
-  assert.deepStrictEqual(sf_item()(`123;a=1;b`), {ok, value: {value: 123, params: {"a":1, "b":true}}, rest: ``})
-  assert.deepStrictEqual(sf_item()(``),          {ok: false, rest: ``})
-}
-
-function test_bare_item() {
-  assert.deepStrictEqual(bare_item()(`123`),        {ok, value: 123,         rest: ``})
-  assert.deepStrictEqual(bare_item()(`3.14`),       {ok, value: 3.14,        rest: ``})
-  assert.deepStrictEqual(bare_item()(`string`),     {ok, value: s(`string`), rest: ``})
-  assert.deepStrictEqual(bare_item()(`string`),     {ok, value: s(`string`), rest: ``})
-  assert.deepStrictEqual(bare_item()(`foo123;456`), {ok, value: s(`foo123`), rest: `;456`})
+function test_bareItem() {
+  assert.deepStrictEqual(parseBareItem(`123`),        {value: 123,         input_string: ``})
+  assert.deepStrictEqual(parseBareItem(`3.14`),       {value: 3.14,        input_string: ``})
+  assert.deepStrictEqual(parseBareItem(`string`),     {value: s(`string`), input_string: ``})
+  assert.deepStrictEqual(parseBareItem(`string`),     {value: s(`string`), input_string: ``})
+  assert.deepStrictEqual(parseBareItem(`foo123;456`), {value: s(`foo123`), input_string: `;456`})
+  assert.deepStrictEqual(parseBareItem(`?1`),         {value: true,     input_string: ``})
   const binary = new Uint8Array([1,2,3,4,5])
-  assert.deepStrictEqual(bare_item()(`:${base64encode(binary)}:`), {ok, value: binary, rest: ``})
-  assert.deepStrictEqual(bare_item()(`?1`),         {ok, value: true,     rest: ``})
+  assert.deepStrictEqual(parseBareItem(`:${base64encode(binary)}:`), {value: binary, input_string: ``})
 }
 
-function test_parameters() {
-  assert.deepStrictEqual(parameters()(`;a=0`),         {ok, value: {"a": 0},                         rest: ``})
-  assert.deepStrictEqual(parameters()(`;a`),           {ok, value: {"a": true},                      rest: ``})
-  assert.deepStrictEqual(parameters()(`;  a;  b=?0`),  {ok, value: {"a": true, "b": false},          rest: ``})
-  assert.deepStrictEqual(parameters()(`;a;b=?0;c=10`), {ok, value: {"a": true, "b": false, "c": 10}, rest: ``})
+function test_parseParameters() {
+  assert.deepStrictEqual(parseParameters(`;a=0`),         {value: {"a": 0},                         input_string: ``})
+  assert.deepStrictEqual(parseParameters(`;a`),           {value: {"a": true},                      input_string: ``})
+  assert.deepStrictEqual(parseParameters(`;  a;  b=?0`),  {value: {"a": true, "b": false},          input_string: ``})
+  assert.deepStrictEqual(parseParameters(`;a;b=?0;c=10`), {value: {"a": true, "b": false, "c": 10}, input_string: ``})
 }
 
-function test_parameter() {
-  assert.deepStrictEqual(parameter()(`a`),    {ok, value: [`a`, true],  rest: ``})
-  assert.deepStrictEqual(parameter()(`b=?0`), {ok, value: [`b`, false], rest: ``})
-  assert.deepStrictEqual(parameter()(`c=10`), {ok, value: [`c`, 10],    rest: ``})
-  assert.deepStrictEqual(parameter()(``),     {ok: false, rest: ``})
-}
-
-function test_sf_key() {
-  assert.deepStrictEqual(sf_key()(`a123_-.*`), {ok, value: `a123_-.*`, rest: ``})
-  assert.deepStrictEqual(sf_key()(`*a123`),    {ok, value: `*a123`,    rest: ``})
+function test_parseKey() {
+  assert.deepStrictEqual(parseKey(`a123_-.*`), {value: `a123_-.*`, input_string: ``})
+  assert.deepStrictEqual(parseKey(`*a123`),    {value: `*a123`,    input_string: ``})
 }
 
 function structured_field_tests() {
@@ -383,4 +372,21 @@ function structured_field_tests() {
   })();
 }
 
-structured_field_tests()
+;[
+  test_parseIntegerOrDecimal,
+  test_parseString,
+  test_parseToken,
+  test_parseByteSequence,
+  test_parseBoolean,
+  test_parseList,
+  test_parseInnerList,
+  test_parseDictionary,
+  test_parseItem,
+  test_bareItem,
+  test_parseParameters,
+  test_parseKey,
+  structured_field_tests,
+].forEach((t) => {
+  console.log(t.name)
+  t()
+})
