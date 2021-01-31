@@ -1153,6 +1153,18 @@ function parseToken(input_string) {
 // Section 3.1 and 3.3; therefore, parsers MUST fail on characters
 // outside the base64 alphabet, and on line feeds in encoded data.
 function parseByteSequence(input_string) {
+  if (input_string[0] !== ":") throw new Error(`failed to parse ${input_string}`)
+  input_string = input_string.substr(1)
+  if (input_string.includes(":") === false) throw new Error(`failed to parse ${input_string}`)
+  const re = /(^.*?)(:)/g
+  const b64_content = re.exec(input_string)[1]
+  input_string = input_string.substr(re.lastIndex)
+  // pass b64_content char check step 6
+  const binary_content = base64decode(b64_content)
+  return {
+    value: binary_content,
+    input_string
+  }
 }
 
 // 4.2.8.  Parsing a Boolean
@@ -1174,7 +1186,7 @@ function parseByteSequence(input_string) {
 function parseBoolean(input_string) {
   let i = 0
   if (input_string[i] !== "?") {
-    throw new Error(`failed to parse ${input_string.substr(i)}`)
+    throw new Error(`failed to parse ${input_string}`)
   }
   i ++
   if (input_string[i] === "1") {
@@ -1206,3 +1218,23 @@ function parseBoolean(input_string) {
 // }
 
 console.log({ok})
+
+/////////////////////////
+// base64 uility
+/////////////////////////
+export function base64decode(str) {
+  if (typeof window === `undefined`) {
+    return Uint8Array.from(Buffer.from(str, `base64`))
+  } else {
+    return new Uint8Array([...atob(str)].map(a => a.charCodeAt(0)));
+  }
+}
+
+export function base64encode(binary) {
+  if (typeof window === `undefined`) {
+    return Buffer.from(binary).toString(`base64`)
+  } else {
+    return btoa(String.fromCharCode(...binary));
+  }
+}
+
