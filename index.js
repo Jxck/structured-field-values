@@ -174,9 +174,8 @@ export function serializeParams(params) {
 // 5.  Append input_key to output.
 //
 // 6.  Return output.
-const KEY_FORMAT = /^[a-z\*][a-z0-9\-\_\.\*]*$/
 export function serializeKey(value) {
-  if (KEY_FORMAT.test(value) === false) {
+  if (/^[a-z\*][a-z0-9\-\_\.\*]*$/.test(value) === false) {
     throw new Error(`failed to serialize ${value} as key`)
   }
   return value
