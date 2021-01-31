@@ -319,7 +319,7 @@ export function serializeBareItem(value) {
 //     only decimal digits to output.
 //
 // 5.  Return output.
-function serializeInteger(value) {
+export function serializeInteger(value) {
   if (value < -999999999999999n || 999999999999999n < value) throw new Error(`failed to serialize ${value} as integer`)
   return value.toString()
 }
@@ -358,7 +358,7 @@ function serializeInteger(value) {
 //      digits) to output.
 //
 // 10.  Return output.
-function serializeDecimal(value) {
+export function serializeDecimal(value) {
   if (value > 999999999999) throw new Error(`failed to serialize ${value} decimal`)
   return (Math.round(value*1000)/1000).toString()
 }
@@ -387,7 +387,7 @@ function serializeDecimal(value) {
 // 5.  Append DQUOTE to output.
 //
 // 6.  Return output.
-function serializeString(value) {
+export function serializeString(value) {
   if (/[\x00-\x1f\x7f]+/.test(value)) throw new Error(`failed to serialize ${value} as string`)
   return `"${value.replace(/\\/g, `\\\\`).replace(/"/g, `\\\"`)}"`
 }
@@ -409,7 +409,7 @@ function serializeString(value) {
 // 4.  Append input_token to output.
 //
 // 5.  Return output.
-function serializeToken(value) {
+export function serializeToken(value) {
   return Symbol.keyFor(value)
 }
 
@@ -429,7 +429,7 @@ function serializeToken(value) {
 // 5.  If input_boolean is false, append "0" to output.
 //
 // 6.  Return output.
-function serializeBoolean(value) {
+export function serializeBoolean(value) {
   return value ? "?1" : "?0"
 }
 
@@ -457,7 +457,7 @@ function serializeBoolean(value) {
 // Likewise, encoded data SHOULD have pad bits set to zero, as per
 // [RFC4648], Section 3.5, unless it is not possible to do so due to
 // implementation constraints.
-function serializeByteSequence(value) {
+export function serializeByteSequence(value) {
   return `:${base64encode(value)}:`
 }
 
@@ -515,7 +515,7 @@ export function parseList(input_string) {
 //
 // 2.  Return the result of running Parsing an Item (Section 4.2.3) with
 //     input_string.
-function parseItemOrInnerList(input_string) {
+export function parseItemOrInnerList(input_string) {
   if (input_string[0] === "(") {
     return parseInnerList(input_string)
   }
@@ -555,7 +555,7 @@ function parseItemOrInnerList(input_string) {
 //         parsing.
 //
 // 4.  The end of the inner list was not found; fail parsing.
-function parseInnerList(input_string) {
+export function parseInnerList(input_string) {
   if (input_string[0] !== "(") throw new Error(`failed to parse ${input_string} as Inner List`)
   input_string = input_string.substr(1)
   const inner_list = []
@@ -631,7 +631,7 @@ function parseInnerList(input_string) {
 //
 // Note that when duplicate Dictionary keys are encountered, this has
 // the effect of ignoring all but the last instance.
-function parseDictionary(input_string, option = {}) {
+export function parseDictionary(input_string, option = {}) {
   const value = [] // ordered map
 
   function toDict(entries) {
@@ -679,7 +679,7 @@ function parseDictionary(input_string, option = {}) {
 //     (Section 4.2.3.2) with input_string.
 //
 // 3.  Return the tuple (bare_item, parameters).
-function parseItem(input_string) {
+export function parseItem(input_string) {
   const parsedBareItem  = parseBareItem(input_string)
   const value = parsedBareItem.value
   input_string = parsedBareItem.input_string
@@ -716,7 +716,7 @@ function parseItem(input_string) {
 //     input_string.
 //
 // 6.  Otherwise, the item type is unrecognized; fail parsing.
-function parseBareItem(input_string) {
+export function parseBareItem(input_string) {
   let i = 0
   if (input_string[i] === `"`) {
     return parseString(input_string)
@@ -774,7 +774,7 @@ function parseBareItem(input_string) {
 //
 // Note that when duplicate Parameter keys are encountered, this has the
 // effect of ignoring all but the last instance.
-function parseParameters(input_string) {
+export function parseParameters(input_string) {
   const parameters = {}
   while (input_string.length > 0) {
     if (input_string[0] !== ";") break
@@ -816,7 +816,7 @@ function parseParameters(input_string) {
 //     3.  Append char to output_string.
 //
 // 4.  Return output_string.
-function parseKey(input_string) {
+export function parseKey(input_string) {
   let i = 0
   if (/^[a-z\*]$/.test(input_string[i]) === false) {
     throw new Error(`failed to parse ${input_string} as Key`)
@@ -903,7 +903,7 @@ function parseKey(input_string) {
 //          be the product of the result and sign.
 //
 // 10.  Return output_number.
-function parseIntegerOrDecimal(input_string) {
+export function parseIntegerOrDecimal(input_string) {
   let type = "integer"
   let sign = 1
   let input_number = ""
@@ -1038,7 +1038,7 @@ export function parseString(input_string) {
 //     3.  Append char to output_string.
 //
 // 4.  Return output_string.
-function parseToken(input_string) {
+export function parseToken(input_string) {
   if (/^[a-zA-Z\*]$/.test(input_string[0]) === false) {
     throw new Error(`failed to parse ${input_string} as Token`)
   }
@@ -1093,7 +1093,7 @@ function parseToken(input_string) {
 // This specification does not relax the requirements in [RFC4648],
 // Section 3.1 and 3.3; therefore, parsers MUST fail on characters
 // outside the base64 alphabet, and on line feeds in encoded data.
-function parseByteSequence(input_string) {
+export function parseByteSequence(input_string) {
   if (input_string[0] !== ":") throw new Error(`failed to parse ${input_string} as Byte Sequence`)
   input_string = input_string.substr(1)
   if (input_string.includes(":") === false) throw new Error(`failed to parse ${input_string} as Byte Sequence`)
@@ -1124,7 +1124,7 @@ function parseByteSequence(input_string) {
 //     first character, and return false.
 //
 // 5.  No value has matched; fail parsing.
-function parseBoolean(input_string) {
+export function parseBoolean(input_string) {
   let i = 0
   if (input_string[i] !== "?") {
     throw new Error(`failed to parse ${input_string} as Boolean`)
