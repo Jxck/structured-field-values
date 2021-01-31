@@ -530,8 +530,34 @@ function parseItemOrInnerList({input_string}) {
 //         parsing.
 //
 // 4.  The end of the inner list was not found; fail parsing.
-function parseInnerList(input) {
+function parseInnerList({input_string}) {
+  debugger
+  if (input_string[0] !== "(") throw new Error(`failed to parse ${input_string}`)
+  input_string = input_string.substr(1)
+  const inner_list = []
+  while(input_string.length > 0) {
+    input_string = input_string.trim()
+    if (input_string[0] === ")") {
+      input_string = input_string.substr(1)
+      const parsedParameters = parseParameters({input_string})
+      let params = parsedParameters.value
+      return {
+        value: {
+          value: inner_list,
+          params: parsedParameters.value,
+        },
+        input_string: parsedParameters.input_string,
+      }
+    }
+    const parsedItem = parseItem({input_string})
+    inner_list.push(parsedItem.value)
+    input_string = parsedItem.input_string
+    if (input_string[0] !== " " && input_string[0] !== ")") throw new Error(`failed to parse ${input_string}`)
+  }
+  throw new Error(`failed to parse ${input_string}`)
 }
+
+console.log(parseInnerList({input_string:`( "1" "2" "3" )`}))
 
 // 4.2.2.  Parsing a Dictionary
 //
