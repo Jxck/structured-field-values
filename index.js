@@ -945,67 +945,67 @@ function parseIntegerOrDecimal(input_string) {
   let type = "integer"
   let sign = 1
   let input_number = ""
+  let output_number;
   let i = 0
 
   if (input_string[i] === "-") {
     sign = -1
-    i ++
+    input_string = input_string.substr(1)
   }
-  if (input_string.length <= i || /^\d$/.test(input_string[i]) === false) {
-    throw new Error(`failed to parse ${input_string}`)
-  }
+  if (input_string.length <= 0) throw new Error(`failed to parse ${input_string}`)
 
-  while (input_string.length > i ) {
-    if (/^\d$/.test(input_string[i])) {
-      input_number += input_string[i]
-    } else if (type === "integer" && /\./.test(input_string[i])) {
-      if (input_number.length > 12) throw new Error(`failed to parse ${input_string}`)
-      input_number += input_string[i]
-      type = "decimal"
-    } else {
-      i--
-      break
-    }
-    if (type === "integer" && input_number.length > 15) {
-      throw new Error(`failed to parse ${input_string}`)
-    }
-    if (type === "decimal" && input_number.length > 16) {
-      throw new Error(`failed to parse ${input_string}`)
-    }
-    i ++
-  }
+  const re_integer = /^(\d+)?/g
+  const result_integer = re_integer.exec(input_string)
+  if (result_integer[0].length === 0) throw new Error(`failed to parse ${input_string}`)
+  input_number += result_integer[1]
+  input_string = input_string.substr(re_integer.lastIndex)
 
-  let output_number
-  if (type === "integer") {
+  if (input_string[0] === ".") {
+    // decimal
+    if (input_number.length > 12) throw new Error(`failed to parse ${input_string}`)
+    const re_decimal = /^(\.\d+)?/g
+    const result_decimal = re_decimal.exec(input_string)
+    input_string = input_string.substr(re_decimal.lastIndex)
+    // 9.2.  If the number of characters after "." in input_number is greater than three, fail parsing.
+    if (result_decimal[0].length === 0 || result_decimal[1].length > 4) throw new Error(`failed to parse ${input_string}`)
+    input_number += result_decimal[1]
+    // 7.6.  If type is "decimal" and input_number contains more than 16 characters, fail parsing.
+    if (input_number.length > 16) throw new Error(`failed to parse ${input_string}`)
+    output_number = parseFloat(input_number) * sign
+  } else {
+    // integer
+    // 7.5.  If type is "integer" and input_number contains more than 15 characters, fail parsing.
+    if (input_number.length > 15) throw new Error(`failed to parse ${input_string}`)
     output_number = parseInt(input_number) * sign
     if (output_number < -999999999999999n || 999999999999999n < output_number) throw new Error(`fail to parse integer: ${input_number}`)
-  } else {
-    if (/\.\d{1,3}$/.test(input_number) === false) throw new Error(`fail to parse decimal: ${input_number}`)
-    output_number = parseFloat(input_number) * sign
   }
-  return output_number
+  return {
+    value: output_number,
+    input_string
+  }
 }
 
-// console.assert(parseIntegerOrDecimal("0")       === 0)
-// console.assert(parseIntegerOrDecimal("123")     === 123)
-// console.assert(parseIntegerOrDecimal("123.456") === 123.456)
-// 
-// ;[
-//   "123.",
-//   "123.4567",
-//   "9999999999999999",
-//   "-9999999999999999",
-//   "1234567890123456",
-//   "1.234567890123456",
-//   "1234567890123.4",
-// ].forEach((sfv) => {
-//   try {
-//     console.log(parseIntegerOrDecimal(sfv))
-//     console.assert(false)
-//   } catch (err) {
-//     console.assert(true)
-//   }
-// })
+//console.log(parseIntegerOrDecimal("0")      )
+//console.log(parseIntegerOrDecimal("123")    )
+//console.log(parseIntegerOrDecimal("123.456"))
+//console.log(parseIntegerOrDecimal("0.123.456"))
+//
+//;[
+//  "123.",
+//  "123.4567",
+//  "9999999999999999",
+//  "-9999999999999999",
+//  "1234567890123456",
+//  "1.234567890123456",
+//  "1234567890123.4",
+//].forEach((sfv) => {
+//  try {
+//    console.log(parseIntegerOrDecimal(sfv))
+//    console.assert(false)
+//  } catch (err) {
+//    console.assert(true)
+//  }
+//})
 
 // 4.2.5.  Parsing a String
 //
