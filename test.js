@@ -89,6 +89,19 @@ function test_serializeDecimal() {
   assert.throws(() => serializeInteger(-1_000_000_000_000_000.1))
 }
 
+function test_serializeString() {
+  // TODO:
+}
+function test_serializeToken() {
+  // TODO:
+}
+function test_serializeBoolean() {
+  // TODO:
+}
+function test_serializeByteSequence() {
+  // TOOD:
+}
+
 function test_decode() {
   assert.throws(() => decodeItem(`1;`))
   assert.throws(() => decodeList(`1,2,3)`))
@@ -464,6 +477,10 @@ function structured_field_tests() {
   test_serializeBareItem,
   test_serializeInteger,
   test_serializeDecimal,
+  test_serializeString,
+  test_serializeToken,
+  test_serializeBoolean,
+  test_serializeByteSequence,
 
   test_decode,
   test_parseIntegerOrDecimal,
