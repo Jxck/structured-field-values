@@ -458,13 +458,22 @@ function serializeByteSequence(value) {
 //
 // 3.  No structured data has been found; return members (which is
 //     empty).
-export function parseList(input) {
+export function parseList({input_string}) {
   const members = []
-  while(value !== '') {
-    parseItemOrInnerList()
+  while(input_string.length > 0) {
+    debugger
+    const parsedItemOrInnerList = parseItemOrInnerList({input_string})
+    members.push(parsedItemOrInnerList.value)
+    input_string = parsedItemOrInnerList.input_string.trim()
+    if (input_string.length === 0) return {input_string: '', value: members}
+    if (input_string[0] !== ",") throw new Error(`failed to parse ${input_string}`)
+    input_string = input_string.substr(1).trim()
+    if (input_string.length === 0 || input_string[0] === ",") throw new Error(`failed to parse ${input_string}`)
   }
   return members
 }
+
+console.log(parseList({input_string: `"?0", "?1", "?0"`}))
 
 
 
@@ -481,11 +490,11 @@ export function parseList(input) {
 //
 // 2.  Return the result of running Parsing an Item (Section 4.2.3) with
 //     input_string.
-function parseItemOrInnerList(input) {
-  if (input === "(") {
-    return parseInnerList(input)
+function parseItemOrInnerList({input_string}) {
+  if (input_string === "(") {
+    return parseInnerList({input_string})
   }
-  return parseItem(input)
+  return parseItem({input_string})
 }
 
 // 4.2.1.2.  Parsing an Inner List
@@ -593,7 +602,7 @@ function parseDictionary(input_string) {
 //     (Section 4.2.3.2) with input_string.
 //
 // 3.  Return the tuple (bare_item, parameters).
-function parseItem(input_string) {
+function parseItem({input_string}) {
   const parsedBareItem  = parseBareItem({input_string})
   const value = parsedBareItem.value
   input_string = parsedBareItem.input_string
@@ -605,7 +614,7 @@ function parseItem(input_string) {
   }
 }
 
-console.log(parseItem("?1;b=?0"))
+//console.log(parseItem("?1;b=?0"))
 
 
 // 4.2.3.1.  Parsing a Bare Item
@@ -889,26 +898,26 @@ function parseIntegerOrDecimal(input_string) {
   return output_number
 }
 
-console.assert(parseIntegerOrDecimal("0")       === 0)
-console.assert(parseIntegerOrDecimal("123")     === 123)
-console.assert(parseIntegerOrDecimal("123.456") === 123.456)
-
-;[
-  "123.",
-  "123.4567",
-  "9999999999999999",
-  "-9999999999999999",
-  "1234567890123456",
-  "1.234567890123456",
-  "1234567890123.4",
-].forEach((sfv) => {
-  try {
-    console.log(parseIntegerOrDecimal(sfv))
-    console.assert(false)
-  } catch (err) {
-    console.assert(true)
-  }
-})
+// console.assert(parseIntegerOrDecimal("0")       === 0)
+// console.assert(parseIntegerOrDecimal("123")     === 123)
+// console.assert(parseIntegerOrDecimal("123.456") === 123.456)
+// 
+// ;[
+//   "123.",
+//   "123.4567",
+//   "9999999999999999",
+//   "-9999999999999999",
+//   "1234567890123456",
+//   "1.234567890123456",
+//   "1234567890123.4",
+// ].forEach((sfv) => {
+//   try {
+//     console.log(parseIntegerOrDecimal(sfv))
+//     console.assert(false)
+//   } catch (err) {
+//     console.assert(true)
+//   }
+// })
 
 // 4.2.5.  Parsing a String
 //
@@ -1034,16 +1043,16 @@ function parseToken(input_string) {
   return output_string
 }
 
-console.assert(parseToken(`*foo123/456`)             === `*foo123/456`)
-console.assert(parseToken(`foo123`)                  === `foo123`)
-console.assert(parseToken(`ABC!#$%&'*+-.^_'|~:/012`) === `ABC!#$%&'*+-.^_'|~:/012`)
+//console.assert(parseToken(`*foo123/456`)             === `*foo123/456`)
+//console.assert(parseToken(`foo123`)                  === `foo123`)
+//console.assert(parseToken(`ABC!#$%&'*+-.^_'|~:/012`) === `ABC!#$%&'*+-.^_'|~:/012`)
 
-try {
-  console.log(parseToken(``))
-  console.assert(false)
-} catch(err) {
-  console.assert(true)
-}
+// try {
+//   console.log(parseToken(``))
+//   console.assert(false)
+// } catch(err) {
+//   console.assert(true)
+// }
 
 
 
@@ -1132,12 +1141,12 @@ function parseBoolean({input_string}) {
 //console.assert(parseBoolean("?1") === true)
 //console.assert(parseBoolean("?0") === false)
 
-try {
-  const input = {input_string: "1", i: 0}
-  parseBoolean(input)
-  console.assert(false)
-} catch(err) {
-  console.assert(true)
-}
+// try {
+//   const input = {input_string: "1", i: 0}
+//   parseBoolean(input)
+//   console.assert(false)
+// } catch(err) {
+//   console.assert(true)
+// }
 
 console.log({ok})
