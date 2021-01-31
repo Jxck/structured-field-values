@@ -53,20 +53,30 @@ import {
   formatDict,
 } from "./test.util.js"
 
+function test_serializeKey() {
+  assert.deepStrictEqual(serializeKey(`a`), "a")
+  assert.deepStrictEqual(serializeKey(`*`), "*")
+  assert.deepStrictEqual(serializeKey(`*-_.*`), "*-_.*")
+  assert.deepStrictEqual(serializeKey(`****`), "****")
+  assert.deepStrictEqual(serializeKey(`a*`), "a*")
+  assert.deepStrictEqual(serializeKey(`a*0-_.*`), "a*0-_.*")
+  assert.throws(() => serializeKey(`#`))
+  assert.throws(() => serializeKey(`?`))
+}
+
 function test_serializeBareItem() {
   assert.throws(() => serializeBareItem([]))
   assert.throws(() => serializeBareItem({}))
 }
 
-function test_serializeKey() {
-  assert.deepStrictEqual((`a`), "a")
-  assert.deepStrictEqual((`*`), "*")
-  assert.deepStrictEqual((`*-_.*`), "*-_.*")
-  assert.deepStrictEqual((`****`), "****")
-  assert.deepStrictEqual((`a*`), "a*")
-  assert.deepStrictEqual((`a*0-_.*`), "a*0-_.*")
-  assert.throws(() => serializeKey(`#`))
-  assert.throws(() => serializeKey(`?`))
+function test_serializeInteger() {
+  assert.deepStrictEqual(serializeInteger(0), "0")
+  assert.deepStrictEqual(serializeInteger(1), "1")
+  assert.deepStrictEqual(serializeInteger(-1), "-1")
+  assert.deepStrictEqual(serializeInteger(-999999999999999n), "-999999999999999")
+  assert.deepStrictEqual(serializeInteger(999999999999999n),  "999999999999999")
+  assert.throws(() => serializeInteger(-999999999999999.1))
+  assert.throws(() => serializeInteger(999999999999999.1))
 }
 
 function test_decode() {
@@ -442,6 +452,7 @@ function structured_field_tests() {
 
   test_serializeKey,
   test_serializeBareItem,
+  test_serializeInteger,
 
   test_decode,
   test_parseIntegerOrDecimal,
