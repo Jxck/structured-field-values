@@ -89,6 +89,10 @@ export function decodeDict(input) {
 //         2.  Append a single SP to output.
 //
 // 3.  Return output.
+/**
+ * @param {Array} list
+ * @return {string}
+ */
 export function serializeList(list) {
   return list.map(({value, params}) => {
     if (Array.isArray(value)) {
@@ -120,8 +124,12 @@ export function serializeList(list) {
 //     (Section 4.1.1.2) with list_parameters to output.
 //
 // 5.  Return output.
-export function serializeInnerList({value, params}) {
-  return `(${value.map(serializeItem).join(" ")})${serializeParams(params)}`
+/**
+ * @param {Object} value
+ * @return {string}
+ */
+export function serializeInnerList(value) {
+  return `(${value.value.map(serializeItem).join(" ")})${serializeParams(value.params)}`
 }
 
 // 4.1.1.2.  Serializing Parameters
@@ -148,6 +156,10 @@ export function serializeInnerList({value, params}) {
 //             (Section 4.1.3.1) with param_value to output.
 //
 // 3.  Return output.
+/**
+ * @param {Object} params
+ * @return {string}
+ */
 export function serializeParams(params) {
   return Object.entries(params).map(([key, value]) => {
     if (value === true) return `;${serializeKey(key)}` // omit true
@@ -174,6 +186,10 @@ export function serializeParams(params) {
 // 5.  Append input_key to output.
 //
 // 6.  Return output.
+/**
+ * @param {string} value
+ * @return {string}
+ */
 export function serializeKey(value) {
   if (/^[a-z\*][a-z0-9\-\_\.\*]*$/.test(value) === false) {
     throw new Error(`failed to serialize ${value} as Key`)
@@ -219,6 +235,10 @@ export function serializeKey(value) {
 //         2.  Append a single SP to output.
 //
 // 3.  Return output.
+/**
+ * @param {Object} dict
+ * @return {string}
+ */
 export function serializeDict(dict) {
   return Object.entries(dict).map(([key, {value, params}]) => {
     let output = serializeKey(key)
@@ -250,8 +270,12 @@ export function serializeDict(dict) {
 //     Section 4.1.1.2 with item_parameters to output.
 //
 // 4.  Return output.
-export function serializeItem({value, params}) {
-  return `${serializeBareItem(value)}${serializeParams(params)}`
+/**
+ * @param {Object} value
+ * @return {string}
+ */
+export function serializeItem(value) {
+  return `${serializeBareItem(value.value)}${serializeParams(value.params)}`
 }
 
 // 4.1.3.1.  Serializing a Bare Item
@@ -278,6 +302,10 @@ export function serializeItem({value, params}) {
 //     Serializing a Byte Sequence (Section 4.1.8) with input_item.
 //
 // 7.  Otherwise, fail serialization.
+/**
+ * @param {any} value
+ * @return {string}
+ */
 export function serializeBareItem(value) {
   switch (typeof value) {
     case "number":
@@ -318,6 +346,10 @@ export function serializeBareItem(value) {
 //     only decimal digits to output.
 //
 // 5.  Return output.
+/**
+ * @param {number} value
+ * @return {string}
+ */
 export function serializeInteger(value) {
   if (value < -999_999_999_999_999n || 999_999_999_999_999n < value) throw new Error(`failed to serialize ${value} as Integer`)
   return value.toString()
@@ -357,6 +389,10 @@ export function serializeInteger(value) {
 //      digits) to output.
 //
 // 10.  Return output.
+/**
+ * @param {number} value
+ * @return {string}
+ */
 export function serializeDecimal(value) {
   value = (Math.round(value*1000)/1000)
   if (value < -1_000_000_000_000 || 1_000_000_000_000 < value) throw new Error(`failed to serialize ${value} as Decimal`)
@@ -387,6 +423,10 @@ export function serializeDecimal(value) {
 // 5.  Append DQUOTE to output.
 //
 // 6.  Return output.
+/**
+ * @param {string} value
+ * @return {string}
+ */
 export function serializeString(value) {
   if (/[\x00-\x1f\x7f]+/.test(value)) throw new Error(`failed to serialize ${value} as string`)
   return `"${value.replace(/\\/g, `\\\\`).replace(/"/g, `\\\"`)}"`
@@ -409,8 +449,13 @@ export function serializeString(value) {
 // 4.  Append input_token to output.
 //
 // 5.  Return output.
-export function serializeToken(value) {
-  value = Symbol.keyFor(value)
+/**
+ * @param {symbol} token
+ * @return {string}
+ */
+export function serializeToken(token) {
+  /** @type {string} */
+  const value = Symbol.keyFor(token)
   if (/^([a-zA-Z\*])([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]*)$/.test(value) === false) {
     throw new Error(`failed to serialize ${value} as token`)
   }
@@ -433,6 +478,10 @@ export function serializeToken(value) {
 // 5.  If input_boolean is false, append "0" to output.
 //
 // 6.  Return output.
+/**
+ * @param {boolean} value
+ * @return {string}
+ */
 export function serializeBoolean(value) {
   if (typeof value !== "boolean") throw new Error(`failed to serialize ${value} as boolean`)
   return value ? "?1" : "?0"
@@ -462,6 +511,10 @@ export function serializeBoolean(value) {
 // Likewise, encoded data SHOULD have pad bits set to zero, as per
 // [RFC4648], Section 3.5, unless it is not possible to do so due to
 // implementation constraints.
+/**
+ * @param {Uint8Array} value
+ * @retrn string
+ */
 export function serializeByteSequence(value) {
   if (ArrayBuffer.isView(value) === false) throw new Error(`failed to serialize ${value} as Byte Sequence`)
   return `:${base64encode(value)}:`
@@ -494,9 +547,19 @@ export function serializeByteSequence(value) {
 //
 // 3.  No structured data has been found; return members (which is
 //     empty).
+/**
+ * @typedef {Object} ParsedList
+ * @property {Array.<Item|InnerList>} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedList}
+ */
 export function parseList(input_string) {
+  /** @type {Array.<Item|InnerList>} */
   const members = []
   while(input_string.length > 0) {
+    /** @type {ParsedItemOrInnerList} */
     const parsedItemOrInnerList = parseItemOrInnerList(input_string)
     members.push(parsedItemOrInnerList.value)
     input_string = parsedItemOrInnerList.input_string.trim()
@@ -521,6 +584,12 @@ export function parseList(input_string) {
 //
 // 2.  Return the result of running Parsing an Item (Section 4.2.3) with
 //     input_string.
+/**
+ * @typedef {ParsedItem|ParsedInnerList} ParsedItemOrInnerList
+ *
+ * @param {string} input_string
+ * @return {ParsedItemOrInnerList}
+ */
 export function parseItemOrInnerList(input_string) {
   if (input_string[0] === "(") {
     return parseInnerList(input_string)
@@ -561,15 +630,29 @@ export function parseItemOrInnerList(input_string) {
 //         parsing.
 //
 // 4.  The end of the inner list was not found; fail parsing.
+/**
+ * @typedef {Array.<Item>} ItemList
+ *
+ * @typedef {{value: ItemList, params: Parameters}} InnerList
+ *
+ * @typedef {Object} ParsedInnerList
+ * @property {InnerList} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedInnerList}
+ */
 export function parseInnerList(input_string) {
   if (input_string[0] !== "(") throw new Error(`failed to parse ${input_string} as Inner List`)
   input_string = input_string.substr(1)
+  /** @type {ItemList}  */
   const inner_list = []
   while(input_string.length > 0) {
     input_string = input_string.trim()
     if (input_string[0] === ")") {
       input_string = input_string.substr(1)
       const parsedParameters = parseParameters(input_string)
+      /** @type {Parameters} */
       let params = parsedParameters.value
       return {
         value: {
@@ -579,6 +662,7 @@ export function parseInnerList(input_string) {
         input_string: parsedParameters.input_string,
       }
     }
+    /** @type {ParsedItem} */
     const parsedItem = parseItem(input_string)
     inner_list.push(parsedItem.value)
     input_string = parsedItem.input_string
@@ -637,24 +721,43 @@ export function parseInnerList(input_string) {
 //
 // Note that when duplicate Dictionary keys are encountered, this has
 // the effect of ignoring all but the last instance.
+/**
+ * @typedef {Object} ParsedDictionary
+ * @property {Object} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @param {Object?} option
+ * @return {ParsedDictionary}
+ */
 export function parseDictionary(input_string, option = {}) {
+  /** @type {Array.<[string, Item|InnerList]>} */
   const value = [] // ordered map
 
+  /**
+   * @param {Array.<[string, Item|InnerList]>} entries
+   * @return Object
+   */
   function toDict(entries) {
     if (option?.use_map === true) return new Map(entries)
     return Object.fromEntries(entries)
   }
 
   while (input_string.length > 0) {
+    /** @type {Item|InnerList} */
     let member;
+    /** @type {ParsedKey} */
     const parsedKey = parseKey(input_string)
-    let this_key = parsedKey.value
+    /** @type {Key} */
+    const this_key = parsedKey.value
     input_string = parsedKey.input_string
     if (input_string[0] === "=") {
+      /** @type {ParsedItemOrInnerList} */
       const parsedItemOrInnerList = parseItemOrInnerList(input_string.substr(1))
       member = parsedItemOrInnerList.value
       input_string = parsedItemOrInnerList.input_string
     } else {
+      /** @type {ParsedParameters} */
       const parsedParameters = parseParameters(input_string)
       member = {
         value: true,
@@ -685,6 +788,18 @@ export function parseDictionary(input_string, option = {}) {
 //     (Section 4.2.3.2) with input_string.
 //
 // 3.  Return the tuple (bare_item, parameters).
+/**
+ * @typedef {Object} Item
+ * @property {BareItem} value
+ * @property {Parameters} params
+ *
+ * @typedef {Object} ParsedItem
+ * @property {Item} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedItem}
+ */
 export function parseItem(input_string) {
   const parsedBareItem  = parseBareItem(input_string)
   const value = parsedBareItem.value
@@ -692,8 +807,11 @@ export function parseItem(input_string) {
   let parsedParameters = parseParameters(input_string)
   const params = parsedParameters.value
   input_string = parsedParameters.input_string
+  /** Item */
+  const item = {value, params}
   return {
-    input_string, value: { value, params }
+    value: item,
+    input_string,
   }
 }
 
@@ -722,6 +840,12 @@ export function parseItem(input_string) {
 //     input_string.
 //
 // 6.  Otherwise, the item type is unrecognized; fail parsing.
+/**
+ * @typedef {ParsedString|ParsedByteSequence|ParsedBoolean|ParsedIntegerOrDecimal|ParsedToken} ParsedBareItem
+ *
+ * @param {string} input_string
+ * @return {ParsedBareItem}
+ */
 export function parseBareItem(input_string) {
   let i = 0
   if (input_string[i] === `"`) {
@@ -780,25 +904,45 @@ export function parseBareItem(input_string) {
 //
 // Note that when duplicate Parameter keys are encountered, this has the
 // effect of ignoring all but the last instance.
+/**
+ * @typedef {string | Uint8Array | boolean | number | symbol} BareItem
+ *
+ * @typedef {Object.<Key, BareItem>} Parameters
+ *
+ * @typedef {Object} ParsedParameters
+ * @property {Parameters} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedParameters}
+ */
 export function parseParameters(input_string) {
+  /** @type {Parameters} */
   const parameters = {}
   while (input_string.length > 0) {
     if (input_string[0] !== ";") break
     input_string = input_string.substr(1).trim()
+    /** @type {ParsedKey} */
     const parsedKey = parseKey(input_string)
-    let param_name = parsedKey.value
+    /** @type {Key} */
+    const param_name  = parsedKey.value
+    /** @type {BareItem} */
     let param_value = true
     input_string = parsedKey.input_string
     if (input_string[0] === "=") {
       input_string = input_string.substr(1)
+      /** @type {ParsedBareItem} */
       const parsedBareItem = parseBareItem(input_string)
-      param_value = parsedBareItem.value
+      param_value  = parsedBareItem.value
       input_string = parsedBareItem.input_string
     }
     // override if param_name exists
     parameters[param_name] = param_value
   }
-  return {input_string, value: parameters}
+  return {
+    value: parameters,
+    input_string,
+  }
 }
 
 // 4.2.3.3.  Parsing a Key
@@ -822,6 +966,16 @@ export function parseParameters(input_string) {
 //     3.  Append char to output_string.
 //
 // 4.  Return output_string.
+/**
+ * @typedef {string} Key
+ *
+ * @typedef {Object} ParsedKey
+ * @property {Key} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedKey}
+ */
 export function parseKey(input_string) {
   let i = 0
   if (/^[a-z\*]$/.test(input_string[i]) === false) {
@@ -831,8 +985,8 @@ export function parseKey(input_string) {
   while(input_string.length > i) {
     if (/^[a-z0-9\_\-\.\*]$/.test(input_string[i]) === false) {
       return {
+        value: output_string,
         input_string: input_string.substr(i),
-        value: output_string
       }
     }
     output_string += input_string[i]
@@ -909,6 +1063,14 @@ export function parseKey(input_string) {
 //          be the product of the result and sign.
 //
 // 10.  Return output_number.
+/**
+ * @typedef {Object} ParsedIntegerOrDecimal
+ * @property {string} input_string
+ * @property {number} value
+ *
+ * @param {string} input_string
+ * @return {ParsedIntegerOrDecimal}
+ */
 export function parseIntegerOrDecimal(input_string) {
   let type = "integer"
   let sign = 1
@@ -990,6 +1152,14 @@ export function parseIntegerOrDecimal(input_string) {
 //
 // 5.  Reached the end of input_string without finding a closing DQUOTE;
 //     fail parsing.
+/**
+ * @typedef {Object} ParsedString
+ * @property {string} value
+ * @property {string} input_string
+ *
+ * @param  {string} input_string
+ * @return {ParsedString}
+ */
 export function parseString(input_string) {
   let output_string = ""
   let i = 0
@@ -1010,8 +1180,8 @@ export function parseString(input_string) {
       output_string += input_string[i]
     } else if (input_string[i] === `"`) {
       return {
+        value: output_string,
         input_string: input_string.substr(++i),
-        value: output_string
       }
     } else if (/[\x00-\x1f\x7f]+/.test(input_string[i])) {
       throw new Error(`failed to parse ${input_string} as String`)
@@ -1044,18 +1214,24 @@ export function parseString(input_string) {
 //     3.  Append char to output_string.
 //
 // 4.  Return output_string.
+/**
+ * @typedef {Object} ParsedToken
+ * @property {symbol} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedToken}
+ */
 export function parseToken(input_string) {
   if (/^[a-zA-Z\*]$/.test(input_string[0]) === false) {
     throw new Error(`failed to parse ${input_string} as Token`)
   }
-
   const re = /^([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]+)/g
   const output_string = re.exec(input_string)[1]
   input_string = input_string.substr(re.lastIndex)
-  // TODO: to Symbol
   return {
+    value: Symbol.for(output_string),
     input_string,
-    value: Symbol.for(output_string)
   }
 }
 
@@ -1099,6 +1275,14 @@ export function parseToken(input_string) {
 // This specification does not relax the requirements in [RFC4648],
 // Section 3.1 and 3.3; therefore, parsers MUST fail on characters
 // outside the base64 alphabet, and on line feeds in encoded data.
+/**
+ * @typedef {Object} ParsedByteSequence
+ * @property {Uint8Array} value
+ * @property {string} input_string
+ *
+ * @param  {string} input_string
+ * @return {ParsedByteSequence}
+ */
 export function parseByteSequence(input_string) {
   if (input_string[0] !== ":") throw new Error(`failed to parse ${input_string} as Byte Sequence`)
   input_string = input_string.substr(1)
@@ -1110,7 +1294,7 @@ export function parseByteSequence(input_string) {
   const binary_content = base64decode(b64_content)
   return {
     value: binary_content,
-    input_string
+    input_string,
   }
 }
 
@@ -1130,6 +1314,14 @@ export function parseByteSequence(input_string) {
 //     first character, and return false.
 //
 // 5.  No value has matched; fail parsing.
+/**
+ * @typedef {Object} ParsedBoolean
+ * @property {boolean} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedBoolean}
+ */
 export function parseBoolean(input_string) {
   let i = 0
   if (input_string[i] !== "?") {
@@ -1138,14 +1330,14 @@ export function parseBoolean(input_string) {
   i ++
   if (input_string[i] === "1") {
     return {
+      value: true,
       input_string: input_string.substr(++i),
-      value: true
     }
   }
   if (input_string[i] === "0") {
     return {
+      value: false,
       input_string: input_string.substr(++i),
-      value: false
     }
   }
   throw new Error(`failed to parse ${input_string} as Boolean`)
@@ -1154,18 +1346,26 @@ export function parseBoolean(input_string) {
 /////////////////////////
 // base64 uility
 /////////////////////////
+/**
+ * @param {string} str
+ * @return {Uint8Array}
+ */
 export function base64decode(str) {
   if (typeof window === `undefined`) {
-    return Uint8Array.from(Buffer.from(str, `base64`))
+    return Uint8Array.from(/**@type {node.Buffer}*/Buffer.from(str, `base64`))
   } else {
-    return new Uint8Array([...atob(str)].map(a => a.charCodeAt(0)));
+    return new Uint8Array([...atob(str)].map(a => a.charCodeAt(0)))
   }
 }
 
+/**
+ * @param {Uint8Array} binary
+ * @return {string}
+ */
 export function base64encode(binary) {
   if (typeof window === `undefined`) {
     return Buffer.from(binary).toString(`base64`)
   } else {
-    return btoa(String.fromCharCode(...binary));
+    return btoa(String.fromCharCode(...binary))
   }
 }
