@@ -24,10 +24,23 @@
 //
 // 6.  Return output_string converted into an array of bytes, using
 //     ASCII encoding [RFC0020].
+/**
+ * @param {Item} value
+ * @returns {string}
+ */
 export function encodeItem(value) { return serializeItem(value) }
-export function encodeList(value) { return serializeList(value) }
-export function encodeDict(value) { return serializeDict(value) }
 
+/**
+ * @param {MemberList} value
+ * @returns {string}
+ */
+export function encodeList(value) { return serializeList(value) }
+
+/**
+ * @param {Dictionary} value
+ * @returns {string}
+ */
+export function encodeDict(value) { return serializeDict(value) }
 
 // 4.2.  Parsing Structured Fields
 //
@@ -50,18 +63,32 @@ export function encodeDict(value) { return serializeDict(value) }
 // 7.  If input_string is not empty, fail parsing.
 //
 // 8.  Otherwise, return output.
+/**
+ * @param {string} input
+ * @returns {Item}
+ */
 export function decodeItem(input) {
-  const {input_string, value} = parseItem(input.trim())
+  const { input_string, value } = parseItem(input.trim())
   if (input_string !== '') throw new Error(`failed to parse ${input_string} as Item`)
   return value
 }
+
+/**
+ * @param {string} input
+ * @returns {MemberList}
+ */
 export function decodeList(input) {
-  const {input_string, value} = parseList(input.trim())
+  const { input_string, value } = parseList(input.trim())
   if (input_string !== '') throw new Error(`failed to parse ${input_string} as List`)
   return value
 }
+
+/**
+ * @param {string} input
+ * @returns {Dictionary}
+ */
 export function decodeDict(input) {
-  const {input_string, value} = parseDictionary(input.trim())
+  const { input_string, value } = parseDictionary(input.trim())
   if (input_string !== '') throw new Error(`failed to parse ${input_string} as Dict`)
   return value
 }
@@ -90,15 +117,15 @@ export function decodeDict(input) {
 //
 // 3.  Return output.
 /**
- * @param {Array} list
+ * @param {MemberList} list
  * @return {string}
  */
 export function serializeList(list) {
-  return list.map(({value, params}) => {
+  return list.map(({ value, params }) => {
     if (Array.isArray(value)) {
-      return serializeInnerList({value, params})
+      return serializeInnerList({ value, params })
     }
-    return serializeItem({value, params})
+    return serializeItem({ value, params })
   }).join(", ")
 }
 
@@ -236,20 +263,20 @@ export function serializeKey(value) {
 //
 // 3.  Return output.
 /**
- * @param {Object} dict
+ * @param {Dictionary} dict
  * @return {string}
  */
 export function serializeDict(dict) {
-  return Object.entries(dict).map(([key, {value, params}]) => {
+  return Object.entries(dict).map(([key, { value, params }]) => {
     let output = serializeKey(key)
     if (value === true) {
       output += serializeParams(params)
     } else {
       output += "="
       if (Array.isArray(value)) {
-        output += serializeInnerList({value, params})
+        output += serializeInnerList({ value, params })
       } else {
-        output += serializeItem({value, params})
+        output += serializeItem({ value, params })
       }
     }
     return output
@@ -271,7 +298,7 @@ export function serializeDict(dict) {
 //
 // 4.  Return output.
 /**
- * @param {Object} value
+ * @param {Item} value
  * @return {string}
  */
 export function serializeItem(value) {
@@ -394,7 +421,7 @@ export function serializeInteger(value) {
  * @return {string}
  */
 export function serializeDecimal(value) {
-  value = (Math.round(value*1000)/1000)
+  value = (Math.round(value * 1000) / 1000)
   if (value < -1_000_000_000_000 || 1_000_000_000_000 < value) throw new Error(`failed to serialize ${value} as Decimal`)
   return value.toString()
 }
@@ -513,7 +540,7 @@ export function serializeBoolean(value) {
 // implementation constraints.
 /**
  * @param {Uint8Array} value
- * @retrn string
+ * @return {string}
  */
 export function serializeByteSequence(value) {
   if (ArrayBuffer.isView(value) === false) throw new Error(`failed to serialize ${value} as Byte Sequence`)
@@ -548,27 +575,32 @@ export function serializeByteSequence(value) {
 // 3.  No structured data has been found; return members (which is
 //     empty).
 /**
+ * @typedef {Array.<Item|InnerList>} MemberList
+ *
  * @typedef {Object} ParsedList
- * @property {Array.<Item|InnerList>} value
+ * @property {MemberList} value
  * @property {string} input_string
  *
  * @param {string} input_string
  * @return {ParsedList}
  */
 export function parseList(input_string) {
-  /** @type {Array.<Item|InnerList>} */
+  /** @type {MemberList} */
   const members = []
-  while(input_string.length > 0) {
+  while (input_string.length > 0) {
     /** @type {ParsedItemOrInnerList} */
     const parsedItemOrInnerList = parseItemOrInnerList(input_string)
     members.push(parsedItemOrInnerList.value)
     input_string = parsedItemOrInnerList.input_string.trim()
-    if (input_string.length === 0) return {input_string, value: members}
+    if (input_string.length === 0) return { input_string, value: members }
     if (input_string[0] !== ",") throw new Error(`failed to parse ${input_string} as List`)
     input_string = input_string.substr(1).trim()
     if (input_string.length === 0 || input_string[0] === ",") throw new Error(`failed to parse ${input_string} as List`)
   }
-  return {input_string, value: members}
+  return {
+    value: members,
+    input_string,
+  }
 }
 
 // 4.2.1.1.  Parsing an Item or Inner List
@@ -647,13 +679,11 @@ export function parseInnerList(input_string) {
   input_string = input_string.substr(1)
   /** @type {ItemList}  */
   const inner_list = []
-  while(input_string.length > 0) {
+  while (input_string.length > 0) {
     input_string = input_string.trim()
     if (input_string[0] === ")") {
       input_string = input_string.substr(1)
       const parsedParameters = parseParameters(input_string)
-      /** @type {Parameters} */
-      let params = parsedParameters.value
       return {
         value: {
           value: inner_list,
@@ -722,8 +752,10 @@ export function parseInnerList(input_string) {
 // Note that when duplicate Dictionary keys are encountered, this has
 // the effect of ignoring all but the last instance.
 /**
+ * @typedef {Object.<Key, Item|InnerList>|Map} Dictionary
+ *
  * @typedef {Object} ParsedDictionary
- * @property {Object} value
+ * @property {Dictionary} value
  * @property {string} input_string
  *
  * @param {string} input_string
@@ -731,12 +763,12 @@ export function parseInnerList(input_string) {
  * @return {ParsedDictionary}
  */
 export function parseDictionary(input_string, option = {}) {
-  /** @type {Array.<[string, Item|InnerList]>} */
+  /** @type {Array.<[Key, Item|InnerList]>} */
   const value = [] // ordered map
 
   /**
-   * @param {Array.<[string, Item|InnerList]>} entries
-   * @return Object
+   * @param {Array.<[Key, Item|InnerList]>} entries
+   * @return {Dictionary}
    */
   function toDict(entries) {
     if (option?.use_map === true) return new Map(entries)
@@ -767,12 +799,15 @@ export function parseDictionary(input_string, option = {}) {
     }
     value.push([this_key, member])
     input_string = input_string.trim()
-    if (input_string.length === 0) return {input_string, value: toDict(value)}
+    if (input_string.length === 0) return { input_string, value: toDict(value) }
     if (input_string[0] !== ",") throw new Error(`failed to parse ${input_string} as Dictionary`)
     input_string = input_string.substr(1).trim()
     if (input_string.length === 0 || input_string[0] === ",") throw new Error(`failed to parse ${input_string} as Dictionary`)
   }
-  return {input_string, value: toDict(value)}
+  return {
+    value: toDict(value),
+    input_string,
+  }
 }
 
 // 4.2.3.  Parsing an Item
@@ -801,14 +836,14 @@ export function parseDictionary(input_string, option = {}) {
  * @return {ParsedItem}
  */
 export function parseItem(input_string) {
-  const parsedBareItem  = parseBareItem(input_string)
+  const parsedBareItem = parseBareItem(input_string)
   const value = parsedBareItem.value
   input_string = parsedBareItem.input_string
-  let parsedParameters = parseParameters(input_string)
+  const parsedParameters = parseParameters(input_string)
   const params = parsedParameters.value
   input_string = parsedParameters.input_string
-  /** Item */
-  const item = {value, params}
+  /** @type {Item} */
+  const item = { value, params }
   return {
     value: item,
     input_string,
@@ -847,20 +882,20 @@ export function parseItem(input_string) {
  * @return {ParsedBareItem}
  */
 export function parseBareItem(input_string) {
-  let i = 0
-  if (input_string[i] === `"`) {
+  const first = input_string[0]
+  if (first === `"`) {
     return parseString(input_string)
   }
-  if (input_string[i] === `:`) {
+  if (first === `:`) {
     return parseByteSequence(input_string)
   }
-  if (input_string[i] === `?`) {
+  if (first === `?`) {
     return parseBoolean(input_string)
   }
-  if (/^[\-0-9]/.test(input_string[i])) {
+  if (/^[\-0-9]/.test(first)) {
     return parseIntegerOrDecimal(input_string)
   }
-  if (/^[a-zA-Z\*]/.test(input_string[i])) {
+  if (/^[a-zA-Z\*]/.test(first)) {
     return parseToken(input_string)
   }
   throw new Error(`failed to parse ${input_string} as Bare Item`)
@@ -922,18 +957,15 @@ export function parseParameters(input_string) {
   while (input_string.length > 0) {
     if (input_string[0] !== ";") break
     input_string = input_string.substr(1).trim()
-    /** @type {ParsedKey} */
     const parsedKey = parseKey(input_string)
-    /** @type {Key} */
-    const param_name  = parsedKey.value
+    const param_name = parsedKey.value
     /** @type {BareItem} */
     let param_value = true
     input_string = parsedKey.input_string
     if (input_string[0] === "=") {
       input_string = input_string.substr(1)
-      /** @type {ParsedBareItem} */
       const parsedBareItem = parseBareItem(input_string)
-      param_value  = parsedBareItem.value
+      param_value = parsedBareItem.value
       input_string = parsedBareItem.input_string
     }
     // override if param_name exists
@@ -981,8 +1013,9 @@ export function parseKey(input_string) {
   if (/^[a-z\*]$/.test(input_string[i]) === false) {
     throw new Error(`failed to parse ${input_string} as Key`)
   }
+  /** @type {Key} */
   let output_string = ""
-  while(input_string.length > i) {
+  while (input_string.length > i) {
     if (/^[a-z0-9\_\-\.\*]$/.test(input_string[i]) === false) {
       return {
         value: output_string,
@@ -990,11 +1023,11 @@ export function parseKey(input_string) {
       }
     }
     output_string += input_string[i]
-    i ++
+    i++
   }
   return {
+    value: output_string,
     input_string: input_string.substr(i),
-    value: output_string
   }
 }
 
@@ -1065,8 +1098,8 @@ export function parseKey(input_string) {
 // 10.  Return output_number.
 /**
  * @typedef {Object} ParsedIntegerOrDecimal
- * @property {string} input_string
  * @property {number} value
+ * @property {string} input_string
  *
  * @param {string} input_string
  * @return {ParsedIntegerOrDecimal}
@@ -1157,7 +1190,7 @@ export function parseIntegerOrDecimal(input_string) {
  * @property {string} value
  * @property {string} input_string
  *
- * @param  {string} input_string
+ * @param {string} input_string
  * @return {ParsedString}
  */
 export function parseString(input_string) {
@@ -1166,11 +1199,11 @@ export function parseString(input_string) {
   if (input_string[i] !== `"`) {
     throw new Error(`failed to parse ${input_string} as String`)
   }
-  i ++
-  while(input_string.length > i ) {
+  i++
+  while (input_string.length > i) {
     // console.log(i, input_string[i], output_string)
     if (input_string[i] === `\\`) {
-      if (input_string.length <= i+1) {
+      if (input_string.length <= i + 1) {
         throw new Error(`failed to parse ${input_string} as String`)
       }
       i++
@@ -1280,7 +1313,7 @@ export function parseToken(input_string) {
  * @property {Uint8Array} value
  * @property {string} input_string
  *
- * @param  {string} input_string
+ * @param {string} input_string
  * @return {ParsedByteSequence}
  */
 export function parseByteSequence(input_string) {
@@ -1327,7 +1360,7 @@ export function parseBoolean(input_string) {
   if (input_string[i] !== "?") {
     throw new Error(`failed to parse ${input_string} as Boolean`)
   }
-  i ++
+  i++
   if (input_string[i] === "1") {
     return {
       value: true,
