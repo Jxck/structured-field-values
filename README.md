@@ -8,7 +8,7 @@ This is a implementation of a [Structured Field Values Draft-19](https://tools.i
 
 ## DEMO
 
-https://jxck.github.io/structured-field-values/demo.html
+- <https://jxck.github.io/structured-field-values/demo.html>
 
 
 ## Install
