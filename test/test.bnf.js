@@ -1,23 +1,11 @@
 import assert from "assert"
-import fs     from "fs"
 import base32 from "hi-base32"
 
 import {
-  encodeItem,
-  encodeList,
-  encodeDict,
-  decodeItem,
-  decodeList,
-  decodeDict,
-  parseItem,
-  parseList,
-  parseDict,
   token,
   alt,
   list,
   repeat,
-  base64decode,
-  base64encode,
   sf_integer,
   sf_decimal,
   sf_string,
@@ -42,83 +30,27 @@ import {
   parameters,
   parameter,
   sf_key,
-} from "./index.js"
+} from "../bnf/bnf.js"
 
-function log(...arg) {
-  try {
-    throw new Error()
-  } catch (err) {
-    const line = err.stack.split(`\n`)[2].split(`/`).pop()
-    console.log(line, ...arg)
-  }
-}
+import {
+  base64decode,
+  base64encode,
+} from "../index.js"
 
-const j = JSON.stringify.bind(JSON)
-
-const  s = (value)  => Symbol.for(value)
-const ss = (values) => values.map((value) => Symbol.for(value))
+import {
+  log,
+  j,
+  s,
+  ss,
+  read,
+  format,
+  formatItem,
+  formatList,
+  formatDict,
+} from "./test.util.js"
 
 // utility const
 const ok = true;
-
-// read json test suite
-function read(name) {
-  return JSON.parse(fs.readFileSync(`./structured-field-tests/${name}.json`).toString())
-}
-
-// convert "expected" in test.json into JS Primitive
-function format(e) {
-  if (Array.isArray(e)) {
-    return e.map(format)
-  }
-  switch(e[`__type`]) {
-    case `binary`:
-      return Uint8Array.from(e.value === `` ? [] : base32.decode.asBytes(e.value))
-    case `token`:
-      return Symbol.for(e.value)
-    default:
-      return e
-  }
-}
-function formatItem(expected) {
-  const [_value, _params] = expected
-  const value  = format(_value)
-  const params = Object.fromEntries(_params.map(format))
-  return {value, params}
-}
-
-function formatList(expected) {
-  return expected.map(([value, params]) => {
-    if (Array.isArray(value)) {
-      return {
-        value: value.map(formatItem),
-        params: Object.fromEntries(params.map(format))
-      }
-    } else {
-      return {
-        value: format(value),
-        params: Object.fromEntries(params.map(format))
-      }
-    }
-  })
-}
-
-function formatDict(expected) {
-  return Object.fromEntries(expected.map(([name, member]) => {
-    const [value, params] = member
-    if (Array.isArray(value[0])) {
-      return [name, {
-        value: value.map(formatItem),
-        params: Object.fromEntries(params.map(format))
-      }]
-    } else {
-      return [name, {
-        value: format(value),
-        params: Object.fromEntries(params.map(format)),
-      }]
-    }
-  }))
-}
 
 function test_token() {
   const fn = token(/^abc/)
@@ -426,124 +358,36 @@ function test_sf_key() {
   assert.deepStrictEqual(sf_key()(`*a123`),    {ok, value: `*a123`,    rest: ``})
 }
 
-function structured_field_tests() {
-  (() => {
-    const suites = [
-      ...read(`binary`),
-      ...read(`boolean`),
-      ...read(`dictionary`),
-      ...read(`examples`),
-      ...read(`item`),
-      ...read(`key-generated`),
-      ...read(`large-generated`),
-      ...read(`list`),
-      ...read(`listlist`),
-      // ...read(`number-generated`),
-      ...read(`number`),
-      ...read(`param-dict`),
-      ...read(`param-list`),
-      ...read(`param-listlist`),
-      ...read(`string-generated`),
-      ...read(`string`),
-      ...read(`token-generated`),
-      ...read(`token`),
-    ]
-    suites.forEach((suite) => {
-      const ignore = [
-        // number.json
-        `negative zero`, // -0 & +0 are no equal in deepStrictEqual
-        // list.json
-        `two line list`,
-        // dictionary.json
-        `two lines dictionary`,
-        // param-dict.json
-        `two lines parameterised list`,
-        // example.json
-        `Example-Hdr (list on two lines)`,
-        `Example-Hdr (dictionary on two lines)`,
-      ]
-      if (ignore.includes(suite.name)) return
-
-      console.log(suite.name)
-
-      try {
-        if (suite.header_type === `item`) {
-          // decode
-          const obj     = formatItem(suite.expected)
-          const decoded = decodeItem(suite.raw[0])
-          assert.deepStrictEqual(decoded, obj, suite.name)
-
-          // encode
-          const str     = suite?.canonical?.[0] || suite.raw[0]
-          const encoded = encodeItem(obj)
-          assert.deepStrictEqual(str, encoded, suite.name)
-        }
-        if (suite.header_type === `list`) {
-          // decode
-          const obj     = formatList(suite.expected)
-          const decoded = decodeList(suite.raw[0])
-          assert.deepStrictEqual(decoded, obj, suite.name)
-
-          // encode
-          if ([
-            // 1.0 is 1 in JS
-            `single item parameterised list`,
-            `missing parameter value parameterised list`,
-            `missing terminal parameter value parameterised list`,
-          ].includes(suite.name)) return
-          const str     = suite?.canonical?.[0] || suite.raw[0]
-          const encoded = encodeList(obj)
-          assert.deepStrictEqual(str, encoded, suite.name)
-        }
-        if (suite.header_type === `dictionary`) {
-          // decode
-          const obj     = formatDict(suite.expected)
-          const decoded = decodeDict(suite.raw[0])
-          assert.deepStrictEqual(decoded, obj, suite.name)
-
-          // encode
-          if ([
-            // 1.0 is 1 in JS
-            `single item parameterised dict`,
-            `list item parameterised dictionary`,
-          ].includes(suite.name)) return
-          const str     = suite?.canonical?.[0] || suite.raw[0]
-          const encoded = encodeDict(obj)
-          assert.deepStrictEqual(str, encoded, suite.name)
-        }
-      } catch(err) {
-        assert.deepStrictEqual(suite.must_fail, true, err)
-      }
-    })
-  })();
-}
-
-test_token()
-test_alt()
-test_list()
-test_repeat()
-test_sf_integer()
-test_sf_decimal()
-test_sf_string()
-test_char()
-test_unescaped()
-test_escaped()
-test_sf_token()
-test_sf_binary()
-test_sf_boolean()
-test_sf_list()
-test_repeat_list_member()
-test_list_member()
-test_inner_list()
-test_optional_inner_item()
-test_repeat_inner_item()
-test_sf_dictionary()
-test_repeat_dict_member()
-test_dict_member()
-test_member_value()
-test_sf_item()
-test_bare_item()
-test_parameters()
-test_parameter()
-test_sf_key()
-structured_field_tests()
+;[
+  test_token,
+  test_alt,
+  test_list,
+  test_repeat,
+  test_sf_integer,
+  test_sf_decimal,
+  test_sf_string,
+  test_char,
+  test_unescaped,
+  test_escaped,
+  test_sf_token,
+  test_sf_binary,
+  test_sf_boolean,
+  test_sf_list,
+  test_repeat_list_member,
+  test_list_member,
+  test_inner_list,
+  test_optional_inner_item,
+  test_repeat_inner_item,
+  test_sf_dictionary,
+  test_repeat_dict_member,
+  test_dict_member,
+  test_member_value,
+  test_sf_item,
+  test_bare_item,
+  test_parameters,
+  test_parameter,
+  test_sf_key,
+].forEach((t) => {
+  console.log(t.name)
+  t()
+})

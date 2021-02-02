@@ -11,8 +11,7 @@
    encodeItem,
    encodeList,
    encodeDict,
- } from "./index.js"
-
+ } from "../index.js"
 
  ;[`a`, `"a"`, `10`, `3.14`, `?0`, `"a";x;y=?0;z=10`, `:AQIDBA==:`].forEach((value) => {
    console.assert(encodeItem(decodeItem(value)) === value)
@@ -31,3 +30,5 @@
    console.assert(encodeDict(decodeDict(value)) === value)
  })
 </script>
+
+<script type=module src=./test.js></script>

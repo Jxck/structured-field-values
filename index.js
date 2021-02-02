@@ -1,5 +1,4 @@
 `use strict`;
-const ok = true
 
 /////////////////////////
 // public interface
@@ -25,15 +24,74 @@ const ok = true
 //
 // 6.  Return output_string converted into an array of bytes, using
 //     ASCII encoding [RFC0020].
-
-
-export function decodeItem(value) { return parseItem(value) }
-export function decodeList(value) { return parseList(value) }
-export function decodeDict(value) { return parseDict(value) }
+/**
+ * @param {Item} value
+ * @returns {string}
+ */
 export function encodeItem(value) { return serializeItem(value) }
+
+/**
+ * @param {MemberList} value
+ * @returns {string}
+ */
 export function encodeList(value) { return serializeList(value) }
+
+/**
+ * @param {Dictionary} value
+ * @returns {string}
+ */
 export function encodeDict(value) { return serializeDict(value) }
 
+// 4.2.  Parsing Structured Fields
+//
+// 1.  Convert input_bytes into an ASCII string input_string; if
+//     conversion fails, fail parsing.
+//
+// 2.  Discard any leading SP characters from input_string.
+//
+// 3.  If field_type is "list", let output be the result of running
+//     Parsing a List (Section 4.2.1) with input_string.
+//
+// 4.  If field_type is "dictionary", let output be the result of
+//     running Parsing a Dictionary (Section 4.2.2) with input_string.
+//
+// 5.  If field_type is "item", let output be the result of running
+//     Parsing an Item (Section 4.2.3) with input_string.
+//
+// 6.  Discard any leading SP characters from input_string.
+//
+// 7.  If input_string is not empty, fail parsing.
+//
+// 8.  Otherwise, return output.
+/**
+ * @param {string} input
+ * @returns {Item}
+ */
+export function decodeItem(input) {
+  const { input_string, value } = parseItem(input.trim())
+  if (input_string !== '') throw new Error(`failed to parse ${input_string} as Item`)
+  return value
+}
+
+/**
+ * @param {string} input
+ * @returns {MemberList}
+ */
+export function decodeList(input) {
+  const { input_string, value } = parseList(input.trim())
+  if (input_string !== '') throw new Error(`failed to parse ${input_string} as List`)
+  return value
+}
+
+/**
+ * @param {string} input
+ * @returns {Dictionary}
+ */
+export function decodeDict(input) {
+  const { input_string, value } = parseDictionary(input.trim())
+  if (input_string !== '') throw new Error(`failed to parse ${input_string} as Dict`)
+  return value
+}
 
 // 4.1.1.  Serializing a List
 //
@@ -58,12 +116,16 @@ export function encodeDict(value) { return serializeDict(value) }
 //         2.  Append a single SP to output.
 //
 // 3.  Return output.
+/**
+ * @param {MemberList} list
+ * @return {string}
+ */
 export function serializeList(list) {
-  return list.map(({value, params}) => {
+  return list.map(({ value, params }) => {
     if (Array.isArray(value)) {
-      return serializeInnerList({value, params})
+      return serializeInnerList({ value, params })
     }
-    return serializeItem({value, params})
+    return serializeItem({ value, params })
   }).join(", ")
 }
 
@@ -89,8 +151,12 @@ export function serializeList(list) {
 //     (Section 4.1.1.2) with list_parameters to output.
 //
 // 5.  Return output.
-export function serializeInnerList({value, params}) {
-  return `(${value.map(serializeItem).join(" ")})${serializeParams(params)}`
+/**
+ * @param {Object} value
+ * @return {string}
+ */
+export function serializeInnerList(value) {
+  return `(${value.value.map(serializeItem).join(" ")})${serializeParams(value.params)}`
 }
 
 // 4.1.1.2.  Serializing Parameters
@@ -117,6 +183,10 @@ export function serializeInnerList({value, params}) {
 //             (Section 4.1.3.1) with param_value to output.
 //
 // 3.  Return output.
+/**
+ * @param {Object} params
+ * @return {string}
+ */
 export function serializeParams(params) {
   return Object.entries(params).map(([key, value]) => {
     if (value === true) return `;${serializeKey(key)}` // omit true
@@ -143,12 +213,15 @@ export function serializeParams(params) {
 // 5.  Append input_key to output.
 //
 // 6.  Return output.
-const KEY_FORMAT = /^[a-z\*][a-z0-9\-\_\.\*]*$/
-export function serializeKey(key) {
-  if (KEY_FORMAT.test(key) === false) {
-    throw new Error(`fail to serialize key: ${key}`)
+/**
+ * @param {string} value
+ * @return {string}
+ */
+export function serializeKey(value) {
+  if (/^[a-z\*][a-z0-9\-\_\.\*]*$/.test(value) === false) {
+    throw new Error(`failed to serialize ${value} as Key`)
   }
-  return key
+  return value
 }
 
 // 4.1.2.  Serializing a Dictionary
@@ -189,17 +262,21 @@ export function serializeKey(key) {
 //         2.  Append a single SP to output.
 //
 // 3.  Return output.
+/**
+ * @param {Dictionary} dict
+ * @return {string}
+ */
 export function serializeDict(dict) {
-  return Object.entries(dict).map(([key, {value, params}]) => {
+  return Object.entries(dict).map(([key, { value, params }]) => {
     let output = serializeKey(key)
     if (value === true) {
       output += serializeParams(params)
     } else {
       output += "="
       if (Array.isArray(value)) {
-        output += serializeInnerList({value, params})
+        output += serializeInnerList({ value, params })
       } else {
-        output += serializeItem({value, params})
+        output += serializeItem({ value, params })
       }
     }
     return output
@@ -220,8 +297,12 @@ export function serializeDict(dict) {
 //     Section 4.1.1.2 with item_parameters to output.
 //
 // 4.  Return output.
-export function serializeItem({value, params}) {
-  return `${serializeBareItem(value)}${serializeParams(params)}`
+/**
+ * @param {Item} value
+ * @return {string}
+ */
+export function serializeItem(value) {
+  return `${serializeBareItem(value.value)}${serializeParams(value.params)}`
 }
 
 // 4.1.3.1.  Serializing a Bare Item
@@ -248,6 +329,10 @@ export function serializeItem({value, params}) {
 //     Serializing a Byte Sequence (Section 4.1.8) with input_item.
 //
 // 7.  Otherwise, fail serialization.
+/**
+ * @param {any} value
+ * @return {string}
+ */
 export function serializeBareItem(value) {
   switch (typeof value) {
     case "number":
@@ -266,7 +351,7 @@ export function serializeBareItem(value) {
         return serializeByteSequence(value)
       }
     default:
-      break;
+      throw new Error(`failed to serialize ${value} as Bare Item`)
   }
 }
 
@@ -288,8 +373,12 @@ export function serializeBareItem(value) {
 //     only decimal digits to output.
 //
 // 5.  Return output.
-function serializeInteger(value) {
-  if (value < -999999999999999n || 999999999999999n < value) throw new Error(`fail to serialize integer: ${value}`)
+/**
+ * @param {number} value
+ * @return {string}
+ */
+export function serializeInteger(value) {
+  if (value < -999_999_999_999_999n || 999_999_999_999_999n < value) throw new Error(`failed to serialize ${value} as Integer`)
   return value.toString()
 }
 
@@ -327,9 +416,14 @@ function serializeInteger(value) {
 //      digits) to output.
 //
 // 10.  Return output.
-function serializeDecimal(value) {
-  if (value > 999999999999) throw new Error(`fail to serialize decimal: ${value}`)
-  return (Math.round(value*1000)/1000).toString()
+/**
+ * @param {number} value
+ * @return {string}
+ */
+export function serializeDecimal(value) {
+  value = (Math.round(value * 1000) / 1000)
+  if (value < -1_000_000_000_000 || 1_000_000_000_000 < value) throw new Error(`failed to serialize ${value} as Decimal`)
+  return value.toString()
 }
 
 // 4.1.6.  Serializing a String
@@ -356,8 +450,12 @@ function serializeDecimal(value) {
 // 5.  Append DQUOTE to output.
 //
 // 6.  Return output.
-function serializeString(value) {
-  if (/[\x00-\x1f\x7f]+/.test(value)) throw new Error(`fail to serialize string: ${value}`)
+/**
+ * @param {string} value
+ * @return {string}
+ */
+export function serializeString(value) {
+  if (/[\x00-\x1f\x7f]+/.test(value)) throw new Error(`failed to serialize ${value} as string`)
   return `"${value.replace(/\\/g, `\\\\`).replace(/"/g, `\\\"`)}"`
 }
 
@@ -378,8 +476,17 @@ function serializeString(value) {
 // 4.  Append input_token to output.
 //
 // 5.  Return output.
-function serializeToken(value) {
-  return Symbol.keyFor(value)
+/**
+ * @param {symbol} token
+ * @return {string}
+ */
+export function serializeToken(token) {
+  /** @type {string} */
+  const value = Symbol.keyFor(token)
+  if (/^([a-zA-Z\*])([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]*)$/.test(value) === false) {
+    throw new Error(`failed to serialize ${value} as token`)
+  }
+  return value
 }
 
 // 4.1.9.  Serializing a Boolean
@@ -398,7 +505,12 @@ function serializeToken(value) {
 // 5.  If input_boolean is false, append "0" to output.
 //
 // 6.  Return output.
-function serializeBoolean(value) {
+/**
+ * @param {boolean} value
+ * @return {string}
+ */
+export function serializeBoolean(value) {
+  if (typeof value !== "boolean") throw new Error(`failed to serialize ${value} as boolean`)
   return value ? "?1" : "?0"
 }
 
@@ -426,653 +538,15 @@ function serializeBoolean(value) {
 // Likewise, encoded data SHOULD have pad bits set to zero, as per
 // [RFC4648], Section 3.5, unless it is not possible to do so due to
 // implementation constraints.
-function serializeByteSequence(value) {
+/**
+ * @param {Uint8Array} value
+ * @return {string}
+ */
+export function serializeByteSequence(value) {
+  if (ArrayBuffer.isView(value) === false) throw new Error(`failed to serialize ${value} as Byte Sequence`)
   return `:${base64encode(value)}:`
 }
 
-
-/// parser
-export function parseItem(value) {
-  // trim leading/trailing space
-  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2
-  const result = sf_item()(value.trim())
-  if (result.ok === false) {
-    throw new Error(`failed to parse`)
-  }
-  if (result.rest.length > 0) {
-    throw new Error(`failed to parse: trailing values ${result.rest}`)
-  }
-  return result.value
-}
-
-export function parseList(value) {
-  // return if empty
-  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
-  if (value === ``) return []
-
-  const result = sf_list()(value.trim())
-  if (result.ok === false) {
-    throw new Error(`failed to parse`)
-  }
-  if (result.rest.length > 0) {
-    throw new Error(`failed to parse: trailing values ${result.rest}`)
-  }
-  return result.value
-}
-
-export function parseDict(value) {
-  // return if empty
-  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
-  if (value === ``) return {}
-
-  const result = sf_dictionary()(value.trim())
-  if (result.ok === false) {
-    throw new Error(`failed to parse`)
-  }
-  if (result.rest.length > 0) {
-    throw new Error(`failed to parse: trailing values ${result.rest}`)
-  }
-  return result.value
-}
-
-
-/////////////////////////
-// BFN utility
-/////////////////////////
-
-// a => token(/^a/)
-export function token(reg) {
-  return (rest) => {
-    const result = reg.exec(rest)
-    if (result === null) {
-      return {ok: false, rest}
-    } else {
-      const value = result[0]
-      return {ok, value, rest: rest.substr(value.length)}
-    }
-  }
-}
-
-// (a / b) => alt([a(), b()])
-export function alt(fns) {
-  return (rest) => {
-    for (let i = 0; i < fns.length; i ++) {
-      const result = fns[i](rest)
-      if (result.ok) {
-        return result
-      }
-    }
-    return {ok: false, rest}
-  }
-}
-
-// (a b c) => list([a(), b(), c()])
-export function list(fns) {
-  return (rest) => {
-    const value = []
-    const orig  = rest
-    for (let i = 0; i < fns.length; i ++) {
-      const result = fns[i](rest)
-      if (result.ok === false) {
-        return {ok: false, rest: orig}
-      }
-      value.push(result.value)
-      rest = result.rest
-    }
-    return {ok, value, rest}
-  }
-}
-
-// *(a b) => repeat(0, Infinity, list([a(), b()]))
-export function repeat(min, max, fn) {
-  return (rest) => {
-    const value = []
-    const found = 0
-    const orig  = rest
-    while(true) {
-      const result = fn(rest)
-      if (result.ok) {
-        value.push(result.value)
-        rest = result.rest
-        if (value.length === max) break
-      } else {
-        break
-      }
-    }
-
-    if (value.length < min) {
-      return {ok: false, rest: orig}
-    } else {
-      return {ok, value, rest}
-    }
-  }
-}
-
-/////////////////////////
-// base64 uility
-/////////////////////////
-export function base64decode(str) {
-  if (typeof window === `undefined`) {
-    return Uint8Array.from(Buffer.from(str, `base64`))
-  } else {
-    return new Uint8Array([...atob(str)].map(a => a.charCodeAt(0)));
-  }
-}
-
-export function base64encode(binary) {
-  if (typeof window === `undefined`) {
-    return Buffer.from(binary).toString(`base64`)
-  } else {
-    return btoa(String.fromCharCode(...binary));
-  }
-}
-
-
-/////////////////////////
-// BNF in spec
-/////////////////////////
-
-// sf-integer
-//       = ["-"] 1*15DIGIT
-export function sf_integer() {
-  return (rest) => {
-    const result = token(/^\-{0,1}\d{1,15}/)(rest)
-    if (result.ok) {
-      return {ok, value: parseInt(result.value), rest: result.rest}
-    }
-    return {ok: false, rest}
-  }
-}
-
-// sf-decimal
-//       = ["-"] 1*12DIGIT "." 1*3DIGIT
-export function sf_decimal() {
-  return (rest) => {
-    const result = token(/^\-{0,1}\d{1,12}\.\d{1,3}/)(rest)
-    if (result.ok) {
-      return {ok, value: parseFloat(result.value), rest: result.rest}
-    }
-    return {ok: false, rest}
-  }
-}
-
-// sf-string
-//       = DQUOTE *chr DQUOTE
-export function sf_string() {
-  return function(rest) {
-    const fn = list([
-      token(/^"/),
-      repeat(0, 1024, char()),
-      token(/^"/),
-    ])
-    const result = fn(rest)
-    if (result.ok) {
-      // ['"', ['a', 'b', 'c'], '"'] => "abc"
-      result.value = result.value[1].join(``)
-      return result
-    } else {
-      return result
-    }
-  }
-}
-
-// chr
-//       = unescaped
-//       / escaped
-export function char() {
-  return alt([
-    escaped(),
-    unescaped(),
-  ])
-}
-
-// unescaped
-//       = %x20-21  (x22 is ")
-//       / %x23-5B  (x5c is \)
-//       / %x5D-7E
-export function unescaped() {
-  return token(/^([\x20-\x21\x23-\x5B\x5D-\x7E])/)
-}
-
-// escaped
-//       = "\" ( DQUOTE / "\" )
-export function escaped() {
-  return (rest) => {
-    const result = token(/^((\\\")|(\\\\))/)(rest)
-    if (result.ok) {
-      // unescape (\\" => ",  \\\\ => \\)
-      result.value = (result.value === `\\"`) ? `"` : `\\`
-    }
-    return result
-  }
-}
-
-// sf-token
-//       = ( ALPHA / "*" ) *( tchar / ":" / "/" )
-export function sf_token() {
-  return (rest) => {
-    const result = token(/^([a-zA-Z\*])([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]){0,512}/)(rest)
-    if (result.ok) {
-      result.value = Symbol.for(result.value)
-    }
-    return result
-  }
-}
-
-// sf-binary
-//       = ":" *(base64) ":"
-// base64
-//       = ALPHA
-//       / DIGIT
-//       / "+"
-//       / "/"
-//       / "="
-export function sf_binary() {
-  return (rest) => {
-    const result = list([
-      token(/^:/),
-      token(/^([\w+/=]){0,16384}/), // base64
-      token(/^:/),
-    ])(rest)
-
-    if (result.ok) {
-      // [":", "base64str", ":"] => Uint8Array
-      result.value = base64decode(result.value[1]) // remove ":"
-    }
-    return result
-  }
-}
-
-// sf-boolean
-//       = "?" boolean
-// boolean
-//       = "0"
-//       / "1"
-export function sf_boolean() {
-  return (rest) => {
-    const result = token(/^((\?0)|(\?1))/)(rest)
-    if (result.ok) {
-      // ?1 => true, ?0 => false
-      result.value = result.value === `?1`
-    }
-    return result
-  }
-}
-
-// sf-list
-//       = list-member *( OWS "," OWS list-member )
-export function sf_list() {
-  return (rest) => {
-    const result = list([
-      list_member(),
-      _repeat_list_member()
-    ])(rest)
-
-    if (result.ok) {
-      // [ [1,[]], [ [2,[]], [3,[]] .. ] ]
-      result.value = [result.value[0], ...result.value[1]]
-    }
-    return result
-  }
-}
-
-// [repeat of list member]
-//   = *( OWS "," OWS list-member )
-export function _repeat_list_member() {
-  function fn() {
-    return (rest) => {
-      const result = list([
-        token(/^([ \t]*),([ \t]*)/),
-        list_member()
-      ])(rest)
-
-      if (result.ok) {
-        // [ ',', [a, []] => [a, []]
-        result.value = result.value[1]
-      }
-      return result
-    }
-  }
-  return repeat(0, 1024, fn())
-}
-
-// list-member
-//       = sf-item
-//       / inner-list
-export function list_member() {
-  return alt([
-    sf_item(),
-    inner_list(),
-  ])
-}
-
-// inner-list
-//       = "(" *SP [ sf-item *( 1*SP sf-item ) *SP ] ")" parameters
-export function inner_list() {
-  return (rest) => {
-    const result = list([
-      token(/^\( */),
-      _optional_inner_item(),
-      token(/^\)/),
-      parameters()
-    ])(rest)
-
-    if (result.ok) {
-      // [ "(", repeat, ")", param ] => [repeat, param]
-      const [_open, inner_list, _close, params] = result.value
-      result.value = {value: inner_list, params}
-    }
-    return result
-  }
-}
-
-// [ sf-item *( 1*SP sf-item ) *SP ]
-export function _optional_inner_item() {
-  return (rest) => {
-    const result = repeat(0, 1, list([
-      sf_item(),
-      _repeat_inner_item(),
-      token(/^ */)
-    ]))(rest)
-
-    if (result.ok) {
-      if (result.value.length > 0) {
-        // [[sf_item, repeat, space]] => [sf_item, ...repeat]
-        result.value = [result.value[0][0], ...result.value[0][1]]
-      }
-    }
-    return result
-  }
-}
-
-export function _repeat_inner_item() {
-  function fn() {
-    return (rest) => {
-      const result = list([
-        token(/^ +/),
-        sf_item()
-      ])(rest)
-
-      if (result.ok) {
-        // [token, sf_item] => sf_item
-        result.value = result.value[1]
-      }
-      return result
-    }
-  }
-  return repeat(0, 256, fn())
-}
-
-// sf-dictionary
-//       = dict-member *( OWS "," OWS dict-member )
-export function sf_dictionary() {
-  return (rest) => {
-    const result = list([
-      dict_member(),
-      _repeat_dict_member(),
-    ])(rest)
-
-    if (result.ok) {
-      // [dict_member, repeated]
-      const [[key, [value]], rest] = result.value
-      result.value = Object.fromEntries([[key, value], ...rest])
-    }
-    return result
-  }
-}
-
-// repeat of dict member
-export function _repeat_dict_member() {
-  function fn() {
-    return (rest) => {
-      const result = list([
-        token(/^([ \t]*),([ \t]*)/),
-        dict_member()
-      ])(rest)
-
-      if (result.ok) {
-        // [',', [ "a", [ [1,[]] ]]] => ["a", [1,[]]
-        const [_comma, [key, [param]]] = result.value
-        result.value = [key, param]
-      }
-      return result
-    }
-  }
-  return repeat(0, 1024, fn())
-}
-
-// dict-member
-//       = member-name [ "=" member-value ]
-//       = member-name [ ( "=" member-value ) / parameters ] TODO: https://github.com/httpwg/http-extensions/issues/1273
-// member-name
-//       = key
-export function dict_member() {
-  return list([
-    sf_key(),
-    repeat(0, 1, _optional_member_value())
-  ])
-}
-
-export function _optional_member_value() {
-  return (rest) => {
-    const result = alt([
-      list([
-        token(/^=/),
-        member_value(),
-      ]),
-      parameters()
-    ])(rest)
-
-    if (result.ok) {
-      if (result.value[0] === `=`) {
-        // ['=', [member]] => [1, []]
-        result.value = result.value[1]
-      } else {
-        // value should be true if member is ommited
-        result.value = {value: true, params: result.value}
-      }
-    }
-    return result
-  }
-}
-
-// member-value
-//       = sf-item
-//       / inner-list
-export function member_value() {
-  return alt([
-    sf_item(),
-    inner_list()
-  ])
-}
-
-// sf-item
-//       = bare-item parameters
-export function sf_item() {
-  return (rest) => {
-    const result = list([
-      bare_item(),
-      parameters()
-    ])(rest)
-
-    if (result.ok) {
-      const [value, params] = result.value
-      result.value = {value, params}
-    }
-    return result
-  }
-}
-
-// bare-item
-//       = sf-integer
-//       / sf-decimal
-//       / sf-string
-//       / sf-token
-//       / sf-binary
-//       / sf-boolean
-export function bare_item() {
-  return alt([
-    sf_decimal(),
-    sf_integer(),
-    sf_string(),
-    sf_token(),
-    sf_binary(),
-    sf_boolean(),
-  ])
-}
-
-// parameters
-//       = *( ";" *SP parameter )
-export function parameters() {
-  return (rest) => {
-    const result = repeat(0, 256, _inner_parameters())(rest)
-
-    if (result.ok) {
-      result.value = Object.fromEntries(result.value)
-    }
-
-    return result
-  }
-}
-
-export function _inner_parameters() {
-  return (rest) => {
-    const result = list([
-      token(/^; */),
-      parameter()
-    ])(rest)
-
-    if (result.ok) {
-      // [';' , paramete] => parameter
-      result.value = result.value[1]
-    }
-    return result
-  }
-}
-
-// parameter
-//       = param-name [ "=" param-value ]
-// param-name
-//       = key
-// param-value
-//       = bare-item
-export function parameter() {
-  return list([
-    sf_key(),
-    param_value(),
-  ])
-}
-
-// [ "=" param-value ]
-export function param_value() {
-  return (rest) => {
-    const result = repeat(0, 1, list([
-      token(/^=/),
-      bare_item()
-    ]))(rest)
-
-    if (result.ok) {
-      if (result.value.length === 0) {
-        // no parameter is true
-        // [] => true
-        result.value = true
-      } else {
-        // [['=', value]] => value
-        result.value = result.value[0][1]
-      }
-    }
-
-    return result
-  }
-}
-
-// key
-//       = ( lcalpha / "*" )
-//         *( lcalpha / DIGIT / "_" / "-" / "." / "*" )
-// lcalpha
-//       = %x61-7A ; a-z
-export function sf_key() {
-  return token(/^([a-z\*])([a-z0-9\_\-\.\*]){0,64}/)
-}
-
-
-// 4.2.  Parsing Structured Fields
-//
-// When a receiving implementation parses HTTP fields that are known to
-// be Structured Fields, it is important that care be taken, as there
-// are a number of edge cases that can cause interoperability or even
-// security problems.  This section specifies the algorithm for doing
-// so.
-//
-// Given an array of bytes input_bytes that represents the chosen
-// field's field-value (which is empty if that field is not present),
-// and field_type (one of "dictionary", "list", or "item"), return the
-// parsed header value.
-//
-// 1.  Convert input_bytes into an ASCII string input_string; if
-//     conversion fails, fail parsing.
-//
-// 2.  Discard any leading SP characters from input_string.
-//
-// 3.  If field_type is "list", let output be the result of running
-//     Parsing a List (Section 4.2.1) with input_string.
-//
-// 4.  If field_type is "dictionary", let output be the result of
-//     running Parsing a Dictionary (Section 4.2.2) with input_string.
-//
-// 5.  If field_type is "item", let output be the result of running
-//     Parsing an Item (Section 4.2.3) with input_string.
-//
-// 6.  Discard any leading SP characters from input_string.
-//
-// 7.  If input_string is not empty, fail parsing.
-//
-// 8.  Otherwise, return output.
-//
-// When generating input_bytes, parsers MUST combine all field lines in
-// the same section (header or trailer) that case-insensitively match
-// the field name into one comma-separated field-value, as per
-// [RFC7230], Section 3.2.2; this assures that the entire field value is
-// processed correctly.
-//
-// For Lists and Dictionaries, this has the effect of correctly
-// concatenating all of the field's lines, as long as individual members
-// of the top-level data structure are not split across multiple header
-// instances.  The parsing algorithms for both types allow tab
-// characters, since these might be used to combine field lines by some
-// implementations.
-//
-// Strings split across multiple field lines will have unpredictable
-// results, because comma(s) and whitespace inserted upon combination
-// will become part of the string output by the parser.  Since
-// concatenation might be done by an upstream intermediary, the results
-// are not under the control of the serializer or the parser, even when
-// they are both under the control of the same party.
-//
-// Tokens, Integers, Decimals and Byte Sequences cannot be split across
-// multiple field lines because the inserted commas will cause parsing
-// to fail.
-//
-// Parsers MAY fail when processing a field value spread across multiple
-// field lines, when one of those lines does not parse as that field.
-// For example, a parsing handling an Example-String field that's
-// defined as a sf-string is allowed to fail when processing this field
-// section:
-//
-// Example-String: "foo
-// Example-String: bar"
-//
-// If parsing fails - including when calling another algorithm - the
-// entire field value MUST be ignored (i.e., treated as if the field
-// were not present in the section).  This is intentionally strict, to
-// improve interoperability and safety, and specifications referencing
-// this document are not allowed to loosen this requirement.
-//
-// Note that this requirement does not apply to an implementation that
-// is not parsing the field; for example, an intermediary is not
-// required to strip a failing field from a message before forwarding
-// it.
-//
 // 4.2.1.  Parsing a List
 //
 // Given an ASCII string as input_string, return an array of
@@ -1100,7 +574,35 @@ export function sf_key() {
 //
 // 3.  No structured data has been found; return members (which is
 //     empty).
-//
+/**
+ * @typedef {Array.<Item|InnerList>} MemberList
+ *
+ * @typedef {Object} ParsedList
+ * @property {MemberList} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedList}
+ */
+export function parseList(input_string) {
+  /** @type {MemberList} */
+  const members = []
+  while (input_string.length > 0) {
+    /** @type {ParsedItemOrInnerList} */
+    const parsedItemOrInnerList = parseItemOrInnerList(input_string)
+    members.push(parsedItemOrInnerList.value)
+    input_string = parsedItemOrInnerList.input_string.trim()
+    if (input_string.length === 0) return { input_string, value: members }
+    if (input_string[0] !== ",") throw new Error(`failed to parse ${input_string} as List`)
+    input_string = input_string.substr(1).trim()
+    if (input_string.length === 0 || input_string[0] === ",") throw new Error(`failed to parse ${input_string} as List`)
+  }
+  return {
+    value: members,
+    input_string,
+  }
+}
+
 // 4.2.1.1.  Parsing an Item or Inner List
 //
 // Given an ASCII string as input_string, return the tuple
@@ -1114,7 +616,19 @@ export function sf_key() {
 //
 // 2.  Return the result of running Parsing an Item (Section 4.2.3) with
 //     input_string.
-//
+/**
+ * @typedef {ParsedItem|ParsedInnerList} ParsedItemOrInnerList
+ *
+ * @param {string} input_string
+ * @return {ParsedItemOrInnerList}
+ */
+export function parseItemOrInnerList(input_string) {
+  if (input_string[0] === "(") {
+    return parseInnerList(input_string)
+  }
+  return parseItem(input_string)
+}
+
 // 4.2.1.2.  Parsing an Inner List
 //
 // Given an ASCII string as input_string, return the tuple (inner_list,
@@ -1148,7 +662,45 @@ export function sf_key() {
 //         parsing.
 //
 // 4.  The end of the inner list was not found; fail parsing.
-//
+/**
+ * @typedef {Array.<Item>} ItemList
+ *
+ * @typedef {{value: ItemList, params: Parameters}} InnerList
+ *
+ * @typedef {Object} ParsedInnerList
+ * @property {InnerList} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedInnerList}
+ */
+export function parseInnerList(input_string) {
+  if (input_string[0] !== "(") throw new Error(`failed to parse ${input_string} as Inner List`)
+  input_string = input_string.substr(1)
+  /** @type {ItemList}  */
+  const inner_list = []
+  while (input_string.length > 0) {
+    input_string = input_string.trim()
+    if (input_string[0] === ")") {
+      input_string = input_string.substr(1)
+      const parsedParameters = parseParameters(input_string)
+      return {
+        value: {
+          value: inner_list,
+          params: parsedParameters.value,
+        },
+        input_string: parsedParameters.input_string,
+      }
+    }
+    /** @type {ParsedItem} */
+    const parsedItem = parseItem(input_string)
+    inner_list.push(parsedItem.value)
+    input_string = parsedItem.input_string
+    if (input_string[0] !== " " && input_string[0] !== ")") throw new Error(`failed to parse ${input_string} as Inner List`)
+  }
+  throw new Error(`failed to parse ${input_string} as Inner List`)
+}
+
 // 4.2.2.  Parsing a Dictionary
 //
 // Given an ASCII string as input_string, return an ordered map whose
@@ -1199,7 +751,65 @@ export function sf_key() {
 //
 // Note that when duplicate Dictionary keys are encountered, this has
 // the effect of ignoring all but the last instance.
-//
+/**
+ * @typedef {Object.<Key, Item|InnerList>|Map} Dictionary
+ *
+ * @typedef {Object} ParsedDictionary
+ * @property {Dictionary} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @param {Object?} option
+ * @return {ParsedDictionary}
+ */
+export function parseDictionary(input_string, option = {}) { // TODO: option is not fully supported yet
+  /** @type {Array.<[Key, Item|InnerList]>} */
+  const value = [] // ordered map
+
+  /**
+   * @param {Array.<[Key, Item|InnerList]>} entries
+   * @return {Dictionary}
+   */
+  function toDict(entries) {
+    if (option?.use_map === true) return new Map(entries)
+    return Object.fromEntries(entries)
+  }
+
+  while (input_string.length > 0) {
+    /** @type {Item|InnerList} */
+    let member;
+    /** @type {ParsedKey} */
+    const parsedKey = parseKey(input_string)
+    /** @type {Key} */
+    const this_key = parsedKey.value
+    input_string = parsedKey.input_string
+    if (input_string[0] === "=") {
+      /** @type {ParsedItemOrInnerList} */
+      const parsedItemOrInnerList = parseItemOrInnerList(input_string.substr(1))
+      member = parsedItemOrInnerList.value
+      input_string = parsedItemOrInnerList.input_string
+    } else {
+      /** @type {ParsedParameters} */
+      const parsedParameters = parseParameters(input_string)
+      member = {
+        value: true,
+        params: parsedParameters.value
+      }
+      input_string = parsedParameters.input_string
+    }
+    value.push([this_key, member])
+    input_string = input_string.trim()
+    if (input_string.length === 0) return { input_string, value: toDict(value) }
+    if (input_string[0] !== ",") throw new Error(`failed to parse ${input_string} as Dictionary`)
+    input_string = input_string.substr(1).trim()
+    if (input_string.length === 0 || input_string[0] === ",") throw new Error(`failed to parse ${input_string} as Dictionary`)
+  }
+  return {
+    value: toDict(value),
+    input_string,
+  }
+}
+
 // 4.2.3.  Parsing an Item
 //
 // Given an ASCII string as input_string, return a (bare_item,
@@ -1213,7 +823,33 @@ export function sf_key() {
 //     (Section 4.2.3.2) with input_string.
 //
 // 3.  Return the tuple (bare_item, parameters).
-//
+/**
+ * @typedef {Object} Item
+ * @property {BareItem} value
+ * @property {Parameters} params
+ *
+ * @typedef {Object} ParsedItem
+ * @property {Item} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedItem}
+ */
+export function parseItem(input_string) {
+  const parsedBareItem = parseBareItem(input_string)
+  const value = parsedBareItem.value
+  input_string = parsedBareItem.input_string
+  const parsedParameters = parseParameters(input_string)
+  const params = parsedParameters.value
+  input_string = parsedParameters.input_string
+  /** @type {Item} */
+  const item = { value, params }
+  return {
+    value: item,
+    input_string,
+  }
+}
+
 // 4.2.3.1.  Parsing a Bare Item
 //
 // Given an ASCII string as input_string, return a bare Item.
@@ -1239,7 +875,32 @@ export function sf_key() {
 //     input_string.
 //
 // 6.  Otherwise, the item type is unrecognized; fail parsing.
-//
+/**
+ * @typedef {ParsedString|ParsedByteSequence|ParsedBoolean|ParsedIntegerOrDecimal|ParsedToken} ParsedBareItem
+ *
+ * @param {string} input_string
+ * @return {ParsedBareItem}
+ */
+export function parseBareItem(input_string) {
+  const first = input_string[0]
+  if (first === `"`) {
+    return parseString(input_string)
+  }
+  if (first === `:`) {
+    return parseByteSequence(input_string)
+  }
+  if (first === `?`) {
+    return parseBoolean(input_string)
+  }
+  if (/^[\-0-9]/.test(first)) {
+    return parseIntegerOrDecimal(input_string)
+  }
+  if (/^[a-zA-Z\*]/.test(first)) {
+    return parseToken(input_string)
+  }
+  throw new Error(`failed to parse ${input_string} as Bare Item`)
+}
+
 // 4.2.3.2.  Parsing Parameters
 //
 // Given an ASCII string as input_string, return an ordered map whose
@@ -1278,7 +939,44 @@ export function sf_key() {
 //
 // Note that when duplicate Parameter keys are encountered, this has the
 // effect of ignoring all but the last instance.
-//
+/**
+ * @typedef {string | Uint8Array | boolean | number | symbol} BareItem
+ *
+ * @typedef {Object.<Key, BareItem>} Parameters
+ *
+ * @typedef {Object} ParsedParameters
+ * @property {Parameters} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedParameters}
+ */
+export function parseParameters(input_string) {
+  /** @type {Parameters} */
+  const parameters = {}
+  while (input_string.length > 0) {
+    if (input_string[0] !== ";") break
+    input_string = input_string.substr(1).trim()
+    const parsedKey = parseKey(input_string)
+    const param_name = parsedKey.value
+    /** @type {BareItem} */
+    let param_value = true
+    input_string = parsedKey.input_string
+    if (input_string[0] === "=") {
+      input_string = input_string.substr(1)
+      const parsedBareItem = parseBareItem(input_string)
+      param_value = parsedBareItem.value
+      input_string = parsedBareItem.input_string
+    }
+    // override if param_name exists
+    parameters[param_name] = param_value
+  }
+  return {
+    value: parameters,
+    input_string,
+  }
+}
+
 // 4.2.3.3.  Parsing a Key
 //
 // Given an ASCII string as input_string, return a key. input_string is
@@ -1300,7 +998,39 @@ export function sf_key() {
 //     3.  Append char to output_string.
 //
 // 4.  Return output_string.
-//
+/**
+ * @typedef {string} Key
+ *
+ * @typedef {Object} ParsedKey
+ * @property {Key} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedKey}
+ */
+export function parseKey(input_string) {
+  let i = 0
+  if (/^[a-z\*]$/.test(input_string[i]) === false) {
+    throw new Error(`failed to parse ${input_string} as Key`)
+  }
+  /** @type {Key} */
+  let output_string = ""
+  while (input_string.length > i) {
+    if (/^[a-z0-9\_\-\.\*]$/.test(input_string[i]) === false) {
+      return {
+        value: output_string,
+        input_string: input_string.substr(i),
+      }
+    }
+    output_string += input_string[i]
+    i++
+  }
+  return {
+    value: output_string,
+    input_string: input_string.substr(i),
+  }
+}
+
 // 4.2.4.  Parsing an Integer or Decimal
 //
 // Given an ASCII string as input_string, return an Integer or Decimal.
@@ -1366,7 +1096,58 @@ export function sf_key() {
 //          be the product of the result and sign.
 //
 // 10.  Return output_number.
-//
+/**
+ * @typedef {Object} ParsedIntegerOrDecimal
+ * @property {number} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedIntegerOrDecimal}
+ */
+export function parseIntegerOrDecimal(input_string) {
+  let type = "integer"
+  let sign = 1
+  let input_number = ""
+  let output_number;
+  let i = 0
+
+  if (input_string[i] === "-") {
+    sign = -1
+    input_string = input_string.substr(1)
+  }
+  if (input_string.length <= 0) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
+
+  const re_integer = /^(\d+)?/g
+  const result_integer = re_integer.exec(input_string)
+  if (result_integer[0].length === 0) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
+  input_number += result_integer[1]
+  input_string = input_string.substr(re_integer.lastIndex)
+
+  if (input_string[0] === ".") {
+    // decimal
+    if (input_number.length > 12) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
+    const re_decimal = /^(\.\d+)?/g
+    const result_decimal = re_decimal.exec(input_string)
+    input_string = input_string.substr(re_decimal.lastIndex)
+    // 9.2.  If the number of characters after "." in input_number is greater than three, fail parsing.
+    if (result_decimal[0].length === 0 || result_decimal[1].length > 4) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
+    input_number += result_decimal[1]
+    // 7.6.  If type is "decimal" and input_number contains more than 16 characters, fail parsing.
+    if (input_number.length > 16) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
+    output_number = parseFloat(input_number) * sign
+  } else {
+    // integer
+    // 7.5.  If type is "integer" and input_number contains more than 15 characters, fail parsing.
+    if (input_number.length > 15) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
+    output_number = parseInt(input_number) * sign
+    if (output_number < -999999999999999n || 999999999999999n < output_number) throw new Error(`failed to parse integer: ${input_number} as Integer or Decimal`)
+  }
+  return {
+    value: output_number,
+    input_string
+  }
+}
+
 // 4.2.5.  Parsing a String
 //
 // Given an ASCII string as input_string, return an unquoted String.
@@ -1404,7 +1185,47 @@ export function sf_key() {
 //
 // 5.  Reached the end of input_string without finding a closing DQUOTE;
 //     fail parsing.
-//
+/**
+ * @typedef {Object} ParsedString
+ * @property {string} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedString}
+ */
+export function parseString(input_string) {
+  let output_string = ""
+  let i = 0
+  if (input_string[i] !== `"`) {
+    throw new Error(`failed to parse ${input_string} as String`)
+  }
+  i++
+  while (input_string.length > i) {
+    // console.log(i, input_string[i], output_string)
+    if (input_string[i] === `\\`) {
+      if (input_string.length <= i + 1) {
+        throw new Error(`failed to parse ${input_string} as String`)
+      }
+      i++
+      if (input_string[i] !== `"` && input_string[i] !== `\\`) {
+        throw new Error(`failed to parse ${input_string} as String`)
+      }
+      output_string += input_string[i]
+    } else if (input_string[i] === `"`) {
+      return {
+        value: output_string,
+        input_string: input_string.substr(++i),
+      }
+    } else if (/[\x00-\x1f\x7f]+/.test(input_string[i])) {
+      throw new Error(`failed to parse ${input_string} as String`)
+    } else {
+      output_string += input_string[i]
+    }
+    i++
+  }
+  throw new Error(`failed to parse ${input_string} as String`)
+}
+
 // 4.2.6.  Parsing a Token
 //
 // Given an ASCII string as input_string, return a Token. input_string
@@ -1426,7 +1247,27 @@ export function sf_key() {
 //     3.  Append char to output_string.
 //
 // 4.  Return output_string.
-//
+/**
+ * @typedef {Object} ParsedToken
+ * @property {symbol} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedToken}
+ */
+export function parseToken(input_string) {
+  if (/^[a-zA-Z\*]$/.test(input_string[0]) === false) {
+    throw new Error(`failed to parse ${input_string} as Token`)
+  }
+  const re = /^([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]+)/g
+  const output_string = re.exec(input_string)[1]
+  input_string = input_string.substr(re.lastIndex)
+  return {
+    value: Symbol.for(output_string),
+    input_string,
+  }
+}
+
 // 4.2.7.  Parsing a Byte Sequence
 //
 // Given an ASCII string as input_string, return a Byte Sequence.
@@ -1467,8 +1308,29 @@ export function sf_key() {
 // This specification does not relax the requirements in [RFC4648],
 // Section 3.1 and 3.3; therefore, parsers MUST fail on characters
 // outside the base64 alphabet, and on line feeds in encoded data.
-//
-//
+/**
+ * @typedef {Object} ParsedByteSequence
+ * @property {Uint8Array} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedByteSequence}
+ */
+export function parseByteSequence(input_string) {
+  if (input_string[0] !== ":") throw new Error(`failed to parse ${input_string} as Byte Sequence`)
+  input_string = input_string.substr(1)
+  if (input_string.includes(":") === false) throw new Error(`failed to parse ${input_string} as Byte Sequence`)
+  const re = /(^.*?)(:)/g
+  const b64_content = re.exec(input_string)[1]
+  input_string = input_string.substr(re.lastIndex)
+  // pass b64_content char check step 6
+  const binary_content = base64decode(b64_content)
+  return {
+    value: binary_content,
+    input_string,
+  }
+}
+
 // 4.2.8.  Parsing a Boolean
 //
 // Given an ASCII string as input_string, return a Boolean. input_string
@@ -1485,3 +1347,58 @@ export function sf_key() {
 //     first character, and return false.
 //
 // 5.  No value has matched; fail parsing.
+/**
+ * @typedef {Object} ParsedBoolean
+ * @property {boolean} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedBoolean}
+ */
+export function parseBoolean(input_string) {
+  let i = 0
+  if (input_string[i] !== "?") {
+    throw new Error(`failed to parse ${input_string} as Boolean`)
+  }
+  i++
+  if (input_string[i] === "1") {
+    return {
+      value: true,
+      input_string: input_string.substr(++i),
+    }
+  }
+  if (input_string[i] === "0") {
+    return {
+      value: false,
+      input_string: input_string.substr(++i),
+    }
+  }
+  throw new Error(`failed to parse ${input_string} as Boolean`)
+}
+
+/////////////////////////
+// base64 uility
+/////////////////////////
+/**
+ * @param {string} str
+ * @return {Uint8Array}
+ */
+export function base64decode(str) {
+  if (typeof window === `undefined`) {
+    return Uint8Array.from(/**@type {node.Buffer}*/Buffer.from(str, `base64`))
+  } else {
+    return new Uint8Array([...atob(str)].map(a => a.charCodeAt(0)))
+  }
+}
+
+/**
+ * @param {Uint8Array} binary
+ * @return {string}
+ */
+export function base64encode(binary) {
+  if (typeof window === `undefined`) {
+    return Buffer.from(binary).toString(`base64`)
+  } else {
+    return btoa(String.fromCharCode(...binary))
+  }
+}
