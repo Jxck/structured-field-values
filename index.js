@@ -762,7 +762,7 @@ export function parseInnerList(input_string) {
  * @param {Object?} option
  * @return {ParsedDictionary}
  */
-export function parseDictionary(input_string, option = {}) {
+export function parseDictionary(input_string, option = {}) { // TODO: option is not fully supported yet
   /** @type {Array.<[Key, Item|InnerList]>} */
   const value = [] // ordered map
 
