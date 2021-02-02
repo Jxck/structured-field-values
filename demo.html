@@ -83,9 +83,9 @@ button {
 
 .samples {
   font-family: var(--font-family-mono);
+  font-size: 0.5em;
   margin: 0;
   padding: 0 0 0 1em;
-  column-count: 2;
 }
 
 .samples li {
@@ -122,7 +122,7 @@ button {
 <h1>Structured Field Values DEMO</h1>
 <main>
   <label for=encoded>encoded</label>
-  <textarea id=encoded class=encoded>"a";x, "b";y=?0, 10, (1 2)</textarea>
+  <textarea id=encoded class=encoded></textarea>
   <p class="decode error"></p>
   <div class=center>
     <button class="decode Item">decode item ⬇️ </button>
@@ -144,15 +144,19 @@ button {
 
 <h2>sample</h2>
 <ul class=samples>
-  <li>item: <a class="sample Item" href="">?1</a>
-  <li>item: <a class="sample Item" href="">a</a>
-  <li>item: <a class="sample Item" href="">"a"</a>
-  <li>item: <a class="sample Item" href="">100</a>
-  <li>list: <a class="sample List" href="">1,2,3,4</a>
-  <li>list: <a class="sample List" href="">"a";x, "b";y=?0, 10, (1 2)</a>
+  <li>item: <a class="sample Item" href="">?1</a></li>
+  <li>item: <a class="sample Item" href="">a</a></li>
+  <li>item: <a class="sample Item" href="">"a"</a></li>
+  <li>item: <a class="sample Item" href="">100</a></li>
+  <li>list: <a class="sample List" href="">1,2,3,4</a></li>
+  <li>list: <a class="sample List" href="">"a";x, "b";y=?0, 10, (1 2)</a></li>
   <li>dict: <a class="sample Dict" href="">a=10, b=20, c=30</a>
-  <li>dict: <a class="sample Dict" href="">a="x", b=10, c=?0, d=(1 2)</a>
+  <li>dict: <a class="sample Dict" href="">a="x", b=10, c=?0, d=(1 2)</a></li>
+  <li>Accept-CH(<a href=https://tools.ietf.org/html/draft-ietf-httpbis-client-hints-15>id</a>): <a class="sample List" href="">Sec-CH-Example, Sec-CH-Example-2</a></li>
+  <li>Cache-Status(<a href=https://tools.ietf.org/html/draft-ietf-httpbis-cache-header-07>id</a>): <a class="sample List" href="">OriginCache; hit; ttl=1100; collapsed, "CDN Company Here"; hit; ttl=545</a></li>
+  <li>Proxy-Status(<a href=https://tools.ietf.org/html/draft-ietf-httpbis-proxy-status-02>id</a>): <a class="sample List" href="">ExampleProxy; error="http_protocol_error"; details="Malformed response header - space before colon"</a></li>
 </ul>
+
 
 <script type=module>
   const $  = document.querySelector.bind(document)
@@ -173,7 +177,6 @@ button {
       $button.classList.remove("active")
     })
   }
-
 
   document.on("DOMContentLoaded", async (e) => {
     $$(".decode").forEach(($decode) => $decode.on("click", (e) => {
@@ -233,7 +236,7 @@ button {
     })
 
     if (location.hash === "") {
-      $decoded.value = $$(".sample.List")[1].textContent
+      $encoded.value = $$(".sample.List")[1].textContent
       $(".decode.List").click()
     } else {
       $encoded.value = atob(location.hash.substr(1))
