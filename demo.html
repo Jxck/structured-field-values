@@ -174,12 +174,6 @@ button {
     })
   }
 
-  function replacer(key, value) {
-    if (typeof value === "symbol") {
-      return value.toString()
-    }
-    return value
-  }
 
   document.on("DOMContentLoaded", async (e) => {
     $$(".decode").forEach(($decode) => $decode.on("click", (e) => {
@@ -191,7 +185,12 @@ button {
         const method = e.target.classList.item(1)
         const decoded = sfv[`decode${method}`](encoded)
         console.log(decoded)
-        $decoded.value = JSON.stringify(decoded, replacer, " ")
+        $decoded.value = JSON.stringify(decoded, function(key, value) {
+          if (typeof value === "symbol") {
+            return value.toString()
+          }
+          return value
+        }, " ")
         e.target.classList.add("active")
       } catch(error) {
         console.error(error)
@@ -202,7 +201,15 @@ button {
     $$(".encode").forEach(($encode) => $encode.on("click", (e) => {
       try {
         clear()
-        const decoded = JSON.parse($decoded.value)
+        const decoded = JSON.parse($decoded.value, function(k, v) {
+          if (k === "value" && typeof v === "string") {
+            const token = v.match(/^Symbol\((.*)\)$/)
+            if (token) {
+              v = Symbol.for(token[1])
+            }
+          }
+          return v
+        })
         console.log(decoded)
         const method = e.target.classList.item(1)
         const encoded = sfv[`encode${method}`](decoded)
