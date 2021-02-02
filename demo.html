@@ -187,6 +187,7 @@ button {
         clear()
         const encoded = $encoded.value
         console.log(encoded)
+        location.hash = btoa(encoded)
         const method = e.target.classList.item(1)
         const decoded = sfv[`decode${method}`](encoded)
         console.log(decoded)
@@ -223,6 +224,12 @@ button {
         $decoded.value = ""
       })
     })
-    $(".decode.List").click()
+
+    if (location.hash === "") {
+      $decoded.value = $$(".sample.List")[1].textContent
+      $(".decode.List").click()
+    } else {
+      $encoded.value = atob(location.hash.substr(1))
+    }
   })
 </script>
