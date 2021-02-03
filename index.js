@@ -378,7 +378,7 @@ export function serializeBareItem(value) {
  * @return {string}
  */
 export function serializeInteger(value) {
-  if (value < -999_999_999_999_999n || 999_999_999_999_999n < value) throw new Error(`failed to serialize ${value} as Integer`)
+  if (Math.abs(value).toString().length > 15) throw new Error(`failed to serialize ${value} as Integer`)
   return value.toString()
 }
 
