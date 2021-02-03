@@ -79,13 +79,18 @@ function test_serializeInteger() {
 }
 
 function test_serializeDecimal() {
-  assert.deepStrictEqual(serializeDecimal(0), "0") // 0.0 is 0 in JS
-  assert.deepStrictEqual(serializeDecimal(1.0), "1") // 1.0 is 1 in JS
+  assert.deepStrictEqual(serializeDecimal(0), "0.0")
+  assert.deepStrictEqual(serializeDecimal(1.0), "1.0")
   assert.deepStrictEqual(serializeDecimal(1.01), "1.01")
+  assert.deepStrictEqual(serializeDecimal(1.0021), "1.002")
+  assert.deepStrictEqual(serializeDecimal(1.0029), "1.003")
+  assert.deepStrictEqual(serializeDecimal(1.0025), "1.002")
+  assert.deepStrictEqual(serializeDecimal(1.0035), "1.004")
+  assert.deepStrictEqual(serializeDecimal(-1.0035), "-1.004")
   assert.deepStrictEqual(serializeDecimal( 999_999_999_999.999),  "999999999999.999")
   assert.deepStrictEqual(serializeDecimal(-999_999_999_999.999), "-999999999999.999")
-  assert.throws(() => serializeInteger( 1_000_000_000_000_000.1))
-  assert.throws(() => serializeInteger(-1_000_000_000_000_000.1))
+  assert.throws(() => serializeDecimal( 1_000_000_000_000.0))
+  assert.throws(() => serializeDecimal(-1_000_000_000_000.0))
 }
 
 function test_serializeString() {
