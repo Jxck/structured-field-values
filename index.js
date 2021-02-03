@@ -435,18 +435,18 @@ export function serializeDecimal(value) {
  * @param {number} precision - decimal places to round to
  * @return {number}
  */
-function roundToEven(value, precision){
-  if (value<0){
+function roundToEven(value, precision) {
+  if (value < 0) {
     return -roundToEven(-value, precision)
   }
 
   const decimalShift = Math.pow(10, precision)
   const isEquidistant = Math.abs((value * decimalShift) % 1 - 0.5) < Number.EPSILON
-  if(isEquidistant){
+  if (isEquidistant) {
     // If the tail of the decimal place is 'equidistant' we round to the nearest even value
     const flooredValue = Math.floor(value * decimalShift)
-    return (flooredValue % 2 === 0 ? flooredValue : flooredValue+1) / decimalShift
-  } else{
+    return (flooredValue % 2 === 0 ? flooredValue : flooredValue + 1) / decimalShift
+  } else {
     // Otherwise, proceed as normal
     return Math.round(value * decimalShift) / decimalShift
   }
