@@ -421,9 +421,35 @@ export function serializeInteger(value) {
  * @return {string}
  */
 export function serializeDecimal(value) {
-  value = (Math.round(value * 1000) / 1000)
-  if (value < -1_000_000_000_000 || 1_000_000_000_000 < value) throw new Error(`failed to serialize ${value} as Decimal`)
-  return value.toString()
+  const roundedValue = roundToEven(value, 3) // round to 3 decimal places
+  if (Math.floor(Math.abs(roundedValue)).toString().length > 12) throw new Error(`failed to serialize ${value} as Decimal`)
+  const stringValue = roundedValue.toString()
+  return stringValue.includes('.') ? stringValue : `${stringValue}.0`
+}
+
+/**
+ * This implements the rounding procedure described in step 2 of the "Serializing a Decimal" specification.
+ * This rounding style is known as "even rounding", "banker's rounding", or "commercial rounding".
+ * 
+ * @param {number} value 
+ * @param {number} precision - decimal places to round to
+ * @return {number}
+ */
+function roundToEven(value, precision){
+  if (value<0){
+    return -roundToEven(-value, precision)
+  }
+
+  const decimalShift = Math.pow(10, precision)
+  const isEquidistant = Math.abs((value * decimalShift) % 1 - 0.5) <= Number.EPSILON
+  if(isEquidistant){
+    // If the tail of the decimal place is 'equidistant' we round to the nearest even value
+    const flooredValue = Math.floor(value * decimalShift)
+    return (flooredValue % 2 === 0 ? flooredValue : flooredValue+1) / decimalShift
+  } else{
+    // Otherwise, proceed as normal
+    return Math.round(value * decimalShift) / decimalShift
+  }
 }
 
 // 4.1.6.  Serializing a String
