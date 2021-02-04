@@ -448,7 +448,7 @@ function structured_field_tests() {
       ...read(`large-generated`),
       ...read(`list`),
       ...read(`listlist`),
-      // ...read(`number-generated`),
+      ...read(`number-generated`),
       ...read(`number`),
       ...read(`param-dict`),
       ...read(`param-list`),
@@ -473,6 +473,7 @@ function structured_field_tests() {
         `Example-Hdr (dictionary on two lines)`,
       ]
       if (ignore.includes(suite.name)) return
+      if (suite.name.endsWith("0 decimal")) return // .0 is Integer in JS
 
       console.log(suite.name)
 
