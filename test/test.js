@@ -437,94 +437,93 @@ function test_parseKey() {
 }
 
 function structured_field_tests() {
-  (() => {
-    const suites = [
-      ...read(`binary`),
-      ...read(`boolean`),
-      ...read(`dictionary`),
-      ...read(`examples`),
-      ...read(`item`),
-      ...read(`key-generated`),
-      ...read(`large-generated`),
-      ...read(`list`),
-      ...read(`listlist`),
-      ...read(`number-generated`),
-      ...read(`number`),
-      ...read(`param-dict`),
-      ...read(`param-list`),
-      ...read(`param-listlist`),
-      ...read(`string-generated`),
-      ...read(`string`),
-      ...read(`token-generated`),
-      ...read(`token`),
+  const suites = [
+    ...read(`binary`),
+    ...read(`boolean`),
+    ...read(`dictionary`),
+    ...read(`examples`),
+    ...read(`item`),
+    ...read(`key-generated`),
+    ...read(`large-generated`),
+    ...read(`list`),
+    ...read(`listlist`),
+    ...read(`number-generated`),
+    ...read(`number`),
+    ...read(`param-dict`),
+    ...read(`param-list`),
+    ...read(`param-listlist`),
+    ...read(`string-generated`),
+    ...read(`string`),
+    ...read(`token-generated`),
+    ...read(`token`),
+  ]
+  suites.forEach((suite) => {
+    const ignore = [
+      // number.json
+      `negative zero`, // -0 & +0 are no equal in deepStrictEqual
+      // list.json
+      `two line list`,
+      // dictionary.json
+      `two lines dictionary`,
+      // param-dict.json
+      `two lines parameterised list`,
+      // example.json
+      `Example-Hdr (list on two lines)`,
+      `Example-Hdr (dictionary on two lines)`,
     ]
-    suites.forEach((suite) => {
-      const ignore = [
-        // number.json
-        `negative zero`, // -0 & +0 are no equal in deepStrictEqual
-        // list.json
-        `two line list`,
-        // dictionary.json
-        `two lines dictionary`,
-        // param-dict.json
-        `two lines parameterised list`,
-        // example.json
-        `Example-Hdr (list on two lines)`,
-        `Example-Hdr (dictionary on two lines)`,
-      ]
-      if (ignore.includes(suite.name)) return
-      if (suite.name.endsWith("0 decimal")) return // .0 is Integer in JS
+    if (ignore.includes(suite.name)) return
+    if (suite.name.endsWith("0 decimal")) return // .0 is Integer in JS
 
-      try {
-        if (suite.header_type === `item`) {
-          // decode
-          const obj     = formatItem(suite.expected)
-          const decoded = decodeItem(suite.raw[0])
-          assert.deepStrictEqual(decoded, obj, suite.name)
+    console.debug(suite.name)
+    try {
+      if (suite.header_type === `item`) {
+        // decode
+        const obj     = formatItem(suite.expected)
+        const decoded = decodeItem(suite.raw[0])
+        assert.deepStrictEqual(decoded, obj, suite.name)
 
-          // encode
-          const str     = suite?.canonical?.[0] || suite.raw[0]
-          const encoded = encodeItem(obj)
-          assert.deepStrictEqual(str, encoded, suite.name)
-        }
-        if (suite.header_type === `list`) {
-          // decode
-          const obj     = formatList(suite.expected)
-          const decoded = decodeList(suite.raw[0])
-          assert.deepStrictEqual(decoded, obj, suite.name)
-
-          // encode
-          if ([
-            // 1.0 is 1 in JS
-            `single item parameterised list`,
-            `missing parameter value parameterised list`,
-            `missing terminal parameter value parameterised list`,
-          ].includes(suite.name)) return
-          const str     = suite?.canonical?.[0] || suite.raw[0]
-          const encoded = encodeList(obj)
-          assert.deepStrictEqual(str, encoded, suite.name)
-        }
-        if (suite.header_type === `dictionary`) {
-          // decode
-          const obj     = formatDict(suite.expected)
-          const decoded = decodeDict(suite.raw[0])
-          assert.deepStrictEqual(decoded, obj, suite.name)
-
-          // encode
-          if ([
-            // 1.0 is 1 in JS
-            `single item parameterised dict`,
-            `list item parameterised dictionary`,
-          ].includes(suite.name)) return
-          const str     = suite?.canonical?.[0] || suite.raw[0]
-          const encoded = encodeDict(obj)
-          assert.deepStrictEqual(str, encoded, suite.name)
-        }
-      } catch(err) {
-        assert.deepStrictEqual(suite.must_fail, true, err)
+        // encode
+        const str     = suite?.canonical?.[0] || suite.raw[0]
+        const encoded = encodeItem(obj)
+        assert.deepStrictEqual(str, encoded, suite.name)
       }
-    })
-  })();
+      if (suite.header_type === `list`) {
+        // decode
+        const obj     = formatList(suite.expected)
+        const decoded = decodeList(suite.raw[0])
+        assert.deepStrictEqual(decoded, obj, suite.name)
+
+        // encode
+        if ([
+          // 1.0 is 1 in JS
+          `single item parameterised list`,
+          `missing parameter value parameterised list`,
+          `missing terminal parameter value parameterised list`,
+        ].includes(suite.name)) return
+        const str     = suite?.canonical?.[0] || suite.raw[0]
+        const encoded = encodeList(obj)
+        assert.deepStrictEqual(str, encoded, suite.name)
+      }
+      if (suite.header_type === `dictionary`) {
+        // decode
+        const obj     = formatDict(suite.expected)
+        const decoded = decodeDict(suite.raw[0])
+        assert.deepStrictEqual(decoded, obj, suite.name)
+
+        // encode
+        if ([
+          // 1.0 is 1 in JS
+          `single item parameterised dict`,
+          `list item parameterised dictionary`,
+        ].includes(suite.name)) return
+        const str     = suite?.canonical?.[0] || suite.raw[0]
+        const encoded = encodeDict(obj)
+        assert.deepStrictEqual(str, encoded, suite.name)
+      }
+    } catch(err) {
+      assert.deepStrictEqual(suite.must_fail, true, err)
+    }
+  })
 }
 
 function serialisation_tests() {
@@ -536,13 +535,13 @@ function serialisation_tests() {
   ]
 
   suites.forEach((suite) => {
-    // console.log(suite.name)
+    console.debug(suite.name)
     try {
       if (suite.header_type === `item`) {
         // encode
         const obj     = formatItem(suite.expected)
         const encoded = encodeItem(obj)
-        const str     = suite?.canonical?.[0]
+        const str     = suite.canonical[0]
         assert.deepStrictEqual(str, encoded, suite.name)
       }
     } catch(err) {
