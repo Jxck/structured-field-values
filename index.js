@@ -441,7 +441,7 @@ function roundToEven(value, precision){
   }
 
   const decimalShift = Math.pow(10, precision)
-  const isEquidistant = Math.abs((value * decimalShift) % 1 - 0.5) <= Number.EPSILON
+  const isEquidistant = Math.abs((value * decimalShift) % 1 - 0.5) < Number.EPSILON
   if(isEquidistant){
     // If the tail of the decimal place is 'equidistant' we round to the nearest even value
     const flooredValue = Math.floor(value * decimalShift)
