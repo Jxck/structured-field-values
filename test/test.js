@@ -475,8 +475,6 @@ function structured_field_tests() {
       if (ignore.includes(suite.name)) return
       if (suite.name.endsWith("0 decimal")) return // .0 is Integer in JS
 
-      console.log(suite.name)
-
       try {
         if (suite.header_type === `item`) {
           // decode
@@ -529,6 +527,30 @@ function structured_field_tests() {
   })();
 }
 
+function serialisation_tests() {
+  const suites = [
+    ...read("serialisation-tests/key-generated"),
+    ...read("serialisation-tests/number"),
+    ...read("serialisation-tests/string-generated"),
+    ...read("serialisation-tests/token-generated"),
+  ]
+
+  suites.forEach((suite) => {
+    // console.log(suite.name)
+    try {
+      if (suite.header_type === `item`) {
+        // encode
+        const obj     = formatItem(suite.expected)
+        const encoded = encodeItem(obj)
+        const str     = suite?.canonical?.[0]
+        assert.deepStrictEqual(str, encoded, suite.name)
+      }
+    } catch(err) {
+      assert.deepStrictEqual(suite.must_fail, true, err)
+    }
+  })
+}
+
 ;[
   test_serializeKey,
   test_serializeBareItem,
@@ -554,7 +576,9 @@ function structured_field_tests() {
   test_parseKey,
 
   structured_field_tests,
+  serialisation_tests,
 ].forEach((t) => {
   console.log(t.name)
   t()
-})
+});
+
