@@ -10,12 +10,12 @@ import {
   decodeList,
   decodeDict,
 
-  //serializeList,
-  //serializeInnerList,
-  //serializeParams,
+  // serializeList,
+  // serializeInnerList,
+  // serializeParams,
   serializeKey,
-  //serializeDict,
-  //serializeItem,
+  // serializeDict,
+  // serializeItem,
   serializeBareItem,
   serializeInteger,
   serializeDecimal,
@@ -279,17 +279,9 @@ function test_parseList() {
   assert.deepStrictEqual(
     parseList(`("foo" "bar"), ("baz"), ("bat" "one"), ()`),
     { value: [
-      new Item([
-        new Item("foo"),
-        new Item("bar"),
-      ]),
-      new Item([
-        new Item("baz"),
-      ]),
-      new Item([
-        new Item("bat"),
-        new Item("one"),
-      ]),
+      new Item(["foo", "bar"]),
+      new Item(["baz", ]),
+      new Item(["bat", "one"]),
       new Item([])
     ], input_string: ``}
   )
@@ -297,26 +289,17 @@ function test_parseList() {
     new Item([
       new Item("foo", { "a": 1, "b": 2 })
     ], { "lvl": 5 }),
-    new Item([
-      new Item("bar"),
-      new Item("baz"),
-    ], { "lvl": 1 }),
+    new Item(["bar", "baz"], { "lvl": 1 }),
   ], input_string: ``})
 }
 
 function test_parseInnerList() {
   assert.deepStrictEqual(parseInnerList(`( 1 2 3 )`), {
-    value: new Item([
-      new Item(1),
-      new Item(2),
-      new Item(3),
-    ]),
+    value: new Item([1, 2, 3]),
     input_string: ``
   })
   assert.deepStrictEqual(parseInnerList(`(1)`), {
-    value: new Item([
-      new Item(1),
-    ]),
+    value: new Item([1]),
     input_string: ``
   })
   assert.deepStrictEqual(parseInnerList(`()`), {
@@ -336,36 +319,27 @@ function test_parseDictionary() {
 
   assert.deepEqual(parseDictionary(`a=?0, b, c; foo=bar`), {
     value: {
-      "a": { value: false, params: null },
-      "b": { value: true,  params: null },
-      "c": { value: true,  params: { "foo": s("bar") } }
+      "a": new Item(false),
+      "b": new Item(true),
+      "c": new Item(true, { "foo": s("bar")}),
     },
     input_string: ``
   })
 
   assert.deepStrictEqual(parseDictionary(`rating=1.5, feelings=(joy sadness)`), {
     value: {
-      "rating": new Item(1.5),
-      "feelings": new Item([
-        new Item(s("joy")),
-        new Item(s("sadness")),
-      ])
+      "rating":   new Item(1.5),
+      "feelings": new Item([s("joy"), s("sadness")])
     },
     input_string:``
   })
 
   assert.deepStrictEqual(parseDictionary(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {
     value: {
-      "a": new Item([
-        new Item(1),
-        new Item(2),
-      ]),
+      "a": new Item([1,2]),
       "b": new Item(3),
       "c": new Item(4, { "aa": s("bb") }),
-      "d": new Item([
-        new Item(5),
-        new Item(6),
-      ], { "valid": true })
+      "d": new Item([5,6], { "valid": true })
     },
     input_string: ``
   })

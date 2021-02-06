@@ -6,6 +6,12 @@ export class Item {
    * @property {Parameters} params
    */
   constructor(value, params = null) {
+    if (Array.isArray(value)) {
+      value = value.map((v) => {
+        if (v instanceof Item) return v
+        return new Item(v)
+      })
+    }
     this.value = value
     this.params = params
   }
