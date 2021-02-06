@@ -288,16 +288,17 @@ export function serializeKey(value) {
  */
 export function serializeDict(dict) {
   if (typeof dict !== "object") throw new Error(`failed to serialize ${dict} as Dict`)
-  return Object.entries(dict).map(([key, { value, params }]) => {
+  return Object.entries(dict).map(([key, item]) => {
+    if ((item instanceof Item) === false) item = new Item(item)
     let output = serializeKey(key)
-    if (value === true) {
-      output += serializeParams(params)
+    if (item.value === true) {
+      output += serializeParams(item.params)
     } else {
       output += "="
-      if (Array.isArray(value)) {
-        output += serializeInnerList({ value, params })
+      if (Array.isArray(item.value)) {
+        output += serializeInnerList(item)
       } else {
-        output += serializeItem(new Item(value, params))
+        output += serializeItem(item)
       }
     }
     return output

@@ -208,6 +208,29 @@ function test_encode_list() {
   ]),  `1;a=2, 2;a=2, 3;a=2`)
 }
 
+function test_encode_dict() {
+  assert.deepStrictEqual(
+    encodeDict({
+      a: 1,
+      b: false,
+      c: "x",
+      d: Symbol.for("y"),
+      e: new Uint8Array([1,2,3])
+    }),
+    `a=1, b=?0, c="x", d=y, e=:AQID:`
+  )
+  assert.deepStrictEqual(
+    encodeDict({
+      a: new Item(1),
+      b: new Item(false),
+      c: new Item("x"),
+      d: new Item(Symbol.for("y")),
+      e: new Item(new Uint8Array([1,2,3])),
+    }),
+    `a=1, b=?0, c="x", d=y, e=:AQID:`
+  )
+}
+
 function test_parseIntegerOrDecimal() {
   assert.deepStrictEqual(parseIntegerOrDecimal(`42`),   {value: 42,   input_string: ``})
   assert.deepStrictEqual(parseIntegerOrDecimal(`-42`),  {value: -42,  input_string: ``})
@@ -541,6 +564,7 @@ function serialisation_tests() {
   test_decode,
   test_encode_item,
   test_encode_list,
+  test_encode_dict,
 
   test_parseIntegerOrDecimal,
   test_parseString,
