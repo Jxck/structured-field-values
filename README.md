@@ -169,6 +169,15 @@ encodeDict({
   c: 30,
 })
 
+// `a=10, b=20, c=30`
+encodeDict(new Map([
+                     ['a', 10],
+                     ['b', 20],
+                     ['c', 30],
+                   ])
+),
+
+
 // `a=x, b="y", c=10, d=?0, e=:AQID:, f=(10 20)`
 encodeDict({
   a: Symbol.for('x'),
@@ -187,6 +196,13 @@ encodeDict({
   d: new Item(false),
   e: new Item([1, 2]),
 })
+
+// `a=1, b=?0, c="x", d=y, e=:AQID:`
+encodeDict(new Map([
+  ['a', 10],
+  ['b', 20],
+  ['c', 30],
+])),
 ```
 
 

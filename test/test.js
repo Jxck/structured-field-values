@@ -209,6 +209,25 @@ function test_encode_list() {
 }
 
 function test_encode_dict() {
+
+  assert.deepStrictEqual(
+    encodeDict({
+      a: 10,
+      b: 20,
+      c: 30,
+    }),
+    `a=10, b=20, c=30`
+  )
+
+  assert.deepStrictEqual(
+    encodeDict(new Map([
+      ['a', 10],
+      ['b', 20],
+      ['c', 30],
+    ])),
+    `a=10, b=20, c=30`
+  )
+
   assert.deepStrictEqual(
     encodeDict({
       a: 1,
@@ -227,6 +246,16 @@ function test_encode_dict() {
       d: new Item(Symbol.for("y")),
       e: new Item(new Uint8Array([1,2,3])),
     }),
+    `a=1, b=?0, c="x", d=y, e=:AQID:`
+  )
+  assert.deepStrictEqual(
+    encodeDict(new Map([
+      ['a', new Item(1)],
+      ['b', new Item(false)],
+      ['c', new Item("x")],
+      ['d', new Item(Symbol.for("y"))],
+      ['e', new Item(new Uint8Array([1,2,3]))],
+    ])),
     `a=1, b=?0, c="x", d=y, e=:AQID:`
   )
 }

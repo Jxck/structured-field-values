@@ -288,7 +288,8 @@ export function serializeKey(value) {
  */
 export function serializeDict(dict) {
   if (typeof dict !== "object") throw new Error(`failed to serialize ${dict} as Dict`)
-  return Object.entries(dict).map(([key, item]) => {
+  const entries = dict instanceof Map ? dict.entries() : Object.entries(dict)
+  return Array.from(entries).map(([key, item]) => {
     if ((item instanceof Item) === false) item = new Item(item)
     let output = serializeKey(key)
     if (item.value === true) {
