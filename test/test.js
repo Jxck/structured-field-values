@@ -162,14 +162,27 @@ function test_serializeByteSequence() {
 }
 
 function test_decode() {
-  assert.deepStrictEqual(decodeItem(`"a"`),    new Item("a"))
-  assert.deepStrictEqual(decodeItem(`?1`),     new Item(true))
-  assert.deepStrictEqual(decodeItem(`1`),      new Item(1))
-  assert.deepStrictEqual(decodeItem(`a`),      new Item(Symbol.for('a')))
+  assert.deepStrictEqual(decodeItem(`"a"`), new Item("a"))
+  assert.deepStrictEqual(decodeItem(`?1`),  new Item(true))
+  assert.deepStrictEqual(decodeItem(`1`),   new Item(1))
+  assert.deepStrictEqual(decodeItem(`a`),   new Item(Symbol.for('a')))
   assert.deepStrictEqual(decodeItem(`:AQID:`), new Item(new Uint8Array([1, 2,3])))
   assert.throws(() => decodeItem(`1;`))
   assert.throws(() => decodeList(`1,2,3)`))
   assert.throws(() => decodeDiect(`a=1, b=2)`))
+}
+
+function test_encode() {
+  assert.deepStrictEqual(encodeItem(new Item("a")),  `"a"`)
+  assert.deepStrictEqual(encodeItem(new Item(true)), `?1`)
+  assert.deepStrictEqual(encodeItem(new Item(1)),    `1`)
+  assert.deepStrictEqual(encodeItem(new Item(Symbol.for('a'))), `a`)
+  assert.deepStrictEqual(encodeItem(new Item(new Uint8Array([1,2,3]))), `:AQID:`)
+  assert.throws(() => encodeItem(function(){}))
+  assert.throws(() => encodeItem(() => {}))
+  assert.throws(() => encodeItem(999n))
+  assert.throws(() => encodeItem(null))
+  assert.throws(() => encodeItem(undefined))
 }
 
 function test_parseIntegerOrDecimal() {
@@ -503,6 +516,7 @@ function serialisation_tests() {
   test_serializeByteSequence,
 
   test_decode,
+  test_encode,
   test_parseIntegerOrDecimal,
   test_parseString,
   test_parseToken,
