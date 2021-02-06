@@ -172,7 +172,7 @@ function test_decode() {
   assert.throws(() => decodeDiect(`a=1, b=2)`))
 }
 
-function test_encode() {
+function test_encode_item() {
   assert.deepStrictEqual(encodeItem(new Item("a")),  `"a"`)
   assert.deepStrictEqual(encodeItem(new Item(true)), `?1`)
   assert.deepStrictEqual(encodeItem(new Item(1)),    `1`)
@@ -525,7 +525,8 @@ function serialisation_tests() {
   test_serializeByteSequence,
 
   test_decode,
-  test_encode,
+  test_encode_item,
+
   test_parseIntegerOrDecimal,
   test_parseString,
   test_parseToken,

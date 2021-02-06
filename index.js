@@ -138,6 +138,7 @@ export function decodeDict(input) {
  * @return {string}
  */
 export function serializeList(list) {
+  if (Array.isArray(list) === false) throw new Error(`failed to serialize ${list} as List`)
   return list.map(({ value, params }) => {
     if (Array.isArray(value)) {
       return serializeInnerList({ value, params })
@@ -285,6 +286,7 @@ export function serializeKey(value) {
  * @return {string}
  */
 export function serializeDict(dict) {
+  if (typeof dict !== "object") throw new Error(`failed to serialize ${dict} as Dict`)
   return Object.entries(dict).map(([key, { value, params }]) => {
     let output = serializeKey(key)
     if (value === true) {
