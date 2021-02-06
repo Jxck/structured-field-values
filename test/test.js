@@ -178,6 +178,13 @@ function test_encode() {
   assert.deepStrictEqual(encodeItem(new Item(1)),    `1`)
   assert.deepStrictEqual(encodeItem(new Item(Symbol.for('a'))), `a`)
   assert.deepStrictEqual(encodeItem(new Item(new Uint8Array([1,2,3]))), `:AQID:`)
+
+  assert.deepStrictEqual(encodeItem("a"),  `"a"`)
+  assert.deepStrictEqual(encodeItem(true), `?1`)
+  assert.deepStrictEqual(encodeItem(1),    `1`)
+  assert.deepStrictEqual(encodeItem(Symbol.for('a')), `a`)
+  assert.deepStrictEqual(encodeItem(new Uint8Array([1,2,3])), `:AQID:`)
+
   assert.throws(() => encodeItem(function(){}))
   assert.throws(() => encodeItem(() => {}))
   assert.throws(() => encodeItem(999n))

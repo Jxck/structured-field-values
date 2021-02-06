@@ -142,7 +142,7 @@ export function serializeList(list) {
     if (Array.isArray(value)) {
       return serializeInnerList({ value, params })
     }
-    return serializeItem({ value, params })
+    return serializeItem(new Item(value, params))
   }).join(", ")
 }
 
@@ -294,7 +294,7 @@ export function serializeDict(dict) {
       if (Array.isArray(value)) {
         output += serializeInnerList({ value, params })
       } else {
-        output += serializeItem({ value, params })
+        output += serializeItem(new Item(value, params))
       }
     }
     return output
@@ -321,7 +321,12 @@ export function serializeDict(dict) {
  */
 export function serializeItem(value) {
   if (value === null || value === undefined) throw new Error(`failed to serialize ${value} as Item`)
-  return `${serializeBareItem(value.value)}${serializeParams(value.params)}`
+
+  if (value instanceof Item) {
+    return `${serializeBareItem(value.value)}${serializeParams(value.params)}`
+  } else {
+    return serializeBareItem(value)
+  }
 }
 
 // 4.1.3.1.  Serializing a Bare Item
