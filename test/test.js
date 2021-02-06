@@ -10,12 +10,12 @@ import {
   decodeList,
   decodeDict,
 
-  serializeList,
-  serializeInnerList,
-  serializeParams,
+  //serializeList,
+  //serializeInnerList,
+  //serializeParams,
   serializeKey,
-  serializeDict,
-  serializeItem,
+  //serializeDict,
+  //serializeItem,
   serializeBareItem,
   serializeInteger,
   serializeDecimal,
@@ -543,4 +543,3 @@ function serialisation_tests() {
   console.log(t.name)
   t()
 });
-
