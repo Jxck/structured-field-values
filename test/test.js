@@ -55,11 +55,11 @@ import {
 } from "./test.util.js"
 
 function test_serializeKey() {
-  assert.deepStrictEqual(serializeKey(`a`), "a")
-  assert.deepStrictEqual(serializeKey(`*`), "*")
-  assert.deepStrictEqual(serializeKey(`*-_.*`), "*-_.*")
-  assert.deepStrictEqual(serializeKey(`****`), "****")
-  assert.deepStrictEqual(serializeKey(`a*`), "a*")
+  assert.deepStrictEqual(serializeKey(`a`),       "a")
+  assert.deepStrictEqual(serializeKey(`*`),       "*")
+  assert.deepStrictEqual(serializeKey(`*-_.*`),   "*-_.*")
+  assert.deepStrictEqual(serializeKey(`****`),    "****")
+  assert.deepStrictEqual(serializeKey(`a*`),      "a*")
   assert.deepStrictEqual(serializeKey(`a*0-_.*`), "a*0-_.*")
   assert.throws(() => serializeKey(`#`))
   assert.throws(() => serializeKey(`?`))
@@ -71,8 +71,8 @@ function test_serializeBareItem() {
 }
 
 function test_serializeInteger() {
-  assert.deepStrictEqual(serializeInteger(0), "0")
-  assert.deepStrictEqual(serializeInteger(1), "1")
+  assert.deepStrictEqual(serializeInteger(0),  "0")
+  assert.deepStrictEqual(serializeInteger(1),  "1")
   assert.deepStrictEqual(serializeInteger(-1), "-1")
   assert.deepStrictEqual(serializeInteger( 999_999_999_999_999),  "999999999999999")
   assert.deepStrictEqual(serializeInteger(-999_999_999_999_999), "-999999999999999")
@@ -81,13 +81,13 @@ function test_serializeInteger() {
 }
 
 function test_serializeDecimal() {
-  assert.deepStrictEqual(serializeDecimal(0), "0.0")
-  assert.deepStrictEqual(serializeDecimal(1.0), "1.0")
-  assert.deepStrictEqual(serializeDecimal(1.01), "1.01")
-  assert.deepStrictEqual(serializeDecimal(1.0021), "1.002")
-  assert.deepStrictEqual(serializeDecimal(1.0029), "1.003")
-  assert.deepStrictEqual(serializeDecimal(1.0025), "1.002")
-  assert.deepStrictEqual(serializeDecimal(1.0035), "1.004")
+  assert.deepStrictEqual(serializeDecimal(0),       "0.0")
+  assert.deepStrictEqual(serializeDecimal(1.0),     "1.0")
+  assert.deepStrictEqual(serializeDecimal(1.01),    "1.01")
+  assert.deepStrictEqual(serializeDecimal(1.0021),  "1.002")
+  assert.deepStrictEqual(serializeDecimal(1.0029),  "1.003")
+  assert.deepStrictEqual(serializeDecimal(1.0025),  "1.002")
+  assert.deepStrictEqual(serializeDecimal(1.0035),  "1.004")
   assert.deepStrictEqual(serializeDecimal(-1.0035), "-1.004")
   assert.deepStrictEqual(serializeDecimal( 999_999_999_999.999),  "999999999999.999")
   assert.deepStrictEqual(serializeDecimal(-999_999_999_999.999), "-999999999999.999")
@@ -96,7 +96,7 @@ function test_serializeDecimal() {
 }
 
 function test_serializeString() {
-  assert.deepStrictEqual(serializeString("string"), `"string"`)
+  assert.deepStrictEqual(serializeString("string"),   `"string"`)
   assert.deepStrictEqual(serializeString("str\\ing"), `"str\\\\ing"`)
   assert.deepStrictEqual(serializeString("str\"ing"), `"str\\"ing"`)
   assert.throws(() => serializeString("str\x00ing"))
@@ -162,6 +162,11 @@ function test_serializeByteSequence() {
 }
 
 function test_decode() {
+  assert.deepStrictEqual(decodeItem(`"a"`),    new Item("a"))
+  assert.deepStrictEqual(decodeItem(`?1`),     new Item(true))
+  assert.deepStrictEqual(decodeItem(`1`),      new Item(1))
+  assert.deepStrictEqual(decodeItem(`a`),      new Item(Symbol.for('a')))
+  assert.deepStrictEqual(decodeItem(`:AQID:`), new Item(new Uint8Array([1, 2,3])))
   assert.throws(() => decodeItem(`1;`))
   assert.throws(() => decodeList(`1,2,3)`))
   assert.throws(() => decodeDiect(`a=1, b=2)`))
