@@ -38,25 +38,32 @@ export function format(e) {
   }
 }
 
-export function formatItem(expected) {
-  const [_value, _params] = expected
-  const value  = format(_value)
-  const params = _params.length === 0 ? null : Object.fromEntries(_params.map(format))
+export function formatItem([value, params]) {
+  value  = format(value)
+  params = formatParams(params)
   return new Item(value, params)
 }
 
 export function formatList(expected) {
   return expected.map(([value, params]) => {
-    value = Array.isArray(value) ? value.map(formatItem) : format(value)
-    params = params.length === 0 ? null : Object.fromEntries(params.map(format))
+    value  = formatValue(value)
+    params = formatParams(params)
     return new Item(value, params)
   })
 }
 
 export function formatDict(expected) {
   return Object.fromEntries(expected.map(([name, [value, params]]) => {
-    value  = Array.isArray(value[0]) ? value.map(formatItem) : format(value)
-    params = params.length === 0 ? null : Object.fromEntries(params.map(format))
+    value  = formatValue(value)
+    params = formatParams(params)
     return [name, new Item(value, params)]
   }))
+}
+
+function formatValue(value) {
+  return Array.isArray(value) ? value.map(formatItem) : format(value)
+}
+
+function formatParams(params) {
+  return params.length === 0 ? null : Object.fromEntries(params.map(format))
 }
