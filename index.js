@@ -139,11 +139,12 @@ export function decodeDict(input) {
  */
 export function serializeList(list) {
   if (Array.isArray(list) === false) throw new Error(`failed to serialize ${list} as List`)
-  return list.map(({ value, params }) => {
-    if (Array.isArray(value)) {
-      return serializeInnerList({ value, params })
+  return list.map((item) => {
+    if ((item instanceof Item) === false) item = new Item(item)
+    if (Array.isArray(item.value)) {
+      return serializeInnerList(item)
     }
-    return serializeItem(new Item(value, params))
+    return serializeItem(item)
   }).join(", ")
 }
 
