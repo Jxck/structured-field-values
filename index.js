@@ -320,7 +320,11 @@ export function serializeDict(dict) {
  * @return {string}
  */
 export function serializeItem(value) {
-  if (value === null || value === undefined) throw new Error(`failed to serialize ${value} as Item`)
+  if (value === null
+    || value === undefined
+    || Array.isArray(value) === true
+    || value instanceof Map
+  ) throw new Error(`failed to serialize ${value} as Item`)
 
   if (value instanceof Item) {
     return `${serializeBareItem(value.value)}${serializeParams(value.params)}`

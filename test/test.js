@@ -188,6 +188,8 @@ function test_encode() {
   assert.throws(() => encodeItem(function(){}))
   assert.throws(() => encodeItem(() => {}))
   assert.throws(() => encodeItem(999n))
+  assert.throws(() => encodeItem([]))
+  assert.throws(() => encodeItem(new Map()))
   assert.throws(() => encodeItem(null))
   assert.throws(() => encodeItem(undefined))
 }
