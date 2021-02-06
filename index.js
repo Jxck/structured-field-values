@@ -6,7 +6,6 @@ export class Item {
    * @property {Parameters} params
    */
   constructor(value, params = null) {
-    console.log(params)
     this.value = value
     this.params = params
   }
@@ -724,10 +723,7 @@ export function parseInnerList(input_string) {
       input_string = input_string.substr(1)
       const parsedParameters = parseParameters(input_string)
       return {
-        value: {
-          value: inner_list,
-          params: parsedParameters.value,
-        },
+        value: new Item(inner_list, parsedParameters.value),
         input_string: parsedParameters.input_string,
       }
     }
@@ -830,10 +826,7 @@ export function parseDictionary(input_string, option = {}) { // TODO: option is 
     } else {
       /** @type {ParsedParameters} */
       const parsedParameters = parseParameters(input_string)
-      member = {
-        value: true,
-        params: parsedParameters.value
-      }
+      member = new Item(true, parsedParameters.value)
       input_string = parsedParameters.input_string
     }
     value.push([this_key, member])
@@ -878,7 +871,7 @@ export function parseItem(input_string) {
   const params = parsedParameters.value
   input_string = parsedParameters.input_string
   /** @type {Item} */
-  const item = { value, params }
+  const item = new Item(value, params)
   return {
     value: item,
     input_string,

@@ -264,96 +264,72 @@ function test_parseList() {
   assert.deepStrictEqual(
     parseList(`"foo", "bar", "It was the best of times."`),
     { value: [
-      { value: `foo`, params: null },
-      { value: `bar`, params: null },
-      { value: `It was the best of times.`, params: null }
+      new Item(`foo`),
+      new Item(`bar`),
+      new Item(`It was the best of times.`)
     ], input_string: ``}
   )
   assert.deepStrictEqual(
     parseList(`foo, bar`),
     { value: [
-      { value: s(`foo`), params: null },
-      { value: s(`bar`), params: null },
+      new Item(s(`foo`)),
+      new Item(s(`bar`)),
     ], input_string: ``}
   )
   assert.deepStrictEqual(
     parseList(`("foo" "bar"), ("baz"), ("bat" "one"), ()`),
     { value: [
-      {
-        value: [
-          { value: "foo", params: null },
-          { value: "bar", params: null }
-        ],
-        params: null
-      },
-      {
-        value: [
-          { value: "baz", params: null }
-        ],
-        params: null
-      },
-      {
-        value: [
-          { value: "bat", params: null },
-          { value: "one", params: null }
-        ],
-        params: null
-      },
-      {
-        value: [],
-        params: null
-      }
+      new Item([
+        new Item("foo"),
+        new Item("bar"),
+      ]),
+      new Item([
+        new Item("baz"),
+      ]),
+      new Item([
+        new Item("bat"),
+        new Item("one"),
+      ]),
+      new Item([])
     ], input_string: ``}
   )
   assert.deepStrictEqual(parseList(`("foo"; a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), {value: [
-    {
-      value: [
-        { value: "foo", params: { "a": 1, "b": 2 } }
-      ],
-      params: { "lvl": 5 }
-    },
-    {
-      value: [
-        { value: "bar", params: null },
-        { value: "baz", params: null }
-      ],
-      params: { "lvl": 1 }
-    }
+    new Item([
+      new Item("foo", { "a": 1, "b": 2 })
+    ], { "lvl": 5 }),
+    new Item([
+      new Item("bar"),
+      new Item("baz"),
+    ], { "lvl": 1 }),
   ], input_string: ``})
 }
 
 function test_parseInnerList() {
   assert.deepStrictEqual(parseInnerList(`( 1 2 3 )`), {
-    value: {
-      value: [
-        { value: 1, params: null },
-        { value: 2, params: null },
-        { value: 3, params: null }
-      ],
-      params: null
-    },
-    input_string: ``})
+    value: new Item([
+      new Item(1),
+      new Item(2),
+      new Item(3),
+    ]),
+    input_string: ``
+  })
   assert.deepStrictEqual(parseInnerList(`(1)`), {
-    value: {
-      value: [
-        { value: 1, params: null },
-      ],
-      params: null
-    },
-    input_string: ``})
+    value: new Item([
+      new Item(1),
+    ]),
+    input_string: ``
+  })
   assert.deepStrictEqual(parseInnerList(`()`), {
-    value: {
-      value: [],
-      params: null
-    },
-    input_string: ``})
+    value: new Item([]),
+    input_string: ``
+  })
 }
 
 function test_parseDictionary() {
   assert.deepStrictEqual(parseDictionary(`en="Applepie", da=:w4ZibGV0w6ZydGU=:`), {
     value: {
-      "en": { value: `Applepie`, params: null },
-      "da": { value: new Uint8Array([195,134,98,108,101,116,195,166,114,116,101]), params: null }
+      "en": new Item(`Applepie`),
+      "da": new Item(new Uint8Array([195,134,98,108,101,116,195,166,114,116,101])),
     },
     input_string: ``
   })
@@ -369,49 +345,34 @@ function test_parseDictionary() {
 
   assert.deepStrictEqual(parseDictionary(`rating=1.5, feelings=(joy sadness)`), {
     value: {
-      "rating": { value: 1.5, params: null },
-      "feelings": {
-        value: [
-          { value: s("joy"),     params: null },
-          { value: s("sadness"), params: null }
-        ],
-        params: null
-      }
+      "rating": new Item(1.5),
+      "feelings": new Item([
+        new Item(s("joy")),
+        new Item(s("sadness")),
+      ])
     },
     input_string:``
   })
 
   assert.deepStrictEqual(parseDictionary(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {
     value: {
-      "a": {
-        value: [
-          { value: 1, params: null },
-          { value: 2, params: null }
-        ],
-        params: null
-      },
-      "b": {
-        value: 3,
-        params: null,
-      },
-      "c": {
-        value: 4,
-        params: { "aa": s("bb") },
-      },
-      "d": {
-        value: [
-          { value: 5, params: null },
-          { value: 6, params: null }
-        ],
-        params: { "valid": true }
-      },
+      "a": new Item([
+        new Item(1),
+        new Item(2),
+      ]),
+      "b": new Item(3),
+      "c": new Item(4, { "aa": s("bb") }),
+      "d": new Item([
+        new Item(5),
+        new Item(6),
+      ], { "valid": true })
     },
     input_string: ``
   })
 }
 
 function test_parseItem() {
-  assert.deepStrictEqual(parseItem(`123;a=1;b`), {value: {value: 123, params: {"a":1, "b":true}}, input_string: ``})
+  assert.deepStrictEqual(parseItem(`123;a=1;b`), {value: new Item(123, {"a":1, "b":true}), input_string: ``})
   assert.throws(() => parseItem(``))
 }
 
@@ -476,13 +437,12 @@ function structured_field_tests() {
     if (ignore.includes(suite.name)) return
     if (suite.name.endsWith("0 decimal")) return // .0 is Integer in JS
 
-    console.debug(suite.name)
+    // console.debug(suite.name)
     try {
       if (suite.header_type === `item`) {
         // decode
         const obj     = formatItem(suite.expected)
         const decoded = decodeItem(suite.raw[0])
-        console.dir(decoded)
         assert.deepStrictEqual(decoded, obj, suite.name)
 
         // encode
@@ -538,7 +498,7 @@ function serialisation_tests() {
   ]
 
   suites.forEach((suite) => {
-    console.debug(suite.name)
+    // console.debug(suite.name)
     try {
       if (suite.header_type === `item`) {
         // encode

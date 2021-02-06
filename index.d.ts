@@ -236,7 +236,7 @@ export class Item {
      * @property {BareItem} value
      * @property {Parameters} params
      */
-    constructor(value: any, params: any);
+    constructor(value: any, params?: any);
     value: any;
     params: any;
 }
