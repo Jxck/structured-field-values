@@ -38,39 +38,22 @@ export function format(e) {
 export function formatItem(expected) {
   const [_value, _params] = expected
   const value  = format(_value)
-  const params = Object.fromEntries(_params.map(format))
+  const params = _params.length === 0 ? null : Object.fromEntries(_params.map(format))
   return {value, params}
 }
 
 export function formatList(expected) {
   return expected.map(([value, params]) => {
-    if (Array.isArray(value)) {
-      return {
-        value: value.map(formatItem),
-        params: Object.fromEntries(params.map(format))
-      }
-    } else {
-      return {
-        value: format(value),
-        params: Object.fromEntries(params.map(format))
-      }
-    }
+    value = Array.isArray(value) ? value.map(formatItem) : format(value)
+    params = params.length === 0 ? null : Object.fromEntries(params.map(format))
+    return { value, params }
   })
 }
 
 export function formatDict(expected) {
-  return Object.fromEntries(expected.map(([name, member]) => {
-    const [value, params] = member
-    if (Array.isArray(value[0])) {
-      return [name, {
-        value: value.map(formatItem),
-        params: Object.fromEntries(params.map(format))
-      }]
-    } else {
-      return [name, {
-        value: format(value),
-        params: Object.fromEntries(params.map(format)),
-      }]
-    }
+  return Object.fromEntries(expected.map(([name, [value, params]]) => {
+    value  = Array.isArray(value[0]) ? value.map(formatItem) : format(value)
+    params = params.length === 0 ? null : Object.fromEntries(params.map(format))
+    return [name, { value, params }]
   }))
 }

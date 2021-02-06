@@ -188,6 +188,7 @@ export function serializeInnerList(value) {
  * @return {string}
  */
 export function serializeParams(params) {
+  if (params === null) return ""
   return Object.entries(params).map(([key, value]) => {
     if (value === true) return `;${serializeKey(key)}` // omit true
     return `;${serializeKey(key)}=${serializeBareItem(value)}`
@@ -978,8 +979,11 @@ export function parseBareItem(input_string) {
  * @return {ParsedParameters}
  */
 export function parseParameters(input_string) {
-  /** @type {Parameters} */
-  const parameters = {}
+  /**
+   * null by default for easy to detect parameter existance.
+   * @type {Parameters}
+   */
+  let parameters = null
   while (input_string.length > 0) {
     if (input_string[0] !== ";") break
     input_string = input_string.substr(1).trim()
@@ -994,6 +998,8 @@ export function parseParameters(input_string) {
       param_value = parsedBareItem.value
       input_string = parsedBareItem.input_string
     }
+    // initialize as object when params exists
+    if (parameters === null) parameters = {}
     // override if param_name exists
     parameters[param_name] = param_value
   }
