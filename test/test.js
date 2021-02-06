@@ -1,6 +1,8 @@
 import assert from "assert"
 
 import {
+  Item,
+
   encodeItem,
   encodeList,
   encodeDict,

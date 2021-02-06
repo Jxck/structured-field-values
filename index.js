@@ -1,5 +1,17 @@
 `use strict`;
 
+export class Item {
+  /**
+   * @property {BareItem} value
+   * @property {Parameters} params
+   */
+  constructor(value, params = null) {
+    console.log(params)
+    this.value = value
+    this.params = params
+  }
+}
+
 /////////////////////////
 // public interface
 /////////////////////////
@@ -851,10 +863,6 @@ export function parseDictionary(input_string, option = {}) { // TODO: option is 
 //
 // 3.  Return the tuple (bare_item, parameters).
 /**
- * @typedef {Object} Item
- * @property {BareItem} value
- * @property {Parameters} params
- *
  * @typedef {Object} ParsedItem
  * @property {Item} value
  * @property {string} input_string
