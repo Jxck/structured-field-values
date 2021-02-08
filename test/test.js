@@ -1,6 +1,8 @@
 import assert from "assert"
 
 import {
+  Item,
+
   encodeItem,
   encodeList,
   encodeDict,
@@ -8,12 +10,12 @@ import {
   decodeList,
   decodeDict,
 
-  serializeList,
-  serializeInnerList,
-  serializeParams,
+  // serializeList,
+  // serializeInnerList,
+  // serializeParams,
   serializeKey,
-  serializeDict,
-  serializeItem,
+  // serializeDict,
+  // serializeItem,
   serializeBareItem,
   serializeInteger,
   serializeDecimal,
@@ -53,11 +55,11 @@ import {
 } from "./test.util.js"
 
 function test_serializeKey() {
-  assert.deepStrictEqual(serializeKey(`a`), "a")
-  assert.deepStrictEqual(serializeKey(`*`), "*")
-  assert.deepStrictEqual(serializeKey(`*-_.*`), "*-_.*")
-  assert.deepStrictEqual(serializeKey(`****`), "****")
-  assert.deepStrictEqual(serializeKey(`a*`), "a*")
+  assert.deepStrictEqual(serializeKey(`a`),       "a")
+  assert.deepStrictEqual(serializeKey(`*`),       "*")
+  assert.deepStrictEqual(serializeKey(`*-_.*`),   "*-_.*")
+  assert.deepStrictEqual(serializeKey(`****`),    "****")
+  assert.deepStrictEqual(serializeKey(`a*`),      "a*")
   assert.deepStrictEqual(serializeKey(`a*0-_.*`), "a*0-_.*")
   assert.throws(() => serializeKey(`#`))
   assert.throws(() => serializeKey(`?`))
@@ -69,8 +71,8 @@ function test_serializeBareItem() {
 }
 
 function test_serializeInteger() {
-  assert.deepStrictEqual(serializeInteger(0), "0")
-  assert.deepStrictEqual(serializeInteger(1), "1")
+  assert.deepStrictEqual(serializeInteger(0),  "0")
+  assert.deepStrictEqual(serializeInteger(1),  "1")
   assert.deepStrictEqual(serializeInteger(-1), "-1")
   assert.deepStrictEqual(serializeInteger( 999_999_999_999_999),  "999999999999999")
   assert.deepStrictEqual(serializeInteger(-999_999_999_999_999), "-999999999999999")
@@ -79,13 +81,13 @@ function test_serializeInteger() {
 }
 
 function test_serializeDecimal() {
-  assert.deepStrictEqual(serializeDecimal(0), "0.0")
-  assert.deepStrictEqual(serializeDecimal(1.0), "1.0")
-  assert.deepStrictEqual(serializeDecimal(1.01), "1.01")
-  assert.deepStrictEqual(serializeDecimal(1.0021), "1.002")
-  assert.deepStrictEqual(serializeDecimal(1.0029), "1.003")
-  assert.deepStrictEqual(serializeDecimal(1.0025), "1.002")
-  assert.deepStrictEqual(serializeDecimal(1.0035), "1.004")
+  assert.deepStrictEqual(serializeDecimal(0),       "0.0")
+  assert.deepStrictEqual(serializeDecimal(1.0),     "1.0")
+  assert.deepStrictEqual(serializeDecimal(1.01),    "1.01")
+  assert.deepStrictEqual(serializeDecimal(1.0021),  "1.002")
+  assert.deepStrictEqual(serializeDecimal(1.0029),  "1.003")
+  assert.deepStrictEqual(serializeDecimal(1.0025),  "1.002")
+  assert.deepStrictEqual(serializeDecimal(1.0035),  "1.004")
   assert.deepStrictEqual(serializeDecimal(-1.0035), "-1.004")
   assert.deepStrictEqual(serializeDecimal( 999_999_999_999.999),  "999999999999.999")
   assert.deepStrictEqual(serializeDecimal(-999_999_999_999.999), "-999999999999.999")
@@ -94,7 +96,7 @@ function test_serializeDecimal() {
 }
 
 function test_serializeString() {
-  assert.deepStrictEqual(serializeString("string"), `"string"`)
+  assert.deepStrictEqual(serializeString("string"),   `"string"`)
   assert.deepStrictEqual(serializeString("str\\ing"), `"str\\\\ing"`)
   assert.deepStrictEqual(serializeString("str\"ing"), `"str\\"ing"`)
   assert.throws(() => serializeString("str\x00ing"))
@@ -160,9 +162,102 @@ function test_serializeByteSequence() {
 }
 
 function test_decode() {
+  assert.deepStrictEqual(decodeItem(`"a"`), new Item("a"))
+  assert.deepStrictEqual(decodeItem(`?1`),  new Item(true))
+  assert.deepStrictEqual(decodeItem(`1`),   new Item(1))
+  assert.deepStrictEqual(decodeItem(`a`),   new Item(Symbol.for('a')))
+  assert.deepStrictEqual(decodeItem(`:AQID:`), new Item(new Uint8Array([1, 2,3])))
   assert.throws(() => decodeItem(`1;`))
   assert.throws(() => decodeList(`1,2,3)`))
   assert.throws(() => decodeDiect(`a=1, b=2)`))
+}
+
+function test_encode_item() {
+  assert.deepStrictEqual(encodeItem("a"),  `"a"`)
+  assert.deepStrictEqual(encodeItem(true), `?1`)
+  assert.deepStrictEqual(encodeItem(1),    `1`)
+  assert.deepStrictEqual(encodeItem(Symbol.for('a')), `a`)
+  assert.deepStrictEqual(encodeItem(new Uint8Array([1,2,3])), `:AQID:`)
+
+  assert.deepStrictEqual(encodeItem(new Item("a")),  `"a"`)
+  assert.deepStrictEqual(encodeItem(new Item(true)), `?1`)
+  assert.deepStrictEqual(encodeItem(new Item(1)),    `1`)
+  assert.deepStrictEqual(encodeItem(new Item(Symbol.for('a'))), `a`)
+  assert.deepStrictEqual(encodeItem(new Item(new Uint8Array([1,2,3]))), `:AQID:`)
+
+  assert.throws(() => encodeItem(function(){}))
+  assert.throws(() => encodeItem(() => {}))
+  assert.throws(() => encodeItem(999n))
+  assert.throws(() => encodeItem([]))
+  assert.throws(() => encodeItem(new Map()))
+  assert.throws(() => encodeItem(null))
+  assert.throws(() => encodeItem(undefined))
+}
+
+function test_encode_list() {
+  assert.deepStrictEqual(encodeList([1,2,3]),  `1, 2, 3`)
+  assert.deepStrictEqual(encodeList([
+    new Item(1),
+    new Item(2),
+    new Item(3)
+  ]),  `1, 2, 3`)
+  assert.deepStrictEqual(encodeList([
+    new Item(1, {a: 2}),
+    new Item(2, {a: 2}),
+    new Item(3, {a: 2})
+  ]),  `1;a=2, 2;a=2, 3;a=2`)
+}
+
+function test_encode_dict() {
+
+  assert.deepStrictEqual(
+    encodeDict({
+      a: 10,
+      b: 20,
+      c: 30,
+    }),
+    `a=10, b=20, c=30`
+  )
+
+  assert.deepStrictEqual(
+    encodeDict(new Map([
+      ['a', 10],
+      ['b', 20],
+      ['c', 30],
+    ])),
+    `a=10, b=20, c=30`
+  )
+
+  assert.deepStrictEqual(
+    encodeDict({
+      a: 1,
+      b: false,
+      c: "x",
+      d: Symbol.for("y"),
+      e: new Uint8Array([1,2,3])
+    }),
+    `a=1, b=?0, c="x", d=y, e=:AQID:`
+  )
+  assert.deepStrictEqual(
+    encodeDict({
+      a: new Item(1),
+      b: new Item(false),
+      c: new Item("x"),
+      d: new Item(Symbol.for("y")),
+      e: new Item(new Uint8Array([1,2,3])),
+    }),
+    `a=1, b=?0, c="x", d=y, e=:AQID:`
+  )
+  assert.deepStrictEqual(
+    encodeDict(new Map([
+      ['a', new Item(1)],
+      ['b', new Item(false)],
+      ['c', new Item("x")],
+      ['d', new Item(Symbol.for("y"))],
+      ['e', new Item(new Uint8Array([1,2,3]))],
+    ])),
+    `a=1, b=?0, c="x", d=y, e=:AQID:`
+  )
 }
 
 function test_parseIntegerOrDecimal() {
@@ -262,154 +357,89 @@ function test_parseList() {
   assert.deepStrictEqual(
     parseList(`"foo", "bar", "It was the best of times."`),
     { value: [
-      { value: `foo`, params: {} },
-      { value: `bar`, params: {} },
-      { value: `It was the best of times.`, params: {} }
+      new Item(`foo`),
+      new Item(`bar`),
+      new Item(`It was the best of times.`)
     ], input_string: ``}
   )
   assert.deepStrictEqual(
     parseList(`foo, bar`),
     { value: [
-      { value: s(`foo`), params: {} },
-      { value: s(`bar`), params: {} },
+      new Item(s(`foo`)),
+      new Item(s(`bar`)),
     ], input_string: ``}
   )
   assert.deepStrictEqual(
     parseList(`("foo" "bar"), ("baz"), ("bat" "one"), ()`),
     { value: [
-      {
-        value: [
-          { value: "foo", params: {} },
-          { value: "bar", params: {} }
-        ],
-        params: {}
-      },
-      {
-        value: [
-          { value: "baz", params: {} }
-        ],
-        params: {}
-      },
-      {
-        value: [
-          { value: "bat", params: {} },
-          { value: "one", params: {} }
-        ],
-        params: {}
-      },
-      {
-        value: [],
-        params: {}
-      }
+      new Item(["foo", "bar"]),
+      new Item(["baz", ]),
+      new Item(["bat", "one"]),
+      new Item([])
     ], input_string: ``}
   )
   assert.deepStrictEqual(parseList(`("foo"; a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), {value: [
-    {
-      value: [
-        { value: "foo", params: { "a": 1, "b": 2 } }
-      ],
-      params: { "lvl": 5 }
-    },
-    {
-      value: [
-        { value: "bar", params: {} },
-        { value: "baz", params: {} }
-      ],
-      params: { "lvl": 1 }
-    }
+    new Item([
+      new Item("foo", { "a": 1, "b": 2 })
+    ], { "lvl": 5 }),
+    new Item(["bar", "baz"], { "lvl": 1 }),
   ], input_string: ``})
 }
 
 function test_parseInnerList() {
   assert.deepStrictEqual(parseInnerList(`( 1 2 3 )`), {
-    value: {
-      value: [
-        { value: 1, params: {} },
-        { value: 2, params: {} },
-        { value: 3, params: {} }
-      ],
-      params: {}
-    },
-    input_string: ``})
+    value: new Item([1, 2, 3]),
+    input_string: ``
+  })
   assert.deepStrictEqual(parseInnerList(`(1)`), {
-    value: {
-      value: [
-        { value: 1, params: {} },
-      ],
-      params: {}
-    },
-    input_string: ``})
+    value: new Item([1]),
+    input_string: ``
+  })
   assert.deepStrictEqual(parseInnerList(`()`), {
-    value: {
-      value: [],
-      params: {}
-    },
-    input_string: ``})
+    value: new Item([]),
+    input_string: ``
+  })
 }
 
 function test_parseDictionary() {
   assert.deepStrictEqual(parseDictionary(`en="Applepie", da=:w4ZibGV0w6ZydGU=:`), {
     value: {
-      "en": { value: `Applepie`, params: {} },
-      "da": { value: new Uint8Array([195,134,98,108,101,116,195,166,114,116,101]), params: {} }
+      "en": new Item(`Applepie`),
+      "da": new Item(new Uint8Array([195,134,98,108,101,116,195,166,114,116,101])),
     },
     input_string: ``
   })
 
   assert.deepEqual(parseDictionary(`a=?0, b, c; foo=bar`), {
     value: {
-      "a": { value: false, params: {} },
-      "b": { value: true,  params: {} },
-      "c": { value: true,  params: { "foo": s("bar") } }
+      "a": new Item(false),
+      "b": new Item(true),
+      "c": new Item(true, { "foo": s("bar")}),
     },
     input_string: ``
   })
 
   assert.deepStrictEqual(parseDictionary(`rating=1.5, feelings=(joy sadness)`), {
     value: {
-      "rating": { value: 1.5, params: {} },
-      "feelings": {
-        value: [
-          { value: s("joy"),     params: {} },
-          { value: s("sadness"), params: {} }
-        ],
-        params: {}
-      }
+      "rating":   new Item(1.5),
+      "feelings": new Item([s("joy"), s("sadness")])
     },
     input_string:``
   })
 
   assert.deepStrictEqual(parseDictionary(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {
     value: {
-      "a": {
-        value: [
-          { value: 1, params: {} },
-          { value: 2, params: {} }
-        ],
-        params: {}
-      },
-      "b": {
-        value: 3,
-        params: {},
-      },
-      "c": {
-        value: 4,
-        params: { "aa": s("bb") },
-      },
-      "d": {
-        value: [
-          { value: 5, params: {} },
-          { value: 6, params: {} }
-        ],
-        params: { "valid": true }
-      },
+      "a": new Item([1,2]),
+      "b": new Item(3),
+      "c": new Item(4, { "aa": s("bb") }),
+      "d": new Item([5,6], { "valid": true })
     },
     input_string: ``
   })
 }
 
 function test_parseItem() {
-  assert.deepStrictEqual(parseItem(`123;a=1;b`), {value: {value: 123, params: {"a":1, "b":true}}, input_string: ``})
+  assert.deepStrictEqual(parseItem(`123;a=1;b`), {value: new Item(123, {"a":1, "b":true}), input_string: ``})
   assert.throws(() => parseItem(``))
 }
 
@@ -474,7 +504,7 @@ function structured_field_tests() {
     if (ignore.includes(suite.name)) return
     if (suite.name.endsWith("0 decimal")) return // .0 is Integer in JS
 
-    console.debug(suite.name)
+    // console.debug(suite.name)
     try {
       if (suite.header_type === `item`) {
         // decode
@@ -535,7 +565,7 @@ function serialisation_tests() {
   ]
 
   suites.forEach((suite) => {
-    console.debug(suite.name)
+    // console.debug(suite.name)
     try {
       if (suite.header_type === `item`) {
         // encode
@@ -561,6 +591,10 @@ function serialisation_tests() {
   test_serializeByteSequence,
 
   test_decode,
+  test_encode_item,
+  test_encode_list,
+  test_encode_dict,
+
   test_parseIntegerOrDecimal,
   test_parseString,
   test_parseToken,
@@ -580,4 +614,3 @@ function serialisation_tests() {
   console.log(t.name)
   t()
 });
-

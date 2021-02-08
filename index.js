@@ -1,5 +1,22 @@
 `use strict`;
 
+export class Item {
+  /**
+   * @property {BareItem} value
+   * @property {Parameters} params
+   */
+  constructor(value, params = null) {
+    if (Array.isArray(value)) {
+      value = value.map((v) => {
+        if (v instanceof Item) return v
+        return new Item(v)
+      })
+    }
+    this.value = value
+    this.params = params
+  }
+}
+
 /////////////////////////
 // public interface
 /////////////////////////
@@ -121,11 +138,13 @@ export function decodeDict(input) {
  * @return {string}
  */
 export function serializeList(list) {
-  return list.map(({ value, params }) => {
-    if (Array.isArray(value)) {
-      return serializeInnerList({ value, params })
+  if (Array.isArray(list) === false) throw new Error(`failed to serialize ${list} as List`)
+  return list.map((item) => {
+    if ((item instanceof Item) === false) item = new Item(item)
+    if (Array.isArray(item.value)) {
+      return serializeInnerList(item)
     }
-    return serializeItem({ value, params })
+    return serializeItem(item)
   }).join(", ")
 }
 
@@ -188,6 +207,7 @@ export function serializeInnerList(value) {
  * @return {string}
  */
 export function serializeParams(params) {
+  if (params === null) return ""
   return Object.entries(params).map(([key, value]) => {
     if (value === true) return `;${serializeKey(key)}` // omit true
     return `;${serializeKey(key)}=${serializeBareItem(value)}`
@@ -267,16 +287,19 @@ export function serializeKey(value) {
  * @return {string}
  */
 export function serializeDict(dict) {
-  return Object.entries(dict).map(([key, { value, params }]) => {
+  if (typeof dict !== "object") throw new Error(`failed to serialize ${dict} as Dict`)
+  const entries = dict instanceof Map ? dict.entries() : Object.entries(dict)
+  return Array.from(entries).map(([key, item]) => {
+    if ((item instanceof Item) === false) item = new Item(item)
     let output = serializeKey(key)
-    if (value === true) {
-      output += serializeParams(params)
+    if (item.value === true) {
+      output += serializeParams(item.params)
     } else {
       output += "="
-      if (Array.isArray(value)) {
-        output += serializeInnerList({ value, params })
+      if (Array.isArray(item.value)) {
+        output += serializeInnerList(item)
       } else {
-        output += serializeItem({ value, params })
+        output += serializeItem(item)
       }
     }
     return output
@@ -302,7 +325,17 @@ export function serializeDict(dict) {
  * @return {string}
  */
 export function serializeItem(value) {
-  return `${serializeBareItem(value.value)}${serializeParams(value.params)}`
+  if (value === null
+    || value === undefined
+    || Array.isArray(value) === true
+    || value instanceof Map
+  ) throw new Error(`failed to serialize ${value} as Item`)
+
+  if (value instanceof Item) {
+    return `${serializeBareItem(value.value)}${serializeParams(value.params)}`
+  } else {
+    return serializeBareItem(value)
+  }
 }
 
 // 4.1.3.1.  Serializing a Bare Item
@@ -711,10 +744,7 @@ export function parseInnerList(input_string) {
       input_string = input_string.substr(1)
       const parsedParameters = parseParameters(input_string)
       return {
-        value: {
-          value: inner_list,
-          params: parsedParameters.value,
-        },
+        value: new Item(inner_list, parsedParameters.value),
         input_string: parsedParameters.input_string,
       }
     }
@@ -817,10 +847,7 @@ export function parseDictionary(input_string, option = {}) { // TODO: option is 
     } else {
       /** @type {ParsedParameters} */
       const parsedParameters = parseParameters(input_string)
-      member = {
-        value: true,
-        params: parsedParameters.value
-      }
+      member = new Item(true, parsedParameters.value)
       input_string = parsedParameters.input_string
     }
     value.push([this_key, member])
@@ -850,10 +877,6 @@ export function parseDictionary(input_string, option = {}) { // TODO: option is 
 //
 // 3.  Return the tuple (bare_item, parameters).
 /**
- * @typedef {Object} Item
- * @property {BareItem} value
- * @property {Parameters} params
- *
  * @typedef {Object} ParsedItem
  * @property {Item} value
  * @property {string} input_string
@@ -869,7 +892,7 @@ export function parseItem(input_string) {
   const params = parsedParameters.value
   input_string = parsedParameters.input_string
   /** @type {Item} */
-  const item = { value, params }
+  const item = new Item(value, params)
   return {
     value: item,
     input_string,
@@ -978,8 +1001,11 @@ export function parseBareItem(input_string) {
  * @return {ParsedParameters}
  */
 export function parseParameters(input_string) {
-  /** @type {Parameters} */
-  const parameters = {}
+  /**
+   * null by default for easy to detect parameter existance.
+   * @type {Parameters}
+   */
+  let parameters = null
   while (input_string.length > 0) {
     if (input_string[0] !== ";") break
     input_string = input_string.substr(1).trim()
@@ -994,6 +1020,8 @@ export function parseParameters(input_string) {
       param_value = parsedBareItem.value
       input_string = parsedBareItem.input_string
     }
+    // initialize as object when params exists
+    if (parameters === null) parameters = {}
     // override if param_name exists
     parameters[param_name] = param_value
   }

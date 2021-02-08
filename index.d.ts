@@ -137,10 +137,6 @@ export function parseInnerList(input_string: string): ParsedInnerList;
  */
 export function parseDictionary(input_string: string, option?: any | null): ParsedDictionary;
 /**
- * @typedef {Object} Item
- * @property {BareItem} value
- * @property {Parameters} params
- *
  * @typedef {Object} ParsedItem
  * @property {Item} value
  * @property {string} input_string
@@ -235,6 +231,15 @@ export function base64decode(str: string): Uint8Array;
  * @return {string}
  */
 export function base64encode(binary: Uint8Array): string;
+export class Item {
+    /**
+     * @property {BareItem} value
+     * @property {Parameters} params
+     */
+    constructor(value: any, params?: any);
+    value: any;
+    params: any;
+}
 export type MemberList = (Item | InnerList)[];
 export type ParsedList = {
     value: MemberList;
@@ -254,10 +259,6 @@ export type Dictionary = any;
 export type ParsedDictionary = {
     value: Dictionary;
     input_string: string;
-};
-export type Item = {
-    value: BareItem;
-    params: Parameters;
 };
 export type ParsedItem = {
     value: Item;
