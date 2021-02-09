@@ -47,6 +47,13 @@ main {
   height: 80vh;
 }
 
+footer {
+  width: 100%;
+  display: flex;
+  justify-content: flex-end;
+  font-style: italic;
+}
+
 textarea {
   font-family: var(--font-family-mono);
   font-size: 0.5em;
@@ -157,6 +164,9 @@ button {
   <li>Proxy-Status(<a href=https://tools.ietf.org/html/draft-ietf-httpbis-proxy-status-02>id</a>): <a class="sample List" href="">ExampleProxy; error="http_protocol_error"; details="Malformed response header - space before colon"</a></li>
 </ul>
 
+<hr>
+
+<footer><small>Author <a href=https://jxck.io>Jxck</a><small></footer>
 
 <script type=module>
   const $  = document.querySelector.bind(document)
