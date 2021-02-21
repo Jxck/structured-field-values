@@ -3,7 +3,7 @@
 
 ## What is this ?
 
-This is a implementation of a [Structured Field Values Draft-19](https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19) JavaScript.
+This is a implementation of a [RFC 8941: Structured Field Values for HTTP](https://www.rfc-editor.org/rfc/rfc8941.html) JavaScript.
 
 
 ## DEMO

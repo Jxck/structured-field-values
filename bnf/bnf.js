@@ -5,7 +5,7 @@ import {base64decode, base64encode} from "../index.js"
 /// parser
 export function parseItem(value) {
   // trim leading/trailing space
-  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2
+  // https://www.rfc-editor.org/rfc/rfc8941.html#section-4.2
   const result = sf_item()(value.trim())
   if (result.ok === false) {
     throw new Error(`failed to parse`)
@@ -18,7 +18,7 @@ export function parseItem(value) {
 
 export function parseList(value) {
   // return if empty
-  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
+  // https://www.rfc-editor.org/rfc/rfc8941.html#section-4.2.1
   if (value === ``) return []
 
   const result = sf_list()(value.trim())
@@ -33,7 +33,7 @@ export function parseList(value) {
 
 export function parseDict(value) {
   // return if empty
-  // https://tools.ietf.org/html/draft-ietf-httpbis-header-structure-19#section-4.2.1
+  // https://www.rfc-editor.org/rfc/rfc8941.html#section-4.2.1
   if (value === ``) return {}
 
   const result = sf_dictionary()(value.trim())
