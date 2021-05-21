@@ -1438,10 +1438,10 @@ export function parseBoolean(input_string) {
  * @return {Uint8Array}
  */
 export function base64decode(str) {
-  if (typeof window === `undefined`) {
-    return Uint8Array.from(/**@type {node.Buffer}*/Buffer.from(str, `base64`))
-  } else {
+  if (typeof atob === 'function') {
     return new Uint8Array([...atob(str)].map(a => a.charCodeAt(0)))
+  } else {
+    return Uint8Array.from(/**@type {node.Buffer}*/Buffer.from(str, `base64`))
   }
 }
 
