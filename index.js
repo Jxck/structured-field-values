@@ -1450,9 +1450,9 @@ export function base64decode(str) {
  * @return {string}
  */
 export function base64encode(binary) {
-  if (typeof window === `undefined`) {
-    return Buffer.from(binary).toString(`base64`)
-  } else {
+  if (typeof btoa === 'function') {
     return btoa(String.fromCharCode(...binary))
+  } else {
+    return Buffer.from(binary).toString(`base64`)
   }
 }
