@@ -3,7 +3,7 @@
 
 ## What is this ?
 
-This is a implementation of a [RFC 8941: Structured Field Values for HTTP](https://www.rfc-editor.org/rfc/rfc8941.html) JavaScript.
+This is a implementation of a [RFC 8941: Structured Field Values for HTTP](https://www.rfc-editor.org/rfc/rfc8941.html) in JavaScript.
 
 
 ## DEMO
