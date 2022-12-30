@@ -1,6 +1,6 @@
 const ok = true
 
-import {base64decode, base64encode} from "../index.js"
+import { base64decode, base64encode } from "../index.js"
 
 /// parser
 export function parseItem(value) {
@@ -46,7 +46,6 @@ export function parseDict(value) {
   return result.value
 }
 
-
 /////////////////////////
 // BFN utility
 /////////////////////////
@@ -56,10 +55,10 @@ export function token(reg) {
   return (rest) => {
     const result = reg.exec(rest)
     if (result === null) {
-      return {ok: false, rest}
+      return { ok: false, rest }
     } else {
       const value = result[0]
-      return {ok, value, rest: rest.substr(value.length)}
+      return { ok, value, rest: rest.substr(value.length) }
     }
   }
 }
@@ -67,13 +66,13 @@ export function token(reg) {
 // (a / b) => alt([a(), b()])
 export function alt(fns) {
   return (rest) => {
-    for (let i = 0; i < fns.length; i ++) {
+    for (let i = 0; i < fns.length; i++) {
       const result = fns[i](rest)
       if (result.ok) {
         return result
       }
     }
-    return {ok: false, rest}
+    return { ok: false, rest }
   }
 }
 
@@ -81,16 +80,16 @@ export function alt(fns) {
 export function list(fns) {
   return (rest) => {
     const value = []
-    const orig  = rest
-    for (let i = 0; i < fns.length; i ++) {
+    const orig = rest
+    for (let i = 0; i < fns.length; i++) {
       const result = fns[i](rest)
       if (result.ok === false) {
-        return {ok: false, rest: orig}
+        return { ok: false, rest: orig }
       }
       value.push(result.value)
       rest = result.rest
     }
-    return {ok, value, rest}
+    return { ok, value, rest }
   }
 }
 
@@ -99,8 +98,8 @@ export function repeat(min, max, fn) {
   return (rest) => {
     const value = []
     const found = 0
-    const orig  = rest
-    while(true) {
+    const orig = rest
+    while (true) {
       const result = fn(rest)
       if (result.ok) {
         value.push(result.value)
@@ -112,13 +111,12 @@ export function repeat(min, max, fn) {
     }
 
     if (value.length < min) {
-      return {ok: false, rest: orig}
+      return { ok: false, rest: orig }
     } else {
-      return {ok, value, rest}
+      return { ok, value, rest }
     }
   }
 }
-
 
 /////////////////////////
 // BNF in spec
@@ -130,9 +128,9 @@ export function sf_integer() {
   return (rest) => {
     const result = token(/^\-{0,1}\d{1,15}/)(rest)
     if (result.ok) {
-      return {ok, value: parseInt(result.value), rest: result.rest}
+      return { ok, value: parseInt(result.value), rest: result.rest }
     }
-    return {ok: false, rest}
+    return { ok: false, rest }
   }
 }
 
@@ -142,20 +140,20 @@ export function sf_decimal() {
   return (rest) => {
     const result = token(/^\-{0,1}\d{1,12}\.\d{1,3}/)(rest)
     if (result.ok) {
-      return {ok, value: parseFloat(result.value), rest: result.rest}
+      return { ok, value: parseFloat(result.value), rest: result.rest }
     }
-    return {ok: false, rest}
+    return { ok: false, rest }
   }
 }
 
 // sf-string
 //       = DQUOTE *chr DQUOTE
 export function sf_string() {
-  return function(rest) {
+  return function (rest) {
     const fn = list([
-      token(/^"/),
-      repeat(0, 1024, char()),
-      token(/^"/),
+      token(/^"/), // DQUOTE
+      repeat(0, 1024, char()), // *char
+      token(/^"/) // DQUOTE
     ])
     const result = fn(rest)
     if (result.ok) {
@@ -172,10 +170,7 @@ export function sf_string() {
 //       = unescaped
 //       / escaped
 export function char() {
-  return alt([
-    escaped(),
-    unescaped(),
-  ])
+  return alt([escaped(), unescaped()])
 }
 
 // unescaped
@@ -193,7 +188,7 @@ export function escaped() {
     const result = token(/^((\\\")|(\\\\))/)(rest)
     if (result.ok) {
       // unescape (\\" => ",  \\\\ => \\)
-      result.value = (result.value === `\\"`) ? `"` : `\\`
+      result.value = result.value === `\\"` ? `"` : `\\`
     }
     return result
   }
@@ -224,7 +219,7 @@ export function sf_binary() {
     const result = list([
       token(/^:/),
       token(/^([\w+/=]){0,16384}/), // base64
-      token(/^:/),
+      token(/^:/)
     ])(rest)
 
     if (result.ok) {
@@ -257,7 +252,7 @@ export function sf_list() {
   return (rest) => {
     const result = list([
       list_member(),
-      _repeat_list_member()
+      _repeat_list_member() // *( OWS "," OWS list-member )
     ])(rest)
 
     if (result.ok) {
@@ -274,7 +269,7 @@ export function _repeat_list_member() {
   function fn() {
     return (rest) => {
       const result = list([
-        token(/^([ \t]*),([ \t]*)/),
+        token(/^([ \t]*),([ \t]*)/), // OWS "," OWS
         list_member()
       ])(rest)
 
@@ -292,10 +287,7 @@ export function _repeat_list_member() {
 //       = sf-item
 //       / inner-list
 export function list_member() {
-  return alt([
-    sf_item(),
-    inner_list(),
-  ])
+  return alt([sf_item(), inner_list()])
 }
 
 // inner-list
@@ -303,16 +295,16 @@ export function list_member() {
 export function inner_list() {
   return (rest) => {
     const result = list([
-      token(/^\( */),
-      _optional_inner_item(),
-      token(/^\)/),
+      token(/^\( */), // "(" *SP
+      _optional_inner_item(), // [ sf-item *( 1*SP sf-item ) *SP ]
+      token(/^\)/), // ")"
       parameters()
     ])(rest)
 
     if (result.ok) {
       // [ "(", repeat, ")", param ] => [repeat, param]
       const [_open, inner_list, _close, params] = result.value
-      result.value = {value: inner_list, params}
+      result.value = { value: inner_list, params }
     }
     return result
   }
@@ -323,7 +315,7 @@ export function _optional_inner_item() {
   return (rest) => {
     const result = repeat(0, 1, list([
       sf_item(),
-      _repeat_inner_item(),
+      _repeat_inner_item(), // *( 1*SP sf-item )
       token(/^ */)
     ]))(rest)
 
@@ -341,7 +333,7 @@ export function _repeat_inner_item() {
   function fn() {
     return (rest) => {
       const result = list([
-        token(/^ +/),
+        token(/^ +/), // 1*SP
         sf_item()
       ])(rest)
 
@@ -361,7 +353,7 @@ export function sf_dictionary() {
   return (rest) => {
     const result = list([
       dict_member(),
-      _repeat_dict_member(),
+      _repeat_dict_member() // *( OWS "," OWS dict-member )
     ])(rest)
 
     if (result.ok) {
@@ -378,7 +370,7 @@ export function _repeat_dict_member() {
   function fn() {
     return (rest) => {
       const result = list([
-        token(/^([ \t]*),([ \t]*)/),
+        token(/^([ \t]*),([ \t]*)/), // OWS "," OWS
         dict_member()
       ])(rest)
 
@@ -400,7 +392,7 @@ export function _repeat_dict_member() {
 //       = key
 export function dict_member() {
   return list([
-    sf_key(),
+    sf_key(), // key
     repeat(0, 1, _optional_member_value())
   ])
 }
@@ -409,8 +401,8 @@ export function _optional_member_value() {
   return (rest) => {
     const result = alt([
       list([
-        token(/^=/),
-        member_value(),
+        token(/^=/), // "="
+        member_value()
       ]),
       parameters()
     ])(rest)
@@ -421,7 +413,7 @@ export function _optional_member_value() {
         result.value = result.value[1]
       } else {
         // value should be true if member is omitted
-        result.value = {value: true, params: result.value}
+        result.value = { value: true, params: result.value }
       }
     }
     return result
@@ -432,24 +424,18 @@ export function _optional_member_value() {
 //       = sf-item
 //       / inner-list
 export function member_value() {
-  return alt([
-    sf_item(),
-    inner_list()
-  ])
+  return alt([sf_item(), inner_list()])
 }
 
 // sf-item
 //       = bare-item parameters
 export function sf_item() {
   return (rest) => {
-    const result = list([
-      bare_item(),
-      parameters()
-    ])(rest)
+    const result = list([bare_item(), parameters()])(rest)
 
     if (result.ok) {
       const [value, params] = result.value
-      result.value = {value, params}
+      result.value = { value, params }
     }
     return result
   }
@@ -464,12 +450,12 @@ export function sf_item() {
 //       / sf-boolean
 export function bare_item() {
   return alt([
-    sf_decimal(),
+    sf_decimal(), // decimal first
     sf_integer(),
     sf_string(),
     sf_token(),
     sf_binary(),
-    sf_boolean(),
+    sf_boolean()
   ])
 }
 
@@ -490,7 +476,7 @@ export function parameters() {
 export function _inner_parameters() {
   return (rest) => {
     const result = list([
-      token(/^; */),
+      token(/^; */), // ";"
       parameter()
     ])(rest)
 
@@ -509,17 +495,14 @@ export function _inner_parameters() {
 // param-value
 //       = bare-item
 export function parameter() {
-  return list([
-    sf_key(),
-    param_value(),
-  ])
+  return list([sf_key(), param_value()])
 }
 
 // [ "=" param-value ]
 export function param_value() {
   return (rest) => {
     const result = repeat(0, 1, list([
-      token(/^=/),
+      token(/^=/), // "="
       bare_item()
     ]))(rest)
 
