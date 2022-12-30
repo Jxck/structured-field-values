@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "node test/test.js && npx tsc",
-    "test:bnf": "node test/test.bnf.js"
+    "test:bnf": "node test/test.bnf.js",
+    "fmt": "npx prettier -w ./**/*.js"
   },
   "repository": {
     "type": "git",
@@ -23,6 +24,7 @@
   "devDependencies": {
     "@types/node": "^18.11.18",
     "hi-base32": "^0.5.1",
+    "prettier": "^2.8.1",
     "typescript": "^4.9.4"
   },
   "browser": {
