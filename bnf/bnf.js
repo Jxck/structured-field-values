@@ -97,7 +97,6 @@ export function list(fns) {
 export function repeat(min, max, fn) {
   return (rest) => {
     const value = []
-    const found = 0
     const orig = rest
     while (true) {
       const result = fn(rest)
@@ -116,6 +115,11 @@ export function repeat(min, max, fn) {
       return { ok, value, rest }
     }
   }
+}
+
+// [ a b ] => optional(list[a(), b()])
+export function optional(fn) {
+  return repeat(0, 1, fn)
 }
 
 /////////////////////////
@@ -313,7 +317,7 @@ export function inner_list() {
 // [ sf-item *( 1*SP sf-item ) *SP ]
 export function _optional_inner_item() {
   return (rest) => {
-    const result = repeat(0, 1, list([
+    const result = optional(list([
       sf_item(),
       _repeat_inner_item(), // *( 1*SP sf-item )
       token(/^ */)
@@ -393,7 +397,7 @@ export function _repeat_dict_member() {
 export function dict_member() {
   return list([
     sf_key(), // key
-    repeat(0, 1, _optional_member_value())
+    optional(_optional_member_value())
   ])
 }
 
@@ -501,7 +505,7 @@ export function parameter() {
 // [ "=" param-value ]
 export function param_value() {
   return (rest) => {
-    const result = repeat(0, 1, list([
+    const result = optional(list([
       token(/^=/), // "="
       bare_item()
     ]))(rest)
