@@ -6,7 +6,7 @@
   "scripts": {
     "test": "node test/test.js && npx tsc",
     "test:bnf": "node test/test.bnf.js",
-    "fmt": "npx prettier -w ./**/*.js"
+    "fmt": "npx prettier -w ./index.js ./bnf/bnf.js"
   },
   "repository": {
     "type": "git",
