@@ -1002,7 +1002,7 @@ export function parseBareItem(input_string) {
  */
 export function parseParameters(input_string) {
   /**
-   * null by default for easy to detect parameter existance.
+   * null by default for easy to detect parameter existence.
    * @type {Parameters}
    */
   let parameters = null
@@ -1431,7 +1431,7 @@ export function parseBoolean(input_string) {
 }
 
 /////////////////////////
-// base64 uility
+// base64 utility
 /////////////////////////
 /**
  * @param {string} str

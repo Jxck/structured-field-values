@@ -420,7 +420,7 @@ export function _optional_member_value() {
         // ['=', [member]] => [1, []]
         result.value = result.value[1]
       } else {
-        // value should be true if member is ommited
+        // value should be true if member is omitted
         result.value = {value: true, params: result.value}
       }
     }
@@ -495,7 +495,7 @@ export function _inner_parameters() {
     ])(rest)
 
     if (result.ok) {
-      // [';' , paramete] => parameter
+      // [';' , parameter] => parameter
       result.value = result.value[1]
     }
     return result
