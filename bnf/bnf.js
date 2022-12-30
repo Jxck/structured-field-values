@@ -317,11 +317,13 @@ export function inner_list() {
 // [ sf-item *( 1*SP sf-item ) *SP ]
 export function _optional_inner_item() {
   return (rest) => {
-    const result = optional(list([
-      sf_item(),
-      _repeat_inner_item(), // *( 1*SP sf-item )
-      token(/^ */)
-    ]))(rest)
+    const result = optional(
+      list([
+        sf_item(),
+        _repeat_inner_item(), // *( 1*SP sf-item )
+        token(/^ */)
+      ])
+    )(rest)
 
     if (result.ok) {
       if (result.value.length > 0) {
@@ -505,10 +507,12 @@ export function parameter() {
 // [ "=" param-value ]
 export function param_value() {
   return (rest) => {
-    const result = optional(list([
-      token(/^=/), // "="
-      bare_item()
-    ]))(rest)
+    const result = optional(
+      list([
+        token(/^=/), // "="
+        bare_item()
+      ])
+    )(rest)
 
     if (result.ok) {
       if (result.value.length === 0) {
