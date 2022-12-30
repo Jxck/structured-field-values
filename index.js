@@ -1168,7 +1168,6 @@ export function parseKey(input_string) {
  * @return {ParsedIntegerOrDecimal}
  */
 export function parseIntegerOrDecimal(input_string) {
-  let type = "integer"
   let sign = 1
   let input_number = ""
   let output_number
@@ -1448,11 +1447,7 @@ export function parseBoolean(input_string) {
  * @return {Uint8Array}
  */
 export function base64decode(str) {
-  if (typeof atob === "function") {
-    return new Uint8Array([...atob(str)].map((a) => a.charCodeAt(0)))
-  } else {
-    return Uint8Array.from(/**@type {node.Buffer}*/ Buffer.from(str, `base64`))
-  }
+  return new Uint8Array([...atob(str)].map((a) => a.charCodeAt(0)))
 }
 
 /**
@@ -1460,9 +1455,5 @@ export function base64decode(str) {
  * @return {string}
  */
 export function base64encode(binary) {
-  if (typeof btoa === "function") {
-    return btoa(String.fromCharCode(...binary))
-  } else {
-    return Buffer.from(binary).toString(`base64`)
-  }
+  return btoa(String.fromCharCode(...binary))
 }
