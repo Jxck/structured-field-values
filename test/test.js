@@ -55,7 +55,7 @@ import {
   formatDict,
 } from "./test.util.js"
 
-test("test_serializeKey", () => {
+test("test serializeKey", () => {
   assert.deepStrictEqual(serializeKey(`a`),       "a")
   assert.deepStrictEqual(serializeKey(`*`),       "*")
   assert.deepStrictEqual(serializeKey(`*-_.*`),   "*-_.*")
@@ -66,12 +66,12 @@ test("test_serializeKey", () => {
   assert.throws(() => serializeKey(`?`))
 })
 
-test("test_serializeBareItem", () => {
+test("test serializeBareItem", () => {
   assert.throws(() => serializeBareItem([]))
   assert.throws(() => serializeBareItem({}))
 })
 
-test("test_serializeInteger", () => {
+test("test serializeInteger", () => {
   assert.deepStrictEqual(serializeInteger(0),  "0")
   assert.deepStrictEqual(serializeInteger(1),  "1")
   assert.deepStrictEqual(serializeInteger(-1), "-1")
@@ -81,7 +81,7 @@ test("test_serializeInteger", () => {
   assert.throws(() => serializeInteger(-1_000_000_000_000_000))
 })
 
-test("test_serializeDecimal", () => {
+test("test serializeDecimal", () => {
   assert.deepStrictEqual(serializeDecimal(0),       "0.0")
   assert.deepStrictEqual(serializeDecimal(1.0),     "1.0")
   assert.deepStrictEqual(serializeDecimal(1.01),    "1.01")
@@ -96,7 +96,7 @@ test("test_serializeDecimal", () => {
   assert.throws(() => serializeDecimal(-1_000_000_000_000.0))
 })
 
-test("test_serializeString", () => {
+test("test serializeString", () => {
   assert.deepStrictEqual(serializeString("string"),   `"string"`)
   assert.deepStrictEqual(serializeString("str\\ing"), `"str\\\\ing"`)
   assert.deepStrictEqual(serializeString("str\"ing"), `"str\\"ing"`)
@@ -105,7 +105,7 @@ test("test_serializeString", () => {
   assert.throws(() => serializeString("str\x7fing"))
 })
 
-test("test_serializeToken", () => {
+test("test serializeToken", () => {
   assert.deepStrictEqual(serializeToken(s("token")),  `token`)
 
   assert.deepStrictEqual(serializeToken(s(`to!ken`)), `to!ken`)
@@ -144,7 +144,7 @@ test("test_serializeToken", () => {
   assert.throws(() => serializeToken(s(`to}ken`)))
 })
 
-test("test_serializeBoolean", () => {
+test("test serializeBoolean", () => {
   assert.deepStrictEqual(serializeBoolean(true),  `?1`)
   assert.deepStrictEqual(serializeBoolean(false), `?0`)
   assert.throws(() => serializeBoolean(0))
@@ -152,7 +152,7 @@ test("test_serializeBoolean", () => {
   assert.throws(() => serializeBoolean(undefined))
 })
 
-test("test_serializeByteSequence", () => {
+test("test serializeByteSequence", () => {
   const value = Uint8Array.from([
     112, 114, 101, 116, 101, 110, 100, 32, 116, 104, 105, 115, 32,
     105, 115, 32, 98, 105, 110, 97, 114, 121, 32, 99, 111, 110, 116,
@@ -162,7 +162,7 @@ test("test_serializeByteSequence", () => {
   assert.throws(() => serializeByteSequence([1,2,3]))
 })
 
-test("test_decode", () => {
+test("test decode", () => {
   assert.deepStrictEqual(decodeItem(`"a"`), new Item("a"))
   assert.deepStrictEqual(decodeItem(`?1`),  new Item(true))
   assert.deepStrictEqual(decodeItem(`1`),   new Item(1))
@@ -173,7 +173,7 @@ test("test_decode", () => {
   assert.throws(() => decodeDict(`a=1, b=2)`))
 })
 
-test("test_encode_item", () => {
+test("test encode_item", () => {
   assert.deepStrictEqual(encodeItem("a"),  `"a"`)
   assert.deepStrictEqual(encodeItem(true), `?1`)
   assert.deepStrictEqual(encodeItem(1),    `1`)
@@ -195,7 +195,7 @@ test("test_encode_item", () => {
   assert.throws(() => encodeItem(undefined))
 })
 
-test("test_encode_list", () => {
+test("test encode_list", () => {
   assert.deepStrictEqual(encodeList([1,2,3]),  `1, 2, 3`)
   assert.deepStrictEqual(encodeList([
     new Item(1),
@@ -209,7 +209,7 @@ test("test_encode_list", () => {
   ]),  `1;a=2, 2;a=2, 3;a=2`)
 })
 
-test("test_encode_dict", () => {
+test("test encode_dict", () => {
 
   assert.deepStrictEqual(
     encodeDict({
@@ -261,7 +261,7 @@ test("test_encode_dict", () => {
   )
 })
 
-test("test_parseIntegerOrDecimal", () => {
+test("test parseIntegerOrDecimal", () => {
   assert.deepStrictEqual(parseIntegerOrDecimal(`42`),   {value: 42,   input_string: ``})
   assert.deepStrictEqual(parseIntegerOrDecimal(`-42`),  {value: -42,  input_string: ``})
   assert.deepStrictEqual(parseIntegerOrDecimal(`4.2`),  {value: 4.2,  input_string: ``})
@@ -320,7 +320,7 @@ test("test_parseIntegerOrDecimal", () => {
   assert.throws(() => parseIntegerOrDecimal(`1000000000000000`))
 })
 
-test("test_parseString", () => {
+test("test parseString", () => {
   assert.deepStrictEqual(parseString(`"asdf"`),   {value: `asdf`, input_string: ``})
   assert.deepStrictEqual(parseString(`"!#[]"`),   {value: `!#[]`, input_string: ``})
   assert.deepStrictEqual(parseString(`"a""`),     {value: `a`,    input_string: `"`})
@@ -331,14 +331,14 @@ test("test_parseString", () => {
   assert.throws(() => parseString(``))
 })
 
-test("test_parseToken", () => {
+test("test parseToken", () => {
   assert.deepStrictEqual(parseToken(`*foo123/456`),             {value: s(`*foo123/456`),             input_string: ``})
   assert.deepStrictEqual(parseToken(`foo123;456`),              {value: s(`foo123`),                  input_string: `;456`})
   assert.deepStrictEqual(parseToken(`ABC!#$%&'*+-.^_'|~:/012`), {value: s(`ABC!#$%&'*+-.^_'|~:/012`), input_string: ``})
   assert.throws(() => parseToken(``))
 })
 
-test("test_parseByteSequence", () => {
+test("test parseByteSequence", () => {
   const value = Uint8Array.from([
     112, 114, 101, 116, 101, 110, 100, 32, 116, 104, 105, 115, 32,
     105, 115, 32, 98, 105, 110, 97, 114, 121, 32, 99, 111, 110, 116,
@@ -348,13 +348,13 @@ test("test_parseByteSequence", () => {
   assert.throws(() => parseByteSequence(``))
 })
 
-test("test_parseBoolean", () => {
+test("test parseBoolean", () => {
   assert.deepStrictEqual(parseBoolean(`?0`), {value: false, input_string: ``})
   assert.deepStrictEqual(parseBoolean(`?1`), {value: true,  input_string: ``})
   assert.throws(() => parseBoolean(``))
 })
 
-test("test_parseList", () => {
+test("test parseList", () => {
   assert.deepStrictEqual(
     parseList(`"foo", "bar", "It was the best of times."`),
     { value: [
@@ -387,7 +387,7 @@ test("test_parseList", () => {
   ], input_string: ``})
 })
 
-test("test_parseInnerList", () => {
+test("test parseInnerList", () => {
   assert.deepStrictEqual(parseInnerList(`( 1 2 3 )`), {
     value: new Item([1, 2, 3]),
     input_string: ``
@@ -402,7 +402,7 @@ test("test_parseInnerList", () => {
   })
 })
 
-test("test_parseDictionary", () => {
+test("test parseDictionary", () => {
   assert.deepStrictEqual(parseDictionary(`en="Applepie", da=:w4ZibGV0w6ZydGU=:`), {
     value: {
       "en": new Item(`Applepie`),
@@ -439,12 +439,12 @@ test("test_parseDictionary", () => {
   })
 })
 
-test("test_parseItem", () => {
+test("test parseItem", () => {
   assert.deepStrictEqual(parseItem(`123;a=1;b`), {value: new Item(123, {"a":1, "b":true}), input_string: ``})
   assert.throws(() => parseItem(``))
 })
 
-test("test_bareItem", () => {
+test("test bareItem", () => {
   assert.deepStrictEqual(parseBareItem(`123`),        {value: 123,         input_string: ``})
   assert.deepStrictEqual(parseBareItem(`3.14`),       {value: 3.14,        input_string: ``})
   assert.deepStrictEqual(parseBareItem(`string`),     {value: s(`string`), input_string: ``})
@@ -455,14 +455,14 @@ test("test_bareItem", () => {
   assert.deepStrictEqual(parseBareItem(`:${base64encode(binary)}:`), {value: binary, input_string: ``})
 })
 
-test("test_parseParameters", () => {
+test("test parseParameters", () => {
   assert.deepStrictEqual(parseParameters(`;a=0`),         {value: {"a": 0},                         input_string: ``})
   assert.deepStrictEqual(parseParameters(`;a`),           {value: {"a": true},                      input_string: ``})
   assert.deepStrictEqual(parseParameters(`;  a;  b=?0`),  {value: {"a": true, "b": false},          input_string: ``})
   assert.deepStrictEqual(parseParameters(`;a;b=?0;c=10`), {value: {"a": true, "b": false, "c": 10}, input_string: ``})
 })
 
-test("test_parseKey", () => {
+test("test parseKey", () => {
   assert.deepStrictEqual(parseKey(`a123_-.*`), {value: `a123_-.*`, input_string: ``})
   assert.deepStrictEqual(parseKey(`*a123`),    {value: `*a123`,    input_string: ``})
 })
