@@ -1,4 +1,5 @@
-import assert from "assert"
+import assert from "node:assert"
+import test from "node:test"
 import base32 from "hi-base32"
 
 import {
@@ -52,23 +53,23 @@ import {
 // utility const
 const ok = true;
 
-function test_token() {
+test("test token", () => {
   const fn = token(/^abc/)
   assert.deepStrictEqual(fn(`abc`), {ok, value: `abc`, rest: ``})
   assert.deepStrictEqual(fn(`abd`), {ok: false, rest: `abd`})
   assert.deepStrictEqual(fn(``),    {ok: false, rest: ``})
-}
+})
 
-function test_alt() {
+test("test alt", () => {
   // a / b
   const fn = alt([token(/^a/), token(/^b/)])
   assert.deepStrictEqual(fn(`a`), {ok, value: `a`, rest: ``})
   assert.deepStrictEqual(fn(`b`), {ok, value: `b`, rest: ``})
   assert.deepStrictEqual(fn(`c`), {ok: false, rest: `c`})
   assert.deepStrictEqual(fn(``),  {ok: false, rest: ``})
-}
+})
 
-function test_list() {
+test("test list", () => {
   // [a, b, c]
   let fn = list([token(/^a/), token(/^b/), token(/^c/)])
   assert.deepStrictEqual(fn(`abc`), {ok, value: [`a`, `b`, `c`], rest: ``})
@@ -79,9 +80,9 @@ function test_list() {
   fn = list([token(/^ab/), token(/^cde/), token(/^f/)])
   assert.deepStrictEqual(fn(`abcdef`), {ok, value: [`ab`, `cde`, `f`], rest: ``})
   assert.deepStrictEqual(fn(`abcde`),  {ok: false, rest: `abcde`})
-}
+})
 
-function test_repeat() {
+test("test repeat", () => {
   // (a / b){1,5}
   let fn = repeat(1, 5, alt([token(/^a/), token(/^b/)]))
   assert.deepStrictEqual(fn(`a`),       {ok, value: [`a`],      rest: ``})
@@ -91,39 +92,39 @@ function test_repeat() {
   assert.deepStrictEqual(fn(`aacaaab`), {ok, value: [`a`, `a`], rest: `caaab`})
   assert.deepStrictEqual(fn(`c`),       {ok: false, rest: `c`})
   assert.deepStrictEqual(fn(``),        {ok: false, rest: ``})
-}
+})
 
-function test_sf_integer() {
+test("test sf_integer", () => {
   assert.deepStrictEqual(sf_integer()(`42`),  {ok, value: 42,  rest: ``})
   assert.deepStrictEqual(sf_integer()(`-42`), {ok, value: -42, rest: ``})
   assert.deepStrictEqual(sf_integer()(`4.2`), {ok, value: 4,   rest: `.2`})
   assert.deepStrictEqual(sf_integer()(`4a`),  {ok, value: 4,   rest: `a`})
   assert.deepStrictEqual(sf_integer()(`a`),   {ok: false, rest: `a`})
   assert.deepStrictEqual(sf_integer()(``),    {ok: false, rest: ``})
-}
+})
 
-function test_sf_decimal() {
+test("test sf_decimal", () => {
   assert.deepStrictEqual(sf_decimal()(`4.5`),  {ok, value: 4.5,  rest: ``})
   assert.deepStrictEqual(sf_decimal()(`-4.5`), {ok, value: -4.5, rest: ``})
   assert.deepStrictEqual(sf_decimal()(`4.0`),  {ok, value: 4,    rest: ``})
   assert.deepStrictEqual(sf_decimal()(`45`),   {ok: false, rest: `45`})
   assert.deepStrictEqual(sf_decimal()(``),     {ok: false, rest: ``})
-}
+})
 
-function test_sf_string() {
+test("test sf_string", () => {
   assert.deepStrictEqual(sf_string()(`"asdf"`),  {ok, value: `asdf`, rest: ``})
   assert.deepStrictEqual(sf_string()(`"a""`),    {ok, value: `a`,    rest: `"`})
   assert.deepStrictEqual(sf_string()(`"a\\\""`), {ok, value: `a"`,   rest: ``})
   assert.deepStrictEqual(sf_string()(`"a\\\\c"`),{ok, value: `a\\c`, rest: ``})
   assert.deepStrictEqual(sf_string()(`"a\\"`),   {ok: false, rest: `"a\\"`})
   assert.deepStrictEqual(sf_string()(``),        {ok: false, rest: ``})
-}
+})
 
-function test_char() {
+test("test char", () => {
   // test_unescaped / test_escaped
-}
+})
 
-function test_unescaped() {
+test("test unescaped", () => {
   assert.deepStrictEqual(unescaped()(` `),  {ok, value: ` `, rest: ``})   // x20
   assert.deepStrictEqual(unescaped()(`!`),  {ok, value: `!`, rest: ``})   // x21
   assert.deepStrictEqual(unescaped()(`"`),  {ok: false,      rest: `"`})  // x22
@@ -131,22 +132,22 @@ function test_unescaped() {
   assert.deepStrictEqual(unescaped()(`[`),  {ok, value: `[`, rest: ``})   // x5B
   assert.deepStrictEqual(unescaped()(`\\`), {ok: false,      rest: `\\`}) // x5C
   assert.deepStrictEqual(unescaped()(`]`),  {ok, value: `]`, rest: ``})   // x5D
-}
+})
 
-function test_escaped() {
+test("test escaped", () => {
   assert.deepStrictEqual(escaped()(`\\"`),  {ok, value: `"`,  rest: ``})
   assert.deepStrictEqual(escaped()(`\\\\`), {ok, value: `\\`, rest: ``})
   assert.deepStrictEqual(escaped()(`\\a`),  {ok: false,       rest: `\\a`})
-}
+})
 
-function test_sf_token() {
+test("test sf_token", () => {
   assert.deepStrictEqual(sf_token()(`*foo123/456`),             {ok, value: s(`*foo123/456`),             rest: ``})
   assert.deepStrictEqual(sf_token()(`foo123;456`),              {ok, value: s(`foo123`),                  rest: `;456`})
   assert.deepStrictEqual(sf_token()(`ABC!#$%&'*+-.^_'|~:/012`), {ok, value: s(`ABC!#$%&'*+-.^_'|~:/012`), rest: ``})
   assert.deepStrictEqual(sf_token()(``), {ok: false, rest: ``})
-}
+})
 
-function test_sf_binary() {
+test("test sf_binary", () => {
   const value = Uint8Array.from([
     112, 114, 101, 116, 101, 110, 100, 32, 116, 104, 105, 115, 32,
     105, 115, 32, 98, 105, 110, 97, 114, 121, 32, 99, 111, 110, 116,
@@ -154,15 +155,15 @@ function test_sf_binary() {
   ])
   assert.deepStrictEqual(sf_binary()(`:cHJldGVuZCB0aGlzIGlzIGJpbmFyeSBjb250ZW50Lg==:`), {ok, value, rest: ``})
   assert.deepStrictEqual(sf_binary()(``), {ok:false, rest: ``})
-}
+})
 
-function test_sf_boolean() {
+test("test sf_boolean", () => {
   assert.deepStrictEqual(sf_boolean()(`?0`), {ok, value: false, rest: ``})
   assert.deepStrictEqual(sf_boolean()(`?1`), {ok, value: true,  rest: ``})
   assert.deepStrictEqual(sf_boolean()(``),   {ok: false,        rest: ``})
-}
+})
 
-function test_sf_list() {
+test("test sf_list", () => {
   assert.deepStrictEqual(
     sf_list()(`"foo", "bar", "It was the best of times."`),
     {ok, value: [
@@ -223,17 +224,17 @@ function test_sf_list() {
     }
   ], rest: ``})
   assert.deepStrictEqual(sf_list()(``), {ok: false, rest: ``})
-}
+})
 
-function test_repeat_list_member() {
+test("test repeat_list_member", () => {
   // omit
-}
+})
 
-function test_list_member() {
+test("test list_member", () => {
   // test_sf_item / test_inner_list
-}
+})
 
-function test_inner_list() {
+test("test inner_list", () => {
   assert.deepStrictEqual(inner_list()(`( 1 2 3 )`), {ok, value: {
     value: [
       { value: 1, params: {} },
@@ -252,17 +253,17 @@ function test_inner_list() {
     value: [],
     params: {}
   }, rest: ``})
-}
+})
 
-function test_optional_inner_item() {
+test("test optional_inner_item", () => {
   // omit
-}
+})
 
-function test_repeat_inner_item() {
+test("test repeat_inner_item", () => {
   // omit
-}
+})
 
-function test_sf_dictionary() {
+test("test sf_dictionary", () => {
   assert.deepStrictEqual(sf_dictionary()(`en="Applepie", da=:w4ZibGV0w6ZydGU=:`), {ok, value: {
     "en": { value: `Applepie`, params: {} },
     "da": { value: new Uint8Array([195,134,98,108,101,116,195,166,114,116,101]), params: {} }
@@ -309,26 +310,26 @@ function test_sf_dictionary() {
       params: { "valid": true }
     },
   }, rest: ``})
-}
+})
 
-function test_repeat_dict_member() {
+test("test repeat_dict_member", () => {
   // omit
-}
+})
 
-function test_dict_member() {
+test("test dict_member", () => {
   // omit
-}
+})
 
-function test_member_value() {
+test("test member_value", () => {
   // test_sf_item / test_inner_list
-}
+})
 
-function test_sf_item() {
+test("test sf_item", () => {
   assert.deepStrictEqual(sf_item()(`123;a=1;b`), {ok, value: {value: 123, params: {"a":1, "b":true}}, rest: ``})
   assert.deepStrictEqual(sf_item()(``),          {ok: false, rest: ``})
-}
+})
 
-function test_bare_item() {
+test("test bare_item", () => {
   assert.deepStrictEqual(bare_item()(`123`),        {ok, value: 123,         rest: ``})
   assert.deepStrictEqual(bare_item()(`3.14`),       {ok, value: 3.14,        rest: ``})
   assert.deepStrictEqual(bare_item()(`string`),     {ok, value: s(`string`), rest: ``})
@@ -337,57 +338,23 @@ function test_bare_item() {
   const binary = new Uint8Array([1,2,3,4,5])
   assert.deepStrictEqual(bare_item()(`:${base64encode(binary)}:`), {ok, value: binary, rest: ``})
   assert.deepStrictEqual(bare_item()(`?1`),         {ok, value: true,     rest: ``})
-}
+})
 
-function test_parameters() {
+test("test parameters", () => {
   assert.deepStrictEqual(parameters()(`;a=0`),         {ok, value: {"a": 0},                         rest: ``})
   assert.deepStrictEqual(parameters()(`;a`),           {ok, value: {"a": true},                      rest: ``})
   assert.deepStrictEqual(parameters()(`;  a;  b=?0`),  {ok, value: {"a": true, "b": false},          rest: ``})
   assert.deepStrictEqual(parameters()(`;a;b=?0;c=10`), {ok, value: {"a": true, "b": false, "c": 10}, rest: ``})
-}
+})
 
-function test_parameter() {
+test("test parameter", () => {
   assert.deepStrictEqual(parameter()(`a`),    {ok, value: [`a`, true],  rest: ``})
   assert.deepStrictEqual(parameter()(`b=?0`), {ok, value: [`b`, false], rest: ``})
   assert.deepStrictEqual(parameter()(`c=10`), {ok, value: [`c`, 10],    rest: ``})
   assert.deepStrictEqual(parameter()(``),     {ok: false, rest: ``})
-}
+})
 
-function test_sf_key() {
+test("test sf_key", () => {
   assert.deepStrictEqual(sf_key()(`a123_-.*`), {ok, value: `a123_-.*`, rest: ``})
   assert.deepStrictEqual(sf_key()(`*a123`),    {ok, value: `*a123`,    rest: ``})
-}
-
-;[
-  test_token,
-  test_alt,
-  test_list,
-  test_repeat,
-  test_sf_integer,
-  test_sf_decimal,
-  test_sf_string,
-  test_char,
-  test_unescaped,
-  test_escaped,
-  test_sf_token,
-  test_sf_binary,
-  test_sf_boolean,
-  test_sf_list,
-  test_repeat_list_member,
-  test_list_member,
-  test_inner_list,
-  test_optional_inner_item,
-  test_repeat_inner_item,
-  test_sf_dictionary,
-  test_repeat_dict_member,
-  test_dict_member,
-  test_member_value,
-  test_sf_item,
-  test_bare_item,
-  test_parameters,
-  test_parameter,
-  test_sf_key,
-].forEach((t) => {
-  console.log(t.name)
-  t()
 })
