@@ -1,4 +1,4 @@
-`use strict`;
+;`use strict`
 
 export class Item {
   /**
@@ -45,19 +45,25 @@ export class Item {
  * @param {Item} value
  * @returns {string}
  */
-export function encodeItem(value) { return serializeItem(value) }
+export function encodeItem(value) {
+  return serializeItem(value)
+}
 
 /**
  * @param {MemberList} value
  * @returns {string}
  */
-export function encodeList(value) { return serializeList(value) }
+export function encodeList(value) {
+  return serializeList(value)
+}
 
 /**
  * @param {Dictionary} value
  * @returns {string}
  */
-export function encodeDict(value) { return serializeDict(value) }
+export function encodeDict(value) {
+  return serializeDict(value)
+}
 
 // 4.2.  Parsing Structured Fields
 //
@@ -86,7 +92,7 @@ export function encodeDict(value) { return serializeDict(value) }
  */
 export function decodeItem(input) {
   const { input_string, value } = parseItem(input.trim())
-  if (input_string !== '') throw new Error(`failed to parse ${input_string} as Item`)
+  if (input_string !== "") throw new Error(`failed to parse ${input_string} as Item`)
   return value
 }
 
@@ -96,7 +102,7 @@ export function decodeItem(input) {
  */
 export function decodeList(input) {
   const { input_string, value } = parseList(input.trim())
-  if (input_string !== '') throw new Error(`failed to parse ${input_string} as List`)
+  if (input_string !== "") throw new Error(`failed to parse ${input_string} as List`)
   return value
 }
 
@@ -106,7 +112,7 @@ export function decodeList(input) {
  */
 export function decodeDict(input) {
   const { input_string, value } = parseDictionary(input.trim())
-  if (input_string !== '') throw new Error(`failed to parse ${input_string} as Dict`)
+  if (input_string !== "") throw new Error(`failed to parse ${input_string} as Dict`)
   return value
 }
 
@@ -139,13 +145,15 @@ export function decodeDict(input) {
  */
 export function serializeList(list) {
   if (Array.isArray(list) === false) throw new Error(`failed to serialize ${list} as List`)
-  return list.map((item) => {
-    if ((item instanceof Item) === false) item = new Item(item)
-    if (Array.isArray(item.value)) {
-      return serializeInnerList(item)
-    }
-    return serializeItem(item)
-  }).join(", ")
+  return list
+    .map((item) => {
+      if (item instanceof Item === false) item = new Item(item)
+      if (Array.isArray(item.value)) {
+        return serializeInnerList(item)
+      }
+      return serializeItem(item)
+    })
+    .join(", ")
 }
 
 // 4.1.1.1.  Serializing an Inner List
@@ -208,10 +216,12 @@ export function serializeInnerList(value) {
  */
 export function serializeParams(params) {
   if (params === null) return ""
-  return Object.entries(params).map(([key, value]) => {
-    if (value === true) return `;${serializeKey(key)}` // omit true
-    return `;${serializeKey(key)}=${serializeBareItem(value)}`
-  }).join("")
+  return Object.entries(params)
+    .map(([key, value]) => {
+      if (value === true) return `;${serializeKey(key)}` // omit true
+      return `;${serializeKey(key)}=${serializeBareItem(value)}`
+    })
+    .join("")
 }
 
 // 4.1.1.3.  Serializing a Key
@@ -289,21 +299,23 @@ export function serializeKey(value) {
 export function serializeDict(dict) {
   if (typeof dict !== "object") throw new Error(`failed to serialize ${dict} as Dict`)
   const entries = dict instanceof Map ? dict.entries() : Object.entries(dict)
-  return Array.from(entries).map(([key, item]) => {
-    if ((item instanceof Item) === false) item = new Item(item)
-    let output = serializeKey(key)
-    if (item.value === true) {
-      output += serializeParams(item.params)
-    } else {
-      output += "="
-      if (Array.isArray(item.value)) {
-        output += serializeInnerList(item)
+  return Array.from(entries)
+    .map(([key, item]) => {
+      if (item instanceof Item === false) item = new Item(item)
+      let output = serializeKey(key)
+      if (item.value === true) {
+        output += serializeParams(item.params)
       } else {
-        output += serializeItem(item)
+        output += "="
+        if (Array.isArray(item.value)) {
+          output += serializeInnerList(item)
+        } else {
+          output += serializeItem(item)
+        }
       }
-    }
-    return output
-  }).join(", ")
+      return output
+    })
+    .join(", ")
 }
 
 // 4.1.3.  Serializing an Item
@@ -325,11 +337,8 @@ export function serializeDict(dict) {
  * @return {string}
  */
 export function serializeItem(value) {
-  if (value === null
-    || value === undefined
-    || Array.isArray(value) === true
-    || value instanceof Map
-  ) throw new Error(`failed to serialize ${value} as Item`)
+  if (value === null || value === undefined || Array.isArray(value) === true || value instanceof Map)
+    throw new Error(`failed to serialize ${value} as Item`)
 
   if (value instanceof Item) {
     return `${serializeBareItem(value.value)}${serializeParams(value.params)}`
@@ -457,14 +466,14 @@ export function serializeDecimal(value) {
   const roundedValue = roundToEven(value, 3) // round to 3 decimal places
   if (Math.floor(Math.abs(roundedValue)).toString().length > 12) throw new Error(`failed to serialize ${value} as Decimal`)
   const stringValue = roundedValue.toString()
-  return stringValue.includes('.') ? stringValue : `${stringValue}.0`
+  return stringValue.includes(".") ? stringValue : `${stringValue}.0`
 }
 
 /**
  * This implements the rounding procedure described in step 2 of the "Serializing a Decimal" specification.
  * This rounding style is known as "even rounding", "banker's rounding", or "commercial rounding".
- * 
- * @param {number} value 
+ *
+ * @param {number} value
  * @param {number} precision - decimal places to round to
  * @return {number}
  */
@@ -474,7 +483,7 @@ function roundToEven(value, precision) {
   }
 
   const decimalShift = Math.pow(10, precision)
-  const isEquidistant = Math.abs((value * decimalShift) % 1 - 0.5) < Number.EPSILON
+  const isEquidistant = Math.abs(((value * decimalShift) % 1) - 0.5) < Number.EPSILON
   if (isEquidistant) {
     // If the tail of the decimal place is 'equidistant' we round to the nearest even value
     const flooredValue = Math.floor(value * decimalShift)
@@ -658,7 +667,7 @@ export function parseList(input_string) {
   }
   return {
     value: members,
-    input_string,
+    input_string
   }
 }
 
@@ -745,7 +754,7 @@ export function parseInnerList(input_string) {
       const parsedParameters = parseParameters(input_string)
       return {
         value: new Item(inner_list, parsedParameters.value),
-        input_string: parsedParameters.input_string,
+        input_string: parsedParameters.input_string
       }
     }
     /** @type {ParsedItem} */
@@ -815,10 +824,10 @@ export function parseInnerList(input_string) {
  * @property {string} input_string
  *
  * @param {string} input_string
- * @param {Object?} option
+ * @param {Object?} option TODO: not fully supported yet
  * @return {ParsedDictionary}
  */
-export function parseDictionary(input_string, option = {}) { // TODO: option is not fully supported yet
+export function parseDictionary(input_string, option = {}) {
   /** @type {Array.<[Key, Item|InnerList]>} */
   const value = [] // ordered map
 
@@ -833,7 +842,7 @@ export function parseDictionary(input_string, option = {}) { // TODO: option is 
 
   while (input_string.length > 0) {
     /** @type {Item|InnerList} */
-    let member;
+    let member
     /** @type {ParsedKey} */
     const parsedKey = parseKey(input_string)
     /** @type {Key} */
@@ -859,7 +868,7 @@ export function parseDictionary(input_string, option = {}) { // TODO: option is 
   }
   return {
     value: toDict(value),
-    input_string,
+    input_string
   }
 }
 
@@ -895,7 +904,7 @@ export function parseItem(input_string) {
   const item = new Item(value, params)
   return {
     value: item,
-    input_string,
+    input_string
   }
 }
 
@@ -1027,7 +1036,7 @@ export function parseParameters(input_string) {
   }
   return {
     value: parameters,
-    input_string,
+    input_string
   }
 }
 
@@ -1073,7 +1082,7 @@ export function parseKey(input_string) {
     if (/^[a-z0-9\_\-\.\*]$/.test(input_string[i]) === false) {
       return {
         value: output_string,
-        input_string: input_string.substring(i),
+        input_string: input_string.substring(i)
       }
     }
     output_string += input_string[i]
@@ -1081,7 +1090,7 @@ export function parseKey(input_string) {
   }
   return {
     value: output_string,
-    input_string: input_string.substring(i),
+    input_string: input_string.substring(i)
   }
 }
 
@@ -1162,7 +1171,7 @@ export function parseIntegerOrDecimal(input_string) {
   let type = "integer"
   let sign = 1
   let input_number = ""
-  let output_number;
+  let output_number
   let i = 0
 
   if (input_string[i] === "-") {
@@ -1194,7 +1203,8 @@ export function parseIntegerOrDecimal(input_string) {
     // 7.5.  If type is "integer" and input_number contains more than 15 characters, fail parsing.
     if (input_number.length > 15) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
     output_number = parseInt(input_number) * sign
-    if (output_number < -999999999999999n || 999999999999999n < output_number) throw new Error(`failed to parse integer: ${input_number} as Integer or Decimal`)
+    if (output_number < -999999999999999n || 999999999999999n < output_number)
+      throw new Error(`failed to parse integer: ${input_number} as Integer or Decimal`)
   }
   return {
     value: output_number,
@@ -1268,7 +1278,7 @@ export function parseString(input_string) {
     } else if (input_string[i] === `"`) {
       return {
         value: output_string,
-        input_string: input_string.substring(++i),
+        input_string: input_string.substring(++i)
       }
     } else if (/[\x00-\x1f\x7f]+/.test(input_string[i])) {
       throw new Error(`failed to parse ${input_string} as String`)
@@ -1318,7 +1328,7 @@ export function parseToken(input_string) {
   input_string = input_string.substring(re.lastIndex)
   return {
     value: Symbol.for(output_string),
-    input_string,
+    input_string
   }
 }
 
@@ -1381,7 +1391,7 @@ export function parseByteSequence(input_string) {
   const binary_content = base64decode(b64_content)
   return {
     value: binary_content,
-    input_string,
+    input_string
   }
 }
 
@@ -1418,13 +1428,13 @@ export function parseBoolean(input_string) {
   if (input_string[i] === "1") {
     return {
       value: true,
-      input_string: input_string.substring(++i),
+      input_string: input_string.substring(++i)
     }
   }
   if (input_string[i] === "0") {
     return {
       value: false,
-      input_string: input_string.substring(++i),
+      input_string: input_string.substring(++i)
     }
   }
   throw new Error(`failed to parse ${input_string} as Boolean`)
@@ -1438,10 +1448,10 @@ export function parseBoolean(input_string) {
  * @return {Uint8Array}
  */
 export function base64decode(str) {
-  if (typeof atob === 'function') {
-    return new Uint8Array([...atob(str)].map(a => a.charCodeAt(0)))
+  if (typeof atob === "function") {
+    return new Uint8Array([...atob(str)].map((a) => a.charCodeAt(0)))
   } else {
-    return Uint8Array.from(/**@type {node.Buffer}*/Buffer.from(str, `base64`))
+    return Uint8Array.from(/**@type {node.Buffer}*/ Buffer.from(str, `base64`))
   }
 }
 
@@ -1450,7 +1460,7 @@ export function base64decode(str) {
  * @return {string}
  */
 export function base64encode(binary) {
-  if (typeof btoa === 'function') {
+  if (typeof btoa === "function") {
     return btoa(String.fromCharCode(...binary))
   } else {
     return Buffer.from(binary).toString(`base64`)
