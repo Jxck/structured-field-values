@@ -653,7 +653,7 @@ export function parseList(input_string) {
     input_string = parsedItemOrInnerList.input_string.trim()
     if (input_string.length === 0) return { input_string, value: members }
     if (input_string[0] !== ",") throw new Error(`failed to parse ${input_string} as List`)
-    input_string = input_string.substr(1).trim()
+    input_string = input_string.substring(1).trim()
     if (input_string.length === 0 || input_string[0] === ",") throw new Error(`failed to parse ${input_string} as List`)
   }
   return {
@@ -735,13 +735,13 @@ export function parseItemOrInnerList(input_string) {
  */
 export function parseInnerList(input_string) {
   if (input_string[0] !== "(") throw new Error(`failed to parse ${input_string} as Inner List`)
-  input_string = input_string.substr(1)
+  input_string = input_string.substring(1)
   /** @type {ItemList}  */
   const inner_list = []
   while (input_string.length > 0) {
     input_string = input_string.trim()
     if (input_string[0] === ")") {
-      input_string = input_string.substr(1)
+      input_string = input_string.substring(1)
       const parsedParameters = parseParameters(input_string)
       return {
         value: new Item(inner_list, parsedParameters.value),
@@ -841,7 +841,7 @@ export function parseDictionary(input_string, option = {}) { // TODO: option is 
     input_string = parsedKey.input_string
     if (input_string[0] === "=") {
       /** @type {ParsedItemOrInnerList} */
-      const parsedItemOrInnerList = parseItemOrInnerList(input_string.substr(1))
+      const parsedItemOrInnerList = parseItemOrInnerList(input_string.substring(1))
       member = parsedItemOrInnerList.value
       input_string = parsedItemOrInnerList.input_string
     } else {
@@ -854,7 +854,7 @@ export function parseDictionary(input_string, option = {}) { // TODO: option is 
     input_string = input_string.trim()
     if (input_string.length === 0) return { input_string, value: toDict(value) }
     if (input_string[0] !== ",") throw new Error(`failed to parse ${input_string} as Dictionary`)
-    input_string = input_string.substr(1).trim()
+    input_string = input_string.substring(1).trim()
     if (input_string.length === 0 || input_string[0] === ",") throw new Error(`failed to parse ${input_string} as Dictionary`)
   }
   return {
@@ -1008,14 +1008,14 @@ export function parseParameters(input_string) {
   let parameters = null
   while (input_string.length > 0) {
     if (input_string[0] !== ";") break
-    input_string = input_string.substr(1).trim()
+    input_string = input_string.substring(1).trim()
     const parsedKey = parseKey(input_string)
     const param_name = parsedKey.value
     /** @type {BareItem} */
     let param_value = true
     input_string = parsedKey.input_string
     if (input_string[0] === "=") {
-      input_string = input_string.substr(1)
+      input_string = input_string.substring(1)
       const parsedBareItem = parseBareItem(input_string)
       param_value = parsedBareItem.value
       input_string = parsedBareItem.input_string
@@ -1073,7 +1073,7 @@ export function parseKey(input_string) {
     if (/^[a-z0-9\_\-\.\*]$/.test(input_string[i]) === false) {
       return {
         value: output_string,
-        input_string: input_string.substr(i),
+        input_string: input_string.substring(i),
       }
     }
     output_string += input_string[i]
@@ -1081,7 +1081,7 @@ export function parseKey(input_string) {
   }
   return {
     value: output_string,
-    input_string: input_string.substr(i),
+    input_string: input_string.substring(i),
   }
 }
 
@@ -1167,7 +1167,7 @@ export function parseIntegerOrDecimal(input_string) {
 
   if (input_string[i] === "-") {
     sign = -1
-    input_string = input_string.substr(1)
+    input_string = input_string.substring(1)
   }
   if (input_string.length <= 0) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
 
@@ -1175,14 +1175,14 @@ export function parseIntegerOrDecimal(input_string) {
   const result_integer = re_integer.exec(input_string)
   if (result_integer[0].length === 0) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
   input_number += result_integer[1]
-  input_string = input_string.substr(re_integer.lastIndex)
+  input_string = input_string.substring(re_integer.lastIndex)
 
   if (input_string[0] === ".") {
     // decimal
     if (input_number.length > 12) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
     const re_decimal = /^(\.\d+)?/g
     const result_decimal = re_decimal.exec(input_string)
-    input_string = input_string.substr(re_decimal.lastIndex)
+    input_string = input_string.substring(re_decimal.lastIndex)
     // 9.2.  If the number of characters after "." in input_number is greater than three, fail parsing.
     if (result_decimal[0].length === 0 || result_decimal[1].length > 4) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
     input_number += result_decimal[1]
@@ -1268,7 +1268,7 @@ export function parseString(input_string) {
     } else if (input_string[i] === `"`) {
       return {
         value: output_string,
-        input_string: input_string.substr(++i),
+        input_string: input_string.substring(++i),
       }
     } else if (/[\x00-\x1f\x7f]+/.test(input_string[i])) {
       throw new Error(`failed to parse ${input_string} as String`)
@@ -1315,7 +1315,7 @@ export function parseToken(input_string) {
   }
   const re = /^([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]+)/g
   const output_string = re.exec(input_string)[1]
-  input_string = input_string.substr(re.lastIndex)
+  input_string = input_string.substring(re.lastIndex)
   return {
     value: Symbol.for(output_string),
     input_string,
@@ -1372,11 +1372,11 @@ export function parseToken(input_string) {
  */
 export function parseByteSequence(input_string) {
   if (input_string[0] !== ":") throw new Error(`failed to parse ${input_string} as Byte Sequence`)
-  input_string = input_string.substr(1)
+  input_string = input_string.substring(1)
   if (input_string.includes(":") === false) throw new Error(`failed to parse ${input_string} as Byte Sequence`)
   const re = /(^.*?)(:)/g
   const b64_content = re.exec(input_string)[1]
-  input_string = input_string.substr(re.lastIndex)
+  input_string = input_string.substring(re.lastIndex)
   // pass b64_content char check step 6
   const binary_content = base64decode(b64_content)
   return {
@@ -1418,13 +1418,13 @@ export function parseBoolean(input_string) {
   if (input_string[i] === "1") {
     return {
       value: true,
-      input_string: input_string.substr(++i),
+      input_string: input_string.substring(++i),
     }
   }
   if (input_string[i] === "0") {
     return {
       value: false,
-      input_string: input_string.substr(++i),
+      input_string: input_string.substring(++i),
     }
   }
   throw new Error(`failed to parse ${input_string} as Boolean`)
