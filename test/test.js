@@ -170,7 +170,7 @@ test("test_decode", () => {
   assert.deepStrictEqual(decodeItem(`:AQID:`), new Item(new Uint8Array([1, 2,3])))
   assert.throws(() => decodeItem(`1;`))
   assert.throws(() => decodeList(`1,2,3)`))
-  assert.throws(() => decodeDiect(`a=1, b=2)`))
+  assert.throws(() => decodeDict(`a=1, b=2)`))
 })
 
 test("test_encode_item", () => {
@@ -335,7 +335,7 @@ test("test_parseToken", () => {
   assert.deepStrictEqual(parseToken(`*foo123/456`),             {value: s(`*foo123/456`),             input_string: ``})
   assert.deepStrictEqual(parseToken(`foo123;456`),              {value: s(`foo123`),                  input_string: `;456`})
   assert.deepStrictEqual(parseToken(`ABC!#$%&'*+-.^_'|~:/012`), {value: s(`ABC!#$%&'*+-.^_'|~:/012`), input_string: ``})
-  assert.throws(() => parsetoken(``))
+  assert.throws(() => parseToken(``))
 })
 
 test("test_parseByteSequence", () => {
