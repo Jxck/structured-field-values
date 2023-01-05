@@ -132,7 +132,7 @@ export function parseInnerList(input_string: string): ParsedInnerList;
  * @property {string} input_string
  *
  * @param {string} input_string
- * @param {Object?} option
+ * @param {Object?} option TODO: not fully supported yet
  * @return {ParsedDictionary}
  */
 export function parseDictionary(input_string: string, option?: any | null): ParsedDictionary;
@@ -240,22 +240,22 @@ export class Item {
     value: any;
     params: any;
 }
-export type MemberList = (Item | InnerList)[];
+export type MemberList = Array<Item | InnerList>;
 export type ParsedList = {
     value: MemberList;
     input_string: string;
 };
 export type ParsedItemOrInnerList = ParsedItem | ParsedInnerList;
-export type ItemList = Item[];
+export type ItemList = Array<Item>;
 export type InnerList = {
-    value: ItemList;
+    value: Item[];
     params: Parameters;
 };
 export type ParsedInnerList = {
     value: InnerList;
     input_string: string;
 };
-export type Dictionary = any;
+export type Dictionary = any | Map<any, any>;
 export type ParsedDictionary = {
     value: Dictionary;
     input_string: string;
@@ -265,7 +265,7 @@ export type ParsedItem = {
     input_string: string;
 };
 export type ParsedBareItem = ParsedString | ParsedByteSequence | ParsedBoolean | ParsedIntegerOrDecimal | ParsedToken;
-export type BareItem = string | number | boolean | symbol | Uint8Array;
+export type BareItem = string | Uint8Array | boolean | number | symbol;
 export type Parameters = any;
 export type ParsedParameters = {
     value: Parameters;

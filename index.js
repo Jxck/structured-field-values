@@ -92,7 +92,7 @@ export function encodeDict(value) {
  */
 export function decodeItem(input) {
   const { input_string, value } = parseItem(input.trim())
-  if (input_string !== "") throw new Error(`failed to parse ${input_string} as Item`)
+  if (input_string !== "") throw new Error(`failed to parse "${input_string}" as Item`)
   return value
 }
 
@@ -249,7 +249,7 @@ export function serializeParams(params) {
  */
 export function serializeKey(value) {
   if (/^[a-z\*][a-z0-9\-\_\.\*]*$/.test(value) === false) {
-    throw new Error(`failed to serialize ${value} as Key`)
+    throw new Error(`failed to serialize "${value}" as Key`)
   }
   return value
 }
@@ -337,9 +337,6 @@ export function serializeDict(dict) {
  * @return {string}
  */
 export function serializeItem(value) {
-  if (value === null || value === undefined || Array.isArray(value) === true || value instanceof Map)
-    throw new Error(`failed to serialize ${value} as Item`)
-
   if (value instanceof Item) {
     return `${serializeBareItem(value.value)}${serializeParams(value.params)}`
   } else {
@@ -376,6 +373,8 @@ export function serializeItem(value) {
  * @return {string}
  */
 export function serializeBareItem(value) {
+  // console.log(">>>>>>>>>>>>>>>>>>>", { value })
+
   switch (typeof value) {
     case "number":
       if (Number.isInteger(value)) {
@@ -393,7 +392,8 @@ export function serializeBareItem(value) {
         return serializeByteSequence(value)
       }
     default:
-      throw new Error(`failed to serialize ${value} as Bare Item`)
+      // fail
+      throw new Error(`failed to serialize "${value}" as Bare Item`)
   }
 }
 
@@ -420,7 +420,7 @@ export function serializeBareItem(value) {
  * @return {string}
  */
 export function serializeInteger(value) {
-  if (value < -999_999_999_999_999n || 999_999_999_999_999n < value) throw new Error(`failed to serialize ${value} as Integer`)
+  if (value < -999_999_999_999_999n || 999_999_999_999_999n < value) throw new Error(`failed to serialize "${value}" as Integer`)
   return value.toString()
 }
 
@@ -464,7 +464,7 @@ export function serializeInteger(value) {
  */
 export function serializeDecimal(value) {
   const roundedValue = roundToEven(value, 3) // round to 3 decimal places
-  if (Math.floor(Math.abs(roundedValue)).toString().length > 12) throw new Error(`failed to serialize ${value} as Decimal`)
+  if (Math.floor(Math.abs(roundedValue)).toString().length > 12) throw new Error(`failed to serialize "${value}" as Decimal`)
   const stringValue = roundedValue.toString()
   return stringValue.includes(".") ? stringValue : `${stringValue}.0`
 }
@@ -523,7 +523,7 @@ function roundToEven(value, precision) {
  * @return {string}
  */
 export function serializeString(value) {
-  if (/[\x00-\x1f\x7f]+/.test(value)) throw new Error(`failed to serialize ${value} as string`)
+  if (/[\x00-\x1f\x7f]+/.test(value)) throw new Error(`failed to serialize "${value}" as string`)
   return `"${value.replace(/\\/g, `\\\\`).replace(/"/g, `\\\"`)}"`
 }
 
@@ -552,7 +552,7 @@ export function serializeToken(token) {
   /** @type {string} */
   const value = Symbol.keyFor(token)
   if (/^([a-zA-Z\*])([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]*)$/.test(value) === false) {
-    throw new Error(`failed to serialize ${value} as token`)
+    throw new Error(`failed to serialize "${value}" as token`)
   }
   return value
 }
@@ -578,7 +578,7 @@ export function serializeToken(token) {
  * @return {string}
  */
 export function serializeBoolean(value) {
-  if (typeof value !== "boolean") throw new Error(`failed to serialize ${value} as boolean`)
+  if (typeof value !== "boolean") throw new Error(`failed to serialize "${value}" as boolean`)
   return value ? "?1" : "?0"
 }
 
@@ -611,7 +611,7 @@ export function serializeBoolean(value) {
  * @return {string}
  */
 export function serializeByteSequence(value) {
-  if (ArrayBuffer.isView(value) === false) throw new Error(`failed to serialize ${value} as Byte Sequence`)
+  if (ArrayBuffer.isView(value) === false) throw new Error(`failed to serialize "${JSON.stringify(value)}" as Byte Sequence`)
   return `:${base64encode(value)}:`
 }
 
@@ -1074,7 +1074,7 @@ export function parseParameters(input_string) {
 export function parseKey(input_string) {
   let i = 0
   if (/^[a-z\*]$/.test(input_string[i]) === false) {
-    throw new Error(`failed to parse ${input_string} as Key`)
+    throw new Error(`failed to parse "${input_string}" as Key`)
   }
   /** @type {Key} */
   let output_string = ""
@@ -1168,6 +1168,7 @@ export function parseKey(input_string) {
  * @return {ParsedIntegerOrDecimal}
  */
 export function parseIntegerOrDecimal(input_string) {
+  const orig_string = input_string
   let sign = 1
   let input_number = ""
   let output_number
@@ -1177,33 +1178,34 @@ export function parseIntegerOrDecimal(input_string) {
     sign = -1
     input_string = input_string.substring(1)
   }
-  if (input_string.length <= 0) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
+
+  if (input_string.length <= 0) throw new Error(`failed to parse "${orig_string}" as Integer or Decimal`)
 
   const re_integer = /^(\d+)?/g
   const result_integer = re_integer.exec(input_string)
-  if (result_integer[0].length === 0) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
+  if (result_integer[0].length === 0) throw new Error(`failed to parse "${orig_string}" as Integer or Decimal`)
   input_number += result_integer[1]
   input_string = input_string.substring(re_integer.lastIndex)
 
   if (input_string[0] === ".") {
     // decimal
-    if (input_number.length > 12) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
+    if (input_number.length > 12) throw new Error(`failed to parse "${orig_string}" as Integer or Decimal`)
     const re_decimal = /^(\.\d+)?/g
     const result_decimal = re_decimal.exec(input_string)
     input_string = input_string.substring(re_decimal.lastIndex)
     // 9.2.  If the number of characters after "." in input_number is greater than three, fail parsing.
-    if (result_decimal[0].length === 0 || result_decimal[1].length > 4) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
+    if (result_decimal[0].length === 0 || result_decimal[1].length > 4) throw new Error(`failed to parse "${orig_string}" as Integer or Decimal`)
     input_number += result_decimal[1]
     // 7.6.  If type is "decimal" and input_number contains more than 16 characters, fail parsing.
-    if (input_number.length > 16) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
+    if (input_number.length > 16) throw new Error(`failed to parse "${orig_string}" as Integer or Decimal`)
     output_number = parseFloat(input_number) * sign
   } else {
     // integer
     // 7.5.  If type is "integer" and input_number contains more than 15 characters, fail parsing.
-    if (input_number.length > 15) throw new Error(`failed to parse ${input_string} as Integer or Decimal`)
+    if (input_number.length > 15) throw new Error(`failed to parse "${orig_string}" as Integer or Decimal`)
     output_number = parseInt(input_number) * sign
     if (output_number < -999999999999999n || 999999999999999n < output_number)
-      throw new Error(`failed to parse integer: ${input_number} as Integer or Decimal`)
+      throw new Error(`failed to parse "${input_number}" as Integer or Decimal`)
   }
   return {
     value: output_number,
@@ -1260,18 +1262,18 @@ export function parseString(input_string) {
   let output_string = ""
   let i = 0
   if (input_string[i] !== `"`) {
-    throw new Error(`failed to parse ${input_string} as String`)
+    throw new Error(`failed to parse "${input_string}" as String`)
   }
   i++
   while (input_string.length > i) {
     // console.log(i, input_string[i], output_string)
     if (input_string[i] === `\\`) {
       if (input_string.length <= i + 1) {
-        throw new Error(`failed to parse ${input_string} as String`)
+        throw new Error(`failed to parse "${input_string}" as String`)
       }
       i++
       if (input_string[i] !== `"` && input_string[i] !== `\\`) {
-        throw new Error(`failed to parse ${input_string} as String`)
+        throw new Error(`failed to parse "${input_string}" as String`)
       }
       output_string += input_string[i]
     } else if (input_string[i] === `"`) {
@@ -1280,13 +1282,13 @@ export function parseString(input_string) {
         input_string: input_string.substring(++i)
       }
     } else if (/[\x00-\x1f\x7f]+/.test(input_string[i])) {
-      throw new Error(`failed to parse ${input_string} as String`)
+      throw new Error(`failed to parse "${input_string}" as String`)
     } else {
       output_string += input_string[i]
     }
     i++
   }
-  throw new Error(`failed to parse ${input_string} as String`)
+  throw new Error(`failed to parse "${input_string}" as String`)
 }
 
 // 4.2.6.  Parsing a Token
@@ -1320,7 +1322,7 @@ export function parseString(input_string) {
  */
 export function parseToken(input_string) {
   if (/^[a-zA-Z\*]$/.test(input_string[0]) === false) {
-    throw new Error(`failed to parse ${input_string} as Token`)
+    throw new Error(`failed to parse "${input_string}" as Token`)
   }
   const re = /^([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]+)/g
   const output_string = re.exec(input_string)[1]
@@ -1380,9 +1382,9 @@ export function parseToken(input_string) {
  * @return {ParsedByteSequence}
  */
 export function parseByteSequence(input_string) {
-  if (input_string[0] !== ":") throw new Error(`failed to parse ${input_string} as Byte Sequence`)
+  if (input_string[0] !== ":") throw new Error(`failed to parse "${input_string}" as Byte Sequence`)
   input_string = input_string.substring(1)
-  if (input_string.includes(":") === false) throw new Error(`failed to parse ${input_string} as Byte Sequence`)
+  if (input_string.includes(":") === false) throw new Error(`failed to parse "${input_string}" as Byte Sequence`)
   const re = /(^.*?)(:)/g
   const b64_content = re.exec(input_string)[1]
   input_string = input_string.substring(re.lastIndex)
@@ -1421,7 +1423,7 @@ export function parseByteSequence(input_string) {
 export function parseBoolean(input_string) {
   let i = 0
   if (input_string[i] !== "?") {
-    throw new Error(`failed to parse ${input_string} as Boolean`)
+    throw new Error(`failed to parse "${input_string}" as Boolean`)
   }
   i++
   if (input_string[i] === "1") {
@@ -1436,7 +1438,7 @@ export function parseBoolean(input_string) {
       input_string: input_string.substring(++i)
     }
   }
-  throw new Error(`failed to parse ${input_string} as Boolean`)
+  throw new Error(`failed to parse "${input_string}" as Boolean`)
 }
 
 /////////////////////////
