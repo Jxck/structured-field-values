@@ -178,7 +178,13 @@ test("test decode", () => {
   assert.deepStrictEqual(decodeItem(`1`),   new Item(1))
   assert.deepStrictEqual(decodeItem(`a`),   new Item(Symbol.for('a')))
   assert.deepStrictEqual(decodeItem(`:AQID:`), new Item(new Uint8Array([1, 2,3])))
-  // TODO: assert.throws(() => decodeItem(`1;`), /failed to parse "1;" as Key/)
+
+  assert.throws(() => decodeItem(`1;`), (err) => {
+    assert.deepStrictEqual(err.message,       `failed to parse "1;" as Item`)
+    assert.deepStrictEqual(err.cause.message, `failed to parse "" as Key`)
+    return true
+  })
+
   // TODO: assert.throws(() => decodeList(`1,2,3)`), /xxx/)
   // TODO: assert.throws(() => decodeDict(`a=1, b=2)`), /xxx/)
 })
