@@ -67,8 +67,8 @@ test("test serializeKey", () => {
 })
 
 test("test serializeBareItem", () => {
-  // TODO: assert.throws(() => serializeBareItem([]), /failed to serialize "\[\]" as Bare Item/)
-  // TODO: assert.throws(() => serializeBareItem({}), /failed to serialize "{}" as Bare Item/)
+  assert.throws(() => serializeBareItem([]), /failed to serialize "\[\]" as Bare Item/)
+  assert.throws(() => serializeBareItem({}), /failed to serialize "{}" as Bare Item/)
 })
 
 test("test serializeInteger", () => {
@@ -189,8 +189,9 @@ test("test encode_item", () => {
   assert.throws(() => encodeItem(function(){}), /failed to serialize "function\(\)\{\}" as Bare Item/)
   assert.throws(() => encodeItem(() => {}),     /failed to serialize "\(\) => \{\}" as Bare Item/)
   assert.throws(() => encodeItem(999n),         /failed to serialize "999" as Bare Item/)
-  // TODO: assert.throws(() => encodeItem([]),        /failed to serialize "[]" as Bare Item/)
-  // TODO: assert.throws(() => encodeItem(new Map()), /failed to serialize "" as Bare Item/)
+  assert.throws(() => encodeItem([]),           /failed to serialize "\[\]" as Bare Item/)
+  assert.throws(() => encodeItem(new Map()),    /failed to serialize "Map{}" as Bare Item/)
+  assert.throws(() => encodeItem(new Set()),    /failed to serialize "Set{}" as Bare Item/)
   assert.throws(() => encodeItem(null),         /failed to serialize "null" as Bare Item/)
   assert.throws(() => encodeItem(undefined),    /failed to serialize "undefined" as Bare Item/)
 })

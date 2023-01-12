@@ -1,5 +1,26 @@
 ;`use strict`
 
+/**
+ * Tagged Template Literal for Error message
+ * @param {TemplateStringsArray} strings
+ * @param  {...any} keys
+ * @returns string
+ */
+function err(strings, ...keys) {
+  console.log(strings, keys)
+  keys = keys.map((key) => {
+    if (Array.isArray(key)) return JSON.stringify(key)
+    if (key instanceof Map) return "Map{}"
+    if (key instanceof Set) return "Set{}"
+    if (typeof key === "object") return JSON.stringify(key)
+    return String(key)
+  })
+  const result = strings.map((string, i) => {
+    return [string, keys.at(i)]
+  })
+  return result.flat().join("")
+}
+
 export class Item {
   /**
    * @property {BareItem} value
@@ -393,7 +414,7 @@ export function serializeBareItem(value) {
       }
     default:
       // fail
-      throw new Error(`failed to serialize "${value}" as Bare Item`)
+      throw new Error(err`failed to serialize "${value}" as Bare Item`)
   }
 }
 
