@@ -185,6 +185,13 @@ test("test decode", () => {
     return true
   })
 
+  assert.deepStrictEqual(decodeList(`("foo"; a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), [
+    new Item([
+      new Item("foo", { "a": 1, "b": 2 })
+    ], { "lvl": 5 }),
+    new Item(["bar", "baz"], { "lvl": 1 }),
+  ])
+
   assert.throws(() => decodeList(`1,2,3)`), (err) => {
     assert.deepStrictEqual(err.message,       `failed to parse "1,2,3)" as List`)
     assert.deepStrictEqual(err.cause.message, `failed to parse ")" as List`)
@@ -195,7 +202,18 @@ test("test decode", () => {
     assert.deepStrictEqual(err.cause.message, `failed to parse "" as List`)
     return true
   })
-  // TODO: assert.throws(() => decodeDict(`a=1, b=2)`), /xxx/)
+
+  assert.deepStrictEqual(decodeDict(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {
+    "a": new Item([1,2]),
+    "b": new Item(3),
+    "c": new Item(4, { "aa": s("bb") }),
+    "d": new Item([5,6], { "valid": true })
+  })
+  assert.throws(() => decodeDict(`a=1, b=2)`), (err) => {
+    assert.deepStrictEqual(err.message,       `failed to parse "a=1, b=2)" as Dict`)
+    assert.deepStrictEqual(err.cause.message, `failed to parse ")" as Dict`)
+    return true
+  })
 })
 
 test("test encode_item", () => {
@@ -409,6 +427,9 @@ test("test parseList", () => {
     ], { "lvl": 5 }),
     new Item(["bar", "baz"], { "lvl": 1 }),
   ], input_string: ``})
+
+  assert.throws(() => parseList(`("aaa").`), /failed to parse "." as List/)
+  assert.throws(() => parseList(`("aaa"),`), /failed to parse "" as List/)
 })
 
 test("test parseInnerList", () => {
@@ -424,6 +445,9 @@ test("test parseInnerList", () => {
     value: new Item([]),
     input_string: ``
   })
+  assert.throws(() => parseInnerList(`[1 2 3)`), /failed to parse "\[1 2 3\)" as Inner List/)
+  assert.throws(() => parseInnerList(`(1 2 3]`), /failed to parse "\]" as Inner List/)
+  assert.throws(() => parseInnerList(`(`),       /failed to parse "" as Inner List/)
 })
 
 test("test parseDictionary", () => {
@@ -461,6 +485,9 @@ test("test parseDictionary", () => {
     },
     input_string: ``
   })
+
+  assert.throws(() => parseDictionary(`a=1&`), /failed to parse "&" as Dict/)
+  assert.throws(() => parseDictionary(`a=1,`), /failed to parse "" as Dict/)
 })
 
 test("test parseItem", () => {
@@ -491,6 +518,8 @@ test("test parseParameters", () => {
 test("test parseKey", () => {
   assert.deepStrictEqual(parseKey(`a123_-.*`), {value: `a123_-.*`, input_string: ``})
   assert.deepStrictEqual(parseKey(`*a123`),    {value: `*a123`,    input_string: ``})
+
+  assert.throws(() => parseKey(`&`), /failed to parse "&" as Key/)
 })
 
 test("structured_field_tests", () => {

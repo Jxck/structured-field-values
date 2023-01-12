@@ -139,9 +139,13 @@ export function decodeList(input) {
  * @returns {Dictionary}
  */
 export function decodeDict(input) {
-  const { input_string, value } = parseDictionary(input.trim())
-  if (input_string !== "") throw new Error(`failed to parse ${input_string} as Dict`)
-  return value
+  try {
+    const { input_string, value } = parseDictionary(input.trim())
+    if (input_string !== "") throw new Error(err`failed to parse "${input_string}" as Dict`)
+    return value
+  } catch (cause) {
+    throw new Error(err`failed to parse "${input}" as Dict`, { cause })
+  }
 }
 
 // 4.1.1.  Serializing a List
@@ -769,7 +773,7 @@ export function parseItemOrInnerList(input_string) {
  * @return {ParsedInnerList}
  */
 export function parseInnerList(input_string) {
-  if (input_string[0] !== "(") throw new Error(`failed to parse ${input_string} as Inner List`)
+  if (input_string[0] !== "(") throw new Error(err`failed to parse "${input_string}" as Inner List`)
   input_string = input_string.substring(1)
   /** @type {ItemList}  */
   const inner_list = []
@@ -787,9 +791,9 @@ export function parseInnerList(input_string) {
     const parsedItem = parseItem(input_string)
     inner_list.push(parsedItem.value)
     input_string = parsedItem.input_string
-    if (input_string[0] !== " " && input_string[0] !== ")") throw new Error(`failed to parse ${input_string} as Inner List`)
+    if (input_string[0] !== " " && input_string[0] !== ")") throw new Error(err`failed to parse "${input_string}" as Inner List`)
   }
-  throw new Error(`failed to parse ${input_string} as Inner List`)
+  throw new Error(err`failed to parse "${input_string}" as Inner List`)
 }
 
 // 4.2.2.  Parsing a Dictionary
@@ -888,9 +892,9 @@ export function parseDictionary(input_string, option = {}) {
     value.push([this_key, member])
     input_string = input_string.trim()
     if (input_string.length === 0) return { input_string, value: toDict(value) }
-    if (input_string[0] !== ",") throw new Error(`failed to parse ${input_string} as Dictionary`)
+    if (input_string[0] !== ",") throw new Error(err`failed to parse "${input_string}" as Dict`)
     input_string = input_string.substring(1).trim()
-    if (input_string.length === 0 || input_string[0] === ",") throw new Error(`failed to parse ${input_string} as Dictionary`)
+    if (input_string.length === 0 || input_string[0] === ",") throw new Error(err`failed to parse "${input_string}" as Dict`)
   }
   return {
     value: toDict(value),
@@ -1100,7 +1104,7 @@ export function parseParameters(input_string) {
 export function parseKey(input_string) {
   let i = 0
   if (/^[a-z\*]$/.test(input_string[i]) === false) {
-    throw new Error(`failed to parse "${input_string}" as Key`)
+    throw new Error(err`failed to parse "${input_string}" as Key`)
   }
   /** @type {Key} */
   let output_string = ""
