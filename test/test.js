@@ -469,14 +469,16 @@ test("test parseItem", () => {
 })
 
 test("test bareItem", () => {
+  assert.deepStrictEqual(parseBareItem(`"string"`),   {value: "string",    input_string: ``})
   assert.deepStrictEqual(parseBareItem(`123`),        {value: 123,         input_string: ``})
   assert.deepStrictEqual(parseBareItem(`3.14`),       {value: 3.14,        input_string: ``})
-  assert.deepStrictEqual(parseBareItem(`string`),     {value: s(`string`), input_string: ``})
-  assert.deepStrictEqual(parseBareItem(`string`),     {value: s(`string`), input_string: ``})
-  assert.deepStrictEqual(parseBareItem(`foo123;456`), {value: s(`foo123`), input_string: `;456`})
   assert.deepStrictEqual(parseBareItem(`?1`),         {value: true,     input_string: ``})
   const binary = new Uint8Array([1,2,3,4,5])
   assert.deepStrictEqual(parseBareItem(`:${base64encode(binary)}:`), {value: binary, input_string: ``})
+  assert.deepStrictEqual(parseBareItem(`token`),      {value: s(`token`), input_string: ``})
+  assert.deepStrictEqual(parseBareItem(`foo123;456`), {value: s(`foo123`), input_string: `;456`})
+
+  assert.throws(() => parseBareItem(`&`), /failed to parse "&" as Bare Item/)
 })
 
 test("test parseParameters", () => {

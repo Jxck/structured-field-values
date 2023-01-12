@@ -970,19 +970,19 @@ export function parseBareItem(input_string) {
   if (first === `"`) {
     return parseString(input_string)
   }
-  if (first === `:`) {
-    return parseByteSequence(input_string)
+  if (/^[\-0-9]/.test(first)) {
+    return parseIntegerOrDecimal(input_string)
   }
   if (first === `?`) {
     return parseBoolean(input_string)
   }
-  if (/^[\-0-9]/.test(first)) {
-    return parseIntegerOrDecimal(input_string)
+  if (first === `:`) {
+    return parseByteSequence(input_string)
   }
   if (/^[a-zA-Z\*]/.test(first)) {
     return parseToken(input_string)
   }
-  throw new Error(`failed to parse ${input_string} as Bare Item`)
+  throw new Error(err`failed to parse "${input_string}" as Bare Item`)
 }
 
 // 4.2.3.2.  Parsing Parameters
