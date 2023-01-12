@@ -11,11 +11,11 @@ import {
   decodeList,
   decodeDict,
 
-  // serializeList,
+  serializeList,
   // serializeInnerList,
   // serializeParams,
   serializeKey,
-  // serializeDict,
+  serializeDict,
   // serializeItem,
   serializeBareItem,
   serializeInteger,
@@ -55,6 +55,11 @@ import {
   formatDict,
 } from "./test.util.js"
 
+test("test serializeList", () => {
+  assert.deepStrictEqual(serializeList([1, 2, 3]), "1, 2, 3")
+  assert.throws(() => serializeList({}), /failed to serialize "{}" as List/)
+})
+
 test("test serializeKey", () => {
   assert.deepStrictEqual(serializeKey(`a`),       "a")
   assert.deepStrictEqual(serializeKey(`*`),       "*")
@@ -64,6 +69,12 @@ test("test serializeKey", () => {
   assert.deepStrictEqual(serializeKey(`a*0-_.*`), "a*0-_.*")
   assert.throws(() => serializeKey(`#`), /failed to serialize "#" as Key/)
   assert.throws(() => serializeKey(`?`), /failed to serialize "\?" as Key/)
+  assert.throws(() => serializeKey(0),   /failed to serialize "0" as Key/)
+})
+
+test("test serializeDict", () => {
+  assert.deepStrictEqual(serializeDict(new Map([["a", 2]])), "a=2")
+  assert.throws(() => serializeDict(0), /failed to serialize "0" as Dict/)
 })
 
 test("test serializeBareItem", () => {
@@ -107,7 +118,6 @@ test("test serializeString", () => {
 
 test("test serializeToken", () => {
   assert.deepStrictEqual(serializeToken(s("token")),  `token`)
-
   assert.deepStrictEqual(serializeToken(s(`to!ken`)), `to!ken`)
   assert.deepStrictEqual(serializeToken(s(`to#ken`)), `to#ken`)
   assert.deepStrictEqual(serializeToken(s(`to$ken`)), `to$ken`)
@@ -147,16 +157,16 @@ test("test serializeToken", () => {
 test("test serializeBoolean", () => {
   assert.deepStrictEqual(serializeBoolean(true),  `?1`)
   assert.deepStrictEqual(serializeBoolean(false), `?0`)
-  assert.throws(() => serializeBoolean(0), /failed to serialize "0" as boolean/)
-  assert.throws(() => serializeBoolean(null), /failed to serialize "null" as boolean/)
+  assert.throws(() => serializeBoolean(0),         /failed to serialize "0" as boolean/)
+  assert.throws(() => serializeBoolean(null),      /failed to serialize "null" as boolean/)
   assert.throws(() => serializeBoolean(undefined), /failed to serialize "undefined" as boolean/)
 })
 
 test("test serializeByteSequence", () => {
   const value = Uint8Array.from([
-    112, 114, 101, 116, 101, 110, 100, 32, 116, 104, 105, 115, 32,
-    105, 115, 32, 98, 105, 110, 97, 114, 121, 32, 99, 111, 110, 116,
-    101, 110, 116, 46
+    112, 114, 101, 116, 101, 110, 100,  32, 116, 104, 105, 115,
+     32, 105, 115,  32,  98, 105, 110,  97, 114, 121,  32,  99,
+    111, 110, 116, 101, 110, 116, 46
   ])
   assert.deepStrictEqual(serializeByteSequence(value), `:cHJldGVuZCB0aGlzIGlzIGJpbmFyeSBjb250ZW50Lg==:`)
   assert.throws(() => serializeByteSequence([1,2,3]), /failed to serialize "\[1,2,3\]" as Byte Sequence/)

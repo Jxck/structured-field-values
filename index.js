@@ -165,7 +165,7 @@ export function decodeDict(input) {
  * @return {string}
  */
 export function serializeList(list) {
-  if (Array.isArray(list) === false) throw new Error(`failed to serialize ${list} as List`)
+  if (Array.isArray(list) === false) throw new Error(err`failed to serialize "${list}" as List`)
   return list
     .map((item) => {
       if (item instanceof Item === false) item = new Item(item)
@@ -270,7 +270,7 @@ export function serializeParams(params) {
  */
 export function serializeKey(value) {
   if (/^[a-z\*][a-z0-9\-\_\.\*]*$/.test(value) === false) {
-    throw new Error(`failed to serialize "${value}" as Key`)
+    throw new Error(err`failed to serialize "${value}" as Key`)
   }
   return value
 }
@@ -318,7 +318,7 @@ export function serializeKey(value) {
  * @return {string}
  */
 export function serializeDict(dict) {
-  if (typeof dict !== "object") throw new Error(`failed to serialize ${dict} as Dict`)
+  if (typeof dict !== "object") throw new Error(err`failed to serialize "${dict}" as Dict`)
   const entries = dict instanceof Map ? dict.entries() : Object.entries(dict)
   return Array.from(entries)
     .map(([key, item]) => {
@@ -439,7 +439,7 @@ export function serializeBareItem(value) {
  * @return {string}
  */
 export function serializeInteger(value) {
-  if (value < -999_999_999_999_999n || 999_999_999_999_999n < value) throw new Error(`failed to serialize "${value}" as Integer`)
+  if (value < -999_999_999_999_999n || 999_999_999_999_999n < value) throw new Error(err`failed to serialize "${value}" as Integer`)
   return value.toString()
 }
 
@@ -483,7 +483,7 @@ export function serializeInteger(value) {
  */
 export function serializeDecimal(value) {
   const roundedValue = roundToEven(value, 3) // round to 3 decimal places
-  if (Math.floor(Math.abs(roundedValue)).toString().length > 12) throw new Error(`failed to serialize "${value}" as Decimal`)
+  if (Math.floor(Math.abs(roundedValue)).toString().length > 12) throw new Error(err`failed to serialize "${value}" as Decimal`)
   const stringValue = roundedValue.toString()
   return stringValue.includes(".") ? stringValue : `${stringValue}.0`
 }
@@ -542,7 +542,7 @@ function roundToEven(value, precision) {
  * @return {string}
  */
 export function serializeString(value) {
-  if (/[\x00-\x1f\x7f]+/.test(value)) throw new Error(`failed to serialize "${value}" as string`)
+  if (/[\x00-\x1f\x7f]+/.test(value)) throw new Error(err`failed to serialize "${value}" as string`)
   return `"${value.replace(/\\/g, `\\\\`).replace(/"/g, `\\\"`)}"`
 }
 
@@ -571,7 +571,7 @@ export function serializeToken(token) {
   /** @type {string} */
   const value = Symbol.keyFor(token)
   if (/^([a-zA-Z\*])([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]*)$/.test(value) === false) {
-    throw new Error(`failed to serialize "${value}" as token`)
+    throw new Error(err`failed to serialize "${value}" as token`)
   }
   return value
 }
@@ -597,7 +597,7 @@ export function serializeToken(token) {
  * @return {string}
  */
 export function serializeBoolean(value) {
-  if (typeof value !== "boolean") throw new Error(`failed to serialize "${value}" as boolean`)
+  if (typeof value !== "boolean") throw new Error(err`failed to serialize "${value}" as boolean`)
   return value ? "?1" : "?0"
 }
 
@@ -630,7 +630,7 @@ export function serializeBoolean(value) {
  * @return {string}
  */
 export function serializeByteSequence(value) {
-  if (ArrayBuffer.isView(value) === false) throw new Error(`failed to serialize "${JSON.stringify(value)}" as Byte Sequence`)
+  if (ArrayBuffer.isView(value) === false) throw new Error(err`failed to serialize "${value}" as Byte Sequence`)
   return `:${base64encode(value)}:`
 }
 
