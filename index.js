@@ -394,8 +394,6 @@ export function serializeItem(value) {
  * @return {string}
  */
 export function serializeBareItem(value) {
-  // console.log(">>>>>>>>>>>>>>>>>>>", { value })
-
   switch (typeof value) {
     case "number":
       if (Number.isInteger(value)) {
