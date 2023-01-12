@@ -7,7 +7,6 @@
  * @returns string
  */
 function err(strings, ...keys) {
-  console.log(strings, keys)
   keys = keys.map((key) => {
     if (Array.isArray(key)) return JSON.stringify(key)
     if (key instanceof Map) return "Map{}"
