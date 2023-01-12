@@ -115,7 +115,7 @@ export function decodeItem(input) {
     const { input_string, value } = parseItem(input.trim())
     if (input_string !== "") throw new Error(err`failed to parse "${input_string}" as Item`)
     return value
-  } catch(cause) {
+  } catch (cause) {
     throw new Error(err`failed to parse "${input}" as Item`, { cause })
   }
 }
@@ -125,9 +125,13 @@ export function decodeItem(input) {
  * @returns {MemberList}
  */
 export function decodeList(input) {
-  const { input_string, value } = parseList(input.trim())
-  if (input_string !== "") throw new Error(`failed to parse ${input_string} as List`)
-  return value
+  try {
+    const { input_string, value } = parseList(input.trim())
+    if (input_string !== "") throw new Error(err`failed to parse "${input_string}" as List`)
+    return value
+  } catch (cause) {
+    throw new Error(err`failed to parse "${input}" as List`, { cause })
+  }
 }
 
 /**
@@ -683,9 +687,9 @@ export function parseList(input_string) {
     members.push(parsedItemOrInnerList.value)
     input_string = parsedItemOrInnerList.input_string.trim()
     if (input_string.length === 0) return { input_string, value: members }
-    if (input_string[0] !== ",") throw new Error(`failed to parse ${input_string} as List`)
+    if (input_string[0] !== ",") throw new Error(err`failed to parse "${input_string}" as List`)
     input_string = input_string.substring(1).trim()
-    if (input_string.length === 0 || input_string[0] === ",") throw new Error(`failed to parse ${input_string} as List`)
+    if (input_string.length === 0 || input_string[0] === ",") throw new Error(err`failed to parse "${input_string}" as List`)
   }
   return {
     value: members,

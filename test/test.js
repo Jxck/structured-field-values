@@ -185,7 +185,16 @@ test("test decode", () => {
     return true
   })
 
-  // TODO: assert.throws(() => decodeList(`1,2,3)`), /xxx/)
+  assert.throws(() => decodeList(`1,2,3)`), (err) => {
+    assert.deepStrictEqual(err.message,       `failed to parse "1,2,3)" as List`)
+    assert.deepStrictEqual(err.cause.message, `failed to parse ")" as List`)
+    return true
+  })
+  assert.throws(() => decodeList(`1,2,`), (err) => {
+    assert.deepStrictEqual(err.message,       `failed to parse "1,2," as List`)
+    assert.deepStrictEqual(err.cause.message, `failed to parse "" as List`)
+    return true
+  })
   // TODO: assert.throws(() => decodeDict(`a=1, b=2)`), /xxx/)
 })
 
