@@ -587,31 +587,6 @@ export function serializeToken(token) {
   return value
 }
 
-// 4.1.9.  Serializing a Boolean
-//
-// Given a Boolean as input_boolean, return an ASCII string suitable for
-// use in a HTTP field value.
-//
-// 1.  If input_boolean is not a boolean, fail serialization.
-//
-// 2.  Let output be an empty string.
-//
-// 3.  Append "?" to output.
-//
-// 4.  If input_boolean is true, append "1" to output.
-//
-// 5.  If input_boolean is false, append "0" to output.
-//
-// 6.  Return output.
-/**
- * @param {boolean} value
- * @return {string}
- */
-export function serializeBoolean(value) {
-  if (typeof value !== "boolean") throw new Error(err`failed to serialize "${value}" as boolean`)
-  return value ? "?1" : "?0"
-}
-
 // 4.1.8.  Serializing a Byte Sequence
 //
 // Given a Byte Sequence as input_bytes, return an ASCII string suitable
@@ -643,6 +618,31 @@ export function serializeBoolean(value) {
 export function serializeByteSequence(value) {
   if (ArrayBuffer.isView(value) === false) throw new Error(err`failed to serialize "${value}" as Byte Sequence`)
   return `:${base64encode(value)}:`
+}
+
+// 4.1.9.  Serializing a Boolean
+//
+// Given a Boolean as input_boolean, return an ASCII string suitable for
+// use in a HTTP field value.
+//
+// 1.  If input_boolean is not a boolean, fail serialization.
+//
+// 2.  Let output be an empty string.
+//
+// 3.  Append "?" to output.
+//
+// 4.  If input_boolean is true, append "1" to output.
+//
+// 5.  If input_boolean is false, append "0" to output.
+//
+// 6.  Return output.
+/**
+ * @param {boolean} value
+ * @return {string}
+ */
+export function serializeBoolean(value) {
+  if (typeof value !== "boolean") throw new Error(err`failed to serialize "${value}" as boolean`)
+  return value ? "?1" : "?0"
 }
 
 // 4.2.1.  Parsing a List
