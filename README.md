@@ -1,18 +1,18 @@
 # Structured Field Values
 
-
 ## What is this ?
 
 This is a implementation of a [RFC 8941: Structured Field Values for HTTP](https://www.rfc-editor.org/rfc/rfc8941.html) in JavaScript.
 
+And also Date type in [sfbis-02](https://www.ietf.org/archive/id/draft-ietf-httpbis-sfbis-02.html) is also supported.
+
 
 ## DEMO
 
-- <https://jxck.github.io/structured-field-values/demo.html>
+- https://jxck.github.io/structured-field-values/demo.html
 
 
 ## Install
-
 
 ```sh
 npm install structured-field-values
@@ -31,16 +31,13 @@ npm install structured-field-values
 
 ## Primitives
 
-
 ### Item
-
 
 #### decodeItem
 
 SFV has *string* and *token* and this module use Symbol for token.
 
 And SFV has params for every item, so decoded token are always object with `value` & `params`.
-
 
 ```js
 decodeItem(`a`)    // Item { value: Symbol(a), params: null }
@@ -49,11 +46,14 @@ decodeItem(`10`)   // Item { value: 10,        params: null }
 decodeItem(`3.14`) // Item { value: 3.14,      params: null }
 decodeItem(`?0`)   // Item { value: false,     params: null }
 
-decodeItem(`"a";x;y=?0;z=10`) // Item { value: `a`, params: { x: true, y: false, z: 10 } }
+decodeItem(`@1659578233`)
+// Item { value: new Date(`2022-08-04T01:57:13.000Z`), params: null }
+
+decodeItem(`"a";x;y=?0;z=10`)
+// Item { value: `a`, params: { x: true, y: false, z: 10 } }
 ```
 
 Note: Symbol generated in decoder is registered globally as Shared Symbol, so you can handle them like.
-
 
 ```js
 const a = decodeItem(`a`).value // Symbol(a)
@@ -62,7 +62,6 @@ console.log(Symbol.keyFor(a)) // "a" (string)
 
 
 #### encodeItem
-
 
 ```js
 encodeItem(Symbol.for('a')) // `a`
@@ -77,11 +76,12 @@ encodeItem(new Item(10))              // `10`
 encodeItem(new Item(3.14))            // `3.14`
 encodeItem(new Item(true))            // `?0`
 
+encodeItem(new Item(new Date(1659578233000))) // 2022-08-04T01:57:13.000Z
+
 encodeItem(new Item(`a`, { x: true, y: false, z: 10 })) // `"a";x;y=?0;z=10`
 ```
 
 Note: JavaScript only supports number
-
 
 ```js
 encodeItem(decodeItem('1.0')) // '1' not '1.0'
@@ -90,9 +90,7 @@ encodeItem(decodeItem('1.0')) // '1' not '1.0'
 
 ### List
 
-
 #### decodeList
-
 
 ```js
 decodeList(`1,2,3`)
@@ -117,7 +115,6 @@ decodeList(`a;x,"b";y=?0,10,(1 2)`)
 
 #### encodeList
 
-
 ```js
 // `1, 2, 3`
 encodeList([1,2,3])
@@ -139,9 +136,7 @@ encodeList([
 
 ### Dict
 
-
 #### decodeDict
-
 
 ```js
 decodeDict(`a=x, b="y", c=10, d=?0, e=(1 2)`)
@@ -159,7 +154,6 @@ decodeDict(`a=x, b="y", c=10, d=?0, e=(1 2)`)
 
 
 #### encodeDict
-
 
 ```js
 // `a=10, b=20, c=30`
@@ -214,13 +208,7 @@ test includes unittest & httpwg's test.
 
 you can run all test like below.
 
-
 ```sh
 $ git submodule init && git submodule update
 $ npm t
 ```
-
-## TODO
-
-- Update to sfbis
-  - https://github.com/httpwg/http-extensions/compare/541bfbe30abec95d8420ed5cb0131f2998d2c832...main
