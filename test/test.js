@@ -179,6 +179,7 @@ test("test decode", () => {
   assert.deepStrictEqual(decodeItem(`1`),   new Item(1))
   assert.deepStrictEqual(decodeItem(`a`),   new Item(Symbol.for('a')))
   assert.deepStrictEqual(decodeItem(`:AQID:`), new Item(new Uint8Array([1, 2,3])))
+  assert.deepStrictEqual(decodeItem(`@1659578233`), new Item(new Date(1659578233*1000)))
 
   assert.throws(() => decodeItem(`1;`), (err) => {
     assert.deepStrictEqual(err.message,       `failed to parse "1;" as Item`)
@@ -229,6 +230,7 @@ test("test encode_item", () => {
   assert.deepStrictEqual(encodeItem(new Item(1)),    `1`)
   assert.deepStrictEqual(encodeItem(new Item(Symbol.for('a'))), `a`)
   assert.deepStrictEqual(encodeItem(new Item(new Uint8Array([1,2,3]))), `:AQID:`)
+  assert.deepStrictEqual(encodeItem(new Item(new Date(1659578233000))), `@1659578233`)
 
   assert.throws(() => encodeItem(function(){}), /failed to serialize "function\(\)\{\}" as Bare Item/)
   assert.throws(() => encodeItem(() => {}),     /failed to serialize "\(\) => \{\}" as Bare Item/)

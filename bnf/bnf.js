@@ -254,12 +254,9 @@ export function sf_boolean() {
 //       = "@" ["-"] 1*15DIGIT
 export function sf_date() {
   return (rest) => {
-    const result = list([
-      token(/^@/),
-      token(/\-{0,1}\d{1,15}/)
-    ])(rest)
+    const result = list([token(/^@/), token(/\-{0,1}\d{1,15}/)])(rest)
     if (result.ok) {
-      return { ok, value: new Date(result.value[1]*1000), rest: result.rest }
+      return { ok, value: new Date(result.value[1] * 1000), rest: result.rest }
     }
     return { ok: false, rest }
   }
