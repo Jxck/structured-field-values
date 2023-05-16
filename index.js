@@ -399,7 +399,11 @@ export function serializeItem(value) {
 // 6.  If input_item is a Byte Sequence, return the result of running
 //     Serializing a Byte Sequence (Section 4.1.8) with input_item.
 //
-// 7.  Otherwise, fail serialization.
+// 7.  If input_item is a Date, return the result of running Serializing
+//     a Date (Section 4.1.10) with input_item.
+//
+// 8.  Otherwise, fail serialization.
+
 /**
  * @param {any} value
  * @return {string}
@@ -418,6 +422,9 @@ export function serializeBareItem(value) {
     case "boolean":
       return serializeBoolean(value)
     case "object":
+      if (value instanceof Date) {
+        return serializeDate(value)
+      }
       if (value instanceof Uint8Array) {
         return serializeByteSequence(value)
       }
@@ -643,6 +650,26 @@ export function serializeByteSequence(value) {
 export function serializeBoolean(value) {
   if (typeof value !== "boolean") throw new Error(err`failed to serialize "${value}" as boolean`)
   return value ? "?1" : "?0"
+}
+
+// 4.1.10.  Serializing a Date
+//
+// Given a Date as input_integer, return an ASCII string suitable for
+// use in an HTTP field value.
+
+// 1.  Let output be "@".
+
+// 2.  Append to output the result of running Serializing an Integer
+//     with input_date (Section 4.1.4).
+
+// 3.  Return output.
+/**
+ * @param {Date} value
+ * @return {string}
+ */
+export function serializeDate(value) {
+  const input_date = value.getTime() / 1000
+  return `@${serializeInteger(input_date)}`
 }
 
 // 4.2.1.  Parsing a List
@@ -962,9 +989,12 @@ export function parseItem(input_string) {
 //     the result of running Parsing a Token (Section 4.2.6) with
 //     input_string.
 //
-// 6.  Otherwise, the item type is unrecognized; fail parsing.
+// 6.  If the first character of input_string is "@", return the result
+//     of running Parsing a Date (Section 4.2.9) with input_string.
+//
+// 7.  Otherwise, the item type is unrecognized; fail parsing.
 /**
- * @typedef {ParsedString|ParsedByteSequence|ParsedBoolean|ParsedIntegerOrDecimal|ParsedToken} ParsedBareItem
+ * @typedef {ParsedString|ParsedByteSequence|ParsedBoolean|ParsedIntegerOrDecimal|ParsedToken|ParsedDate} ParsedBareItem
  *
  * @param {string} input_string
  * @return {ParsedBareItem}
@@ -985,6 +1015,9 @@ export function parseBareItem(input_string) {
   }
   if (/^[a-zA-Z\*]/.test(first)) {
     return parseToken(input_string)
+  }
+  if (first === `@`) {
+    return parseDate(input_string)
   }
   throw new Error(err`failed to parse "${input_string}" as Bare Item`)
 }
@@ -1028,7 +1061,7 @@ export function parseBareItem(input_string) {
 // Note that when duplicate Parameter keys are encountered, this has the
 // effect of ignoring all but the last instance.
 /**
- * @typedef {string | Uint8Array | boolean | number | symbol} BareItem
+ * @typedef {string | Uint8Array | boolean | number | symbol | Date} BareItem
  *
  * @typedef {Object.<Key, BareItem>} Parameters
  *
@@ -1469,6 +1502,45 @@ export function parseBoolean(input_string) {
     }
   }
   throw new Error(`failed to parse "${input_string}" as Boolean`)
+}
+
+// 4.2.9.  Parsing a Date
+//
+// Given an ASCII string as input_string, return a Date. input_string is
+// modified to remove the parsed value.
+//
+// 1.  If the first character of input_string is not "@", fail parsing.
+//
+// 2.  Discard the first character of input_string.
+//
+// 3.  Let output_date be the result of running Parsing an Integer or
+//     Decimal (Section 4.2.4) with input_string.
+//
+// 4.  If output_date is a Decimal, fail parsing.
+//
+// 5.  Return output_date.
+/**
+ * @typedef {Object} ParsedDate
+ * @property {Date} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedDate}
+ */
+export function parseDate(input_string) {
+  let i = 0
+  if (input_string[i] !== "@") {
+    throw new Error(`failed to parse "${input_string}" as Date`)
+  }
+  i++
+  const output_date = parseIntegerOrDecimal(input_string.substring(i))
+  if (Number.isInteger(output_date.value) === false) {
+    throw new Error(`failed to parse "${input_string}" as Date`)
+  }
+  return {
+    value: new Date(output_date.value * 1000),
+    input_string: output_date.input_string
+  }
 }
 
 /////////////////////////

@@ -84,15 +84,20 @@ export function serializeString(value: string): string;
  */
 export function serializeToken(token: symbol): string;
 /**
+ * @param {Uint8Array} value
+ * @return {string}
+ */
+export function serializeByteSequence(value: Uint8Array): string;
+/**
  * @param {boolean} value
  * @return {string}
  */
 export function serializeBoolean(value: boolean): string;
 /**
- * @param {Uint8Array} value
+ * @param {Date} value
  * @return {string}
  */
-export function serializeByteSequence(value: Uint8Array): string;
+export function serializeDate(value: Date): string;
 /**
  * @typedef {Array.<Item|InnerList>} MemberList
  *
@@ -146,14 +151,14 @@ export function parseDictionary(input_string: string, option?: any | null): Pars
  */
 export function parseItem(input_string: string): ParsedItem;
 /**
- * @typedef {ParsedString|ParsedByteSequence|ParsedBoolean|ParsedIntegerOrDecimal|ParsedToken} ParsedBareItem
+ * @typedef {ParsedString|ParsedByteSequence|ParsedBoolean|ParsedIntegerOrDecimal|ParsedToken|ParsedDate} ParsedBareItem
  *
  * @param {string} input_string
  * @return {ParsedBareItem}
  */
 export function parseBareItem(input_string: string): ParsedBareItem;
 /**
- * @typedef {string | Uint8Array | boolean | number | symbol} BareItem
+ * @typedef {string | Uint8Array | boolean | number | symbol | Date} BareItem
  *
  * @typedef {Object.<Key, BareItem>} Parameters
  *
@@ -222,6 +227,15 @@ export function parseByteSequence(input_string: string): ParsedByteSequence;
  */
 export function parseBoolean(input_string: string): ParsedBoolean;
 /**
+ * @typedef {Object} ParsedDate
+ * @property {Date} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedDate}
+ */
+export function parseDate(input_string: string): ParsedDate;
+/**
  * @param {string} str
  * @return {Uint8Array}
  */
@@ -264,8 +278,8 @@ export type ParsedItem = {
     value: Item;
     input_string: string;
 };
-export type ParsedBareItem = ParsedString | ParsedByteSequence | ParsedBoolean | ParsedIntegerOrDecimal | ParsedToken;
-export type BareItem = string | Uint8Array | boolean | number | symbol;
+export type ParsedBareItem = ParsedString | ParsedByteSequence | ParsedBoolean | ParsedIntegerOrDecimal | ParsedToken | ParsedDate;
+export type BareItem = string | Uint8Array | boolean | number | symbol | Date;
 export type Parameters = any;
 export type ParsedParameters = {
     value: Parameters;
@@ -294,5 +308,9 @@ export type ParsedByteSequence = {
 };
 export type ParsedBoolean = {
     value: boolean;
+    input_string: string;
+};
+export type ParsedDate = {
+    value: Date;
     input_string: string;
 };
