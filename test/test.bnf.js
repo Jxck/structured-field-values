@@ -31,6 +31,7 @@ import {
   parameters,
   parameter,
   sf_key,
+  sf_date,
 } from "../bnf/bnf.js"
 
 import {
@@ -161,6 +162,12 @@ test("test sf_boolean", () => {
   assert.deepStrictEqual(sf_boolean()(`?0`), {ok, value: false, rest: ``})
   assert.deepStrictEqual(sf_boolean()(`?1`), {ok, value: true,  rest: ``})
   assert.deepStrictEqual(sf_boolean()(``),   {ok: false,        rest: ``})
+})
+
+test("test sf_date", () => {
+  assert.deepStrictEqual(sf_date()(`@1659578233`),  {ok, value: new Date(1659578233000),          rest: ``})
+  assert.deepStrictEqual(sf_date()(`@-1659578233`), {ok, value: new Date('1917-05-30 22:02:47Z'), rest: ``})
+  assert.deepStrictEqual(sf_date()(``),             {ok: false,                                   rest: ``})
 })
 
 test("test sf_list", () => {

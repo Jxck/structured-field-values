@@ -250,6 +250,21 @@ export function sf_boolean() {
   }
 }
 
+// sf-date
+//       = "@" ["-"] 1*15DIGIT
+export function sf_date() {
+  return (rest) => {
+    const result = list([
+      token(/^@/),
+      token(/\-{0,1}\d{1,15}/)
+    ])(rest)
+    if (result.ok) {
+      return { ok, value: new Date(result.value[1]*1000), rest: result.rest }
+    }
+    return { ok: false, rest }
+  }
+}
+
 // sf-list
 //       = list-member *( OWS "," OWS list-member )
 export function sf_list() {
@@ -454,6 +469,7 @@ export function sf_item() {
 //       / sf-token
 //       / sf-binary
 //       / sf-boolean
+//       / sf-date
 export function bare_item() {
   return alt([
     sf_decimal(), // decimal first
@@ -461,7 +477,8 @@ export function bare_item() {
     sf_string(),
     sf_token(),
     sf_binary(),
-    sf_boolean()
+    sf_boolean(),
+    sf_date()
   ])
 }
 
