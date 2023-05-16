@@ -38,6 +38,7 @@ import {
   parseToken,
   parseByteSequence,
   parseBoolean,
+  parseDate,
 
   base64decode,
   base64encode,
@@ -396,6 +397,12 @@ test("test parseBoolean", () => {
   assert.throws(() => parseBoolean(``), /failed to parse "" as Boolean/)
 })
 
+test("test parseDate", () => {
+  assert.deepStrictEqual(parseDate(`@1659578233`), {value: new Date(1659578233000), input_string: ``})
+  assert.deepStrictEqual(parseDate(`@-1659578233`), {value: new Date('1917-05-30 22:02:47Z'), input_string: ``})
+  assert.throws(() => parseDate(``), /failed to parse "" as Date/)
+})
+
 test("test parseList", () => {
   assert.deepStrictEqual(
     parseList(`"foo", "bar", "It was the best of times."`),
@@ -504,6 +511,7 @@ test("test bareItem", () => {
   assert.deepStrictEqual(parseBareItem(`:${base64encode(binary)}:`), {value: binary, input_string: ``})
   assert.deepStrictEqual(parseBareItem(`token`),      {value: s(`token`), input_string: ``})
   assert.deepStrictEqual(parseBareItem(`foo123;456`), {value: s(`foo123`), input_string: `;456`})
+  assert.deepStrictEqual(parseBareItem(`@1659578233`), {value: new Date(1659578233000), input_string: ``})
 
   assert.throws(() => parseBareItem(`&`), /failed to parse "&" as Bare Item/)
 })
@@ -526,6 +534,7 @@ test("structured_field_tests", () => {
   const suites = [
     ...read(`binary`),
     ...read(`boolean`),
+    ...read(`date`),
     ...read(`dictionary`),
     ...read(`examples`),
     ...read(`item`),

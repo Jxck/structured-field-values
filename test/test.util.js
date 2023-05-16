@@ -33,6 +33,8 @@ export function format(e) {
       return Uint8Array.from(e.value === `` ? [] : base32.decode.asBytes(e.value))
     case `token`:
       return Symbol.for(e.value)
+    case `date`:
+      return new Date(e.value * 1000)
     default:
       return e
   }
