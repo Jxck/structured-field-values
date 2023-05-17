@@ -58,6 +58,7 @@ import {
 
 test("test serializeList", () => {
   assert.deepStrictEqual(serializeList([1, 2, 3]), "1, 2, 3")
+  assert.deepStrictEqual(serializeList([]), "")
   assert.throws(() => serializeList({}), /failed to serialize "{}" as List/)
 })
 
@@ -74,6 +75,7 @@ test("test serializeKey", () => {
 })
 
 test("test serializeDict", () => {
+  assert.deepStrictEqual(serializeDict(new Map()), "")
   assert.deepStrictEqual(serializeDict(new Map([["a", 2]])), "a=2")
   assert.throws(() => serializeDict(0), /failed to serialize "0" as Dict/)
 })
@@ -187,6 +189,7 @@ test("test decode", () => {
     return true
   })
 
+  assert.deepStrictEqual(decodeList(``), [])
   assert.deepStrictEqual(decodeList(`("foo"; a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), [
     new Item([
       new Item("foo", { "a": 1, "b": 2 })
@@ -205,6 +208,7 @@ test("test decode", () => {
     return true
   })
 
+  assert.deepStrictEqual(decodeDict(``), {})
   assert.deepStrictEqual(decodeDict(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {
     "a": new Item([1,2]),
     "b": new Item(3),
@@ -243,6 +247,7 @@ test("test encode_item", () => {
 })
 
 test("test encode_list", () => {
+  assert.deepStrictEqual(encodeList([]),       ``)
   assert.deepStrictEqual(encodeList([1,2,3]),  `1, 2, 3`)
   assert.deepStrictEqual(encodeList([
     new Item(1),
@@ -257,7 +262,8 @@ test("test encode_list", () => {
 })
 
 test("test encode_dict", () => {
-
+  assert.deepStrictEqual(encodeDict({}), ``)
+  assert.deepStrictEqual(encodeDict(new Map()), ``)
   assert.deepStrictEqual(
     encodeDict({
       a: 10,
@@ -266,7 +272,6 @@ test("test encode_dict", () => {
     }),
     `a=10, b=20, c=30`
   )
-
   assert.deepStrictEqual(
     encodeDict(new Map([
       ['a', 10],
@@ -275,7 +280,6 @@ test("test encode_dict", () => {
     ])),
     `a=10, b=20, c=30`
   )
-
   assert.deepStrictEqual(
     encodeDict({
       a: 1,
