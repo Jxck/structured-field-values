@@ -180,7 +180,7 @@ test("test decode", () => {
   assert.deepStrictEqual(decodeItem(`?1`),  new Item(true))
   assert.deepStrictEqual(decodeItem(`1`),   new Item(1))
   assert.deepStrictEqual(decodeItem(`a`),   new Item(Symbol.for('a')))
-  assert.deepStrictEqual(decodeItem(`:AQID:`), new Item(new Uint8Array([1, 2,3])))
+  assert.deepStrictEqual(decodeItem(`:AQID:`), new Item(new Uint8Array([1, 2, 3])))
   assert.deepStrictEqual(decodeItem(`@1659578233`), new Item(new Date(1659578233*1000)))
 
   assert.throws(() => decodeItem(`1;`), (err) => {
@@ -426,6 +426,18 @@ test("test parseList", () => {
     ], input_string: ``}
   )
   assert.deepStrictEqual(
+    parseList(`1, 1.23, a, "a", ?1, :AQID:, @1659578233`),
+    { value: [
+      new Item(1),
+      new Item(1.23),
+      new Item(s("a")),
+      new Item("a"),
+      new Item(true),
+      new Item(new Uint8Array([1, 2, 3])),
+      new Item(new Date(1659578233*1000))
+    ], input_string: ``}
+  )
+  assert.deepStrictEqual(
     parseList(`("foo" "bar"), ("baz"), ("bat" "one"), ()`),
     { value: [
       new Item(["foo", "bar"]),
@@ -458,16 +470,36 @@ test("test parseInnerList", () => {
     value: new Item([]),
     input_string: ``
   })
+  assert.deepStrictEqual(parseList(`(1 1.23 a "a" ?1 :AQID: @1659578233)`), {
+    value: [
+      new Item([
+        1,
+        1.23,
+        s("a"),
+        "a",
+        true,
+        new Uint8Array([1, 2, 3]),
+        new Date(1659578233*1000)
+      ])
+    ], input_string: ``}
+  )
   assert.throws(() => parseInnerList(`[1 2 3)`), /failed to parse "\[1 2 3\)" as Inner List/)
   assert.throws(() => parseInnerList(`(1 2 3]`), /failed to parse "\]" as Inner List/)
   assert.throws(() => parseInnerList(`(`),       /failed to parse "" as Inner List/)
 })
 
 test("test parseDictionary", () => {
-  assert.deepStrictEqual(parseDictionary(`en="Applepie", da=:w4ZibGV0w6ZydGU=:`), {
+  assert.deepStrictEqual(parseDictionary(
+    `int=1, dec=1.23, token=a, str="a", bool=?1, bin=:AQID:, date=@1659578233`
+  ), {
     value: {
-      "en": new Item(`Applepie`),
-      "da": new Item(new Uint8Array([195,134,98,108,101,116,195,166,114,116,101])),
+      "int": new Item(1),
+      "dec": new Item(1.23),
+      "token": new Item(s("a")),
+      "str": new Item("a"),
+      "bool": new Item(true),
+      "bin": new Item(new Uint8Array([1, 2, 3])),
+      "date": new Item(new Date(1659578233*1000))
     },
     input_string: ``
   })
