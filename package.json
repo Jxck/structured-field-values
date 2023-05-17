@@ -4,7 +4,7 @@
   "description": "Implementation of Structured Field Values from IETF httpbis RFC8941",
   "main": "index.js",
   "scripts": {
-    "test": "node --test test/*.js && npx tsc",
+    "test": "node --test --test-reporter spec && npx tsc",
     "fmt": "npx prettier -w ./index.js ./bnf/bnf.js"
   },
   "repository": {
