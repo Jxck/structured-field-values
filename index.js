@@ -411,6 +411,9 @@ export function serializeItem(value) {
 export function serializeBareItem(value) {
   switch (typeof value) {
     case "number":
+      if (!Number.isFinite(value)) {
+        throw new Error(err`failed to serialize "${value}" as Bare Item`)
+      }
       if (Number.isInteger(value)) {
         return serializeInteger(value)
       }
