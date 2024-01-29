@@ -877,7 +877,7 @@ export function parseInnerList(input_string) {
 // Note that when duplicate Dictionary keys are encountered, this has
 // the effect of ignoring all but the last instance.
 /**
- * @typedef {Object.<Key, Item|InnerList>|Map} Dictionary
+ * @typedef {Object.<string, Item|InnerList>|Map} Dictionary
  *
  * @typedef {Object} ParsedDictionary
  * @property {Dictionary} value

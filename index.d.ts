@@ -130,7 +130,7 @@ export function parseItemOrInnerList(input_string: string): ParsedItemOrInnerLis
  */
 export function parseInnerList(input_string: string): ParsedInnerList;
 /**
- * @typedef {Object.<Key, Item|InnerList>|Map} Dictionary
+ * @typedef {Object.<string, Item|InnerList>|Map} Dictionary
  *
  * @typedef {Object} ParsedDictionary
  * @property {Dictionary} value
@@ -269,7 +269,9 @@ export type ParsedInnerList = {
     value: InnerList;
     input_string: string;
 };
-export type Dictionary = any | Map<any, any>;
+export type Dictionary = {
+    [x: string]: Item | InnerList;
+} | Map<any, any>;
 export type ParsedDictionary = {
     value: Dictionary;
     input_string: string;
