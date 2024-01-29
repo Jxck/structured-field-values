@@ -21,10 +21,10 @@
   "author": "Jxck",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.1.5",
+    "@types/node": "^20.11.10",
     "hi-base32": "^0.5.1",
-    "prettier": "^2.8.8",
-    "typescript": "^5.0.4"
+    "prettier": "^3.2.4",
+    "typescript": "^5.3.3"
   },
   "browser": {
     "Buffer": false
