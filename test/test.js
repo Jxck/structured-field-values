@@ -662,12 +662,12 @@ test("structured_field_tests", () => {
   })
 })
 
-test("serialisation_tests", { only: true }, async (t) => {
+test("serialisation_tests", async (t) => {
   const files = [
     "serialisation-tests/number",
     "serialisation-tests/token-generated",
-    "serialisation-tests/string-generated"
-    // "serialisation-tests/key-generated"
+    "serialisation-tests/string-generated",
+    "serialisation-tests/key-generated"
   ]
 
   for (const file of files) {
@@ -675,12 +675,28 @@ test("serialisation_tests", { only: true }, async (t) => {
       for (const suite of read(t.name)) {
         await t.test(suite.name, () => {
           try {
-            if (suite.header_type === "item") {
-              const obj = formatItem(suite.expected)
-              const encoded = encodeItem(obj)
-              assert.deepStrictEqual(suite.canonical[0], encoded, suite.name)
-            }
+            switch (suite.header_type) {
+              case "item": {
+                  const item = formatItem(suite.expected)
+                  const encoded = encodeItem(item)
+                  assert.deepStrictEqual(suite.canonical[0], encoded, suite.name)
+                  break;
+              }
+              case "dictionary": {
+                const dict = formatDict(suite.expected)
+                const encoded = encodeDict(dict)
+                break;
+              }
+              case "list": {
+                const list = formatList(suite.expected)
+                const encoded = encodeList(list)
+                break;
+              }
+              default:
+                throw "can't be here"
+              }
           } catch (err) {
+            // console.log(err)
             assert.deepStrictEqual(suite.must_fail, true)
             assert.deepStrictEqual(err.message.startsWith(`failed to serialize`), true)
           }
