@@ -21,7 +21,7 @@
   "author": "Jxck",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^20.12.12",
+    "@types/node": "^20.12.13",
     "hi-base32": "^0.5.1",
     "prettier": "^3.2.5",
     "typescript": "^5.4.5"
