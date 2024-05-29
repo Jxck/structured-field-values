@@ -1208,11 +1208,8 @@ export function parseKey(input_string) {
 //
 // 8.   If type is "integer":
 //
-//      1.  Parse input_number as an integer and let output_number be
-//          the product of the result and sign.
-//
-//      2.  If output_number is outside the range -999,999,999,999,999
-//          to 999,999,999,999,999 inclusive, fail parsing.
+//      1.  Let output_number be an Integer that is the result of
+//          parsing input_number as an integer.
 //
 // 9.   Otherwise:
 //
@@ -1221,10 +1218,12 @@ export function parseKey(input_string) {
 //      2.  If the number of characters after "." in input_number is
 //          greater than three, fail parsing.
 //
-//      3.  Parse input_number as a decimal number and let output_number
-//          be the product of the result and sign.
+//      3.  Let output_number be a Decimal that is the result of parsing
+//          input_number as a decimal number.
 //
-// 10.  Return output_number.
+// 10.  Let output_number be the product of output_number and sign.
+//
+// 11.  Return output_number.
 /**
  * @typedef {Object} ParsedIntegerOrDecimal
  * @property {number} value
