@@ -1531,12 +1531,17 @@ export function parseBoolean(input_string) {
  */
 export function parseDate(input_string) {
   let i = 0
+  // 1.  If the first character of input_string is not "@", fail parsing.
   if (input_string[i] !== "@") {
     throw new Error(`failed to parse "${input_string}" as Date`)
   }
+  // 2.  Discard the first character of input_string.
   i++
+
+  // 3.  Let output_date be the result of running Parsing an Integer or Decimal (Section 4.2.4) with input_string.
   const output_date = parseIntegerOrDecimal(input_string.substring(i))
   if (Number.isInteger(output_date.value) === false) {
+    // 4.  If output_date is a Decimal, fail parsing.
     throw new Error(`failed to parse "${input_string}" as Date`)
   }
   return {
