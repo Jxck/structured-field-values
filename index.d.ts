@@ -240,6 +240,10 @@ export function parseBoolean(input_string: string): ParsedBoolean;
  * @return {ParsedDate}
  */
 export function parseDate(input_string: string): ParsedDate;
+export function parseDisplayString(input_string: any): {
+    value: string;
+    input_string: any;
+};
 /**
  * @param {string} str
  * @return {Uint8Array}

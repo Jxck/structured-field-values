@@ -1097,9 +1097,9 @@ export function parseBareItem(input_string) {
   if (first === `@`) {
     return parseDate(input_string)
   }
-  // if (first === `%`) {
-  //   return parseDisplayString(input_string)
-  // }
+  if (first === `%`) {
+    return parseDisplayString(input_string)
+  }
   throw new Error(err`failed to parse "${input_string}" as Bare Item`)
 }
 

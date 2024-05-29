@@ -198,9 +198,9 @@ test("test serializeByteSequence", () => {
 })
 
 test("test serializeDisplayString", () => {
-  assert.deepStrictEqual(serializeDisplayString("foo bar"),            "%\"foo bar\"")
-  assert.deepStrictEqual(serializeDisplayString("füü"),                "%\"f%c3%bc%c3%bc\"")
-  assert.deepStrictEqual(serializeDisplayString("foo \"bar\" \\ baz"), "%\"foo %22bar%22 \\ baz\"")
+  assert.deepStrictEqual(serializeDisplayString("foo bar"),            `%"foo bar"`)
+  assert.deepStrictEqual(serializeDisplayString("füü"),                `%"f%c3%bc%c3%bc"`)
+  assert.deepStrictEqual(serializeDisplayString("foo \"bar\" \\ baz"), `%"foo %22bar%22 \\ baz"`)
 })
 
 test("test decode", () => {
@@ -210,6 +210,8 @@ test("test decode", () => {
   assert.deepStrictEqual(decodeItem(`a`),   new Item(Symbol.for('a')))
   assert.deepStrictEqual(decodeItem(`:AQID:`), new Item(new Uint8Array([1, 2, 3])))
   assert.deepStrictEqual(decodeItem(`@1659578233`), new Item(new Date(1659578233*1000)))
+  assert.deepStrictEqual(decodeItem(`%"foo bar"`), new Item("foo bar"))
+  assert.deepStrictEqual(decodeItem(`%"f%c3%bc%c3%bc"`), new Item("füü"))
 
   assert.throws(() => decodeItem(`1;`), (err) => {
     assert.deepStrictEqual(err.message,       `failed to parse "1;" as Item`)
