@@ -34,15 +34,15 @@ export function decodeDict(input: string): Dictionary;
  */
 export function serializeList(list: MemberList): string;
 /**
- * @param {Object} value
+ * @param {InnerList} value
  * @return {string}
  */
-export function serializeInnerList(value: any): string;
+export function serializeInnerList(value: InnerList): string;
 /**
- * @param {Object} params
+ * @param {Parameters} params
  * @return {string}
  */
-export function serializeParams(params: any): string;
+export function serializeParams(params: Parameters): string;
 /**
  * @param {string} value
  * @return {string}
@@ -59,10 +59,10 @@ export function serializeDict(dict: Dictionary): string;
  */
 export function serializeItem(value: Item): string;
 /**
- * @param {any} value
+ * @param {BareItem} value
  * @return {string}
  */
-export function serializeBareItem(value: any): string;
+export function serializeBareItem(value: BareItem): string;
 /**
  * @param {number} value
  * @return {string}
@@ -135,7 +135,7 @@ export function parseItemOrInnerList(input_string: string): ParsedItemOrInnerLis
  */
 export function parseInnerList(input_string: string): ParsedInnerList;
 /**
- * @typedef {Object.<string, Item|InnerList>|Map} Dictionary
+ * @typedef {Object.<string, Item|InnerList>|Map.<string, Item|InnerList>} Dictionary
  *
  * @typedef {Object} ParsedDictionary
  * @property {Dictionary} value
@@ -165,7 +165,7 @@ export function parseBareItem(input_string: string): ParsedBareItem;
 /**
  * @typedef {string | Uint8Array | boolean | number | symbol | Date} BareItem
  *
- * @typedef {Object.<Key, BareItem>} Parameters
+ * @typedef {Object.<string, BareItem>} Parameters
  *
  * @typedef {Object} ParsedParameters
  * @property {Parameters} value
@@ -285,7 +285,7 @@ export type ParsedInnerList = {
 };
 export type Dictionary = {
     [x: string]: Item | InnerList;
-} | Map<any, any>;
+} | Map<string, Item | InnerList>;
 export type ParsedDictionary = {
     value: Dictionary;
     input_string: string;
@@ -296,7 +296,9 @@ export type ParsedItem = {
 };
 export type ParsedBareItem = ParsedString | ParsedByteSequence | ParsedBoolean | ParsedIntegerOrDecimal | ParsedToken | ParsedDate | ParsedDisplayString;
 export type BareItem = string | Uint8Array | boolean | number | symbol | Date;
-export type Parameters = any;
+export type Parameters = {
+    [x: string]: BareItem;
+};
 export type ParsedParameters = {
     value: Parameters;
     input_string: string;

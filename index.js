@@ -211,7 +211,7 @@ export function serializeList(list) {
 //
 // 5.  Return output.
 /**
- * @param {Object} value
+ * @param {InnerList} value
  * @return {string}
  */
 export function serializeInnerList(value) {
@@ -243,7 +243,7 @@ export function serializeInnerList(value) {
 //
 // 3.  Return output.
 /**
- * @param {Object} params
+ * @param {Parameters} params
  * @return {string}
  */
 export function serializeParams(params) {
@@ -405,7 +405,7 @@ export function serializeItem(value) {
 // 8.  Otherwise, fail serialization.
 
 /**
- * @param {any} value
+ * @param {BareItem} value
  * @return {string}
  */
 export function serializeBareItem(value) {
@@ -956,7 +956,7 @@ export function parseInnerList(input_string) {
 // Note that when duplicate Dictionary keys are encountered, this has
 // the effect of ignoring all but the last instance.
 /**
- * @typedef {Object.<string, Item|InnerList>|Map} Dictionary
+ * @typedef {Object.<string, Item|InnerList>|Map.<string, Item|InnerList>} Dictionary
  *
  * @typedef {Object} ParsedDictionary
  * @property {Dictionary} value
@@ -1148,7 +1148,7 @@ export function parseBareItem(input_string) {
 /**
  * @typedef {string | Uint8Array | boolean | number | symbol | Date} BareItem
  *
- * @typedef {Object.<Key, BareItem>} Parameters
+ * @typedef {Object.<string, BareItem>} Parameters
  *
  * @typedef {Object} ParsedParameters
  * @property {Parameters} value
