@@ -121,7 +121,7 @@ test("test serializeString", () => {
   assert.throws(() => serializeString("str\x7fing"), /failed to serialize "str\x7fing" as string/)
 })
 
-test("test serializeToken", { only: true }, () => {
+test("test serializeToken", () => {
   assert.deepStrictEqual(serializeToken(s("token")),  `token`)
   assert.deepStrictEqual(serializeToken(s("*token")),  `*token`)
   assert.deepStrictEqual(serializeToken(s(`to!ken`)), `to!ken`)
