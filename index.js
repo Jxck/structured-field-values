@@ -584,6 +584,11 @@ export function serializeString(value) {
 // 4.  Append input_token to output.
 //
 // 5.  Return output.
+//
+// tchar = "!" / "#" / "$" / "%" / "&" / "'" / "*" /
+//         "+" / "-" / "." / "^" / "_" / "`" / "|" / "~" /
+//         DIGIT / ALPHA
+//         ; any VCHAR, except delimiters
 /**
  * @param {symbol} token
  * @return {string}
@@ -591,7 +596,7 @@ export function serializeString(value) {
 export function serializeToken(token) {
   /** @type {string} */
   const value = Symbol.keyFor(token)
-  if (/^([a-zA-Z\*])([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]*)$/.test(value) === false) {
+  if (/^([a-zA-Z\*])([0-9a-zA-Z\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\:\/]*)$/.test(value) === false) {
     throw new Error(err`failed to serialize "${value}" as token`)
   }
   return value
