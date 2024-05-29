@@ -1076,7 +1076,7 @@ export function parseItem(input_string) {
 //
 // 7.  Otherwise, the item type is unrecognized; fail parsing.
 /**
- * @typedef {ParsedString|ParsedByteSequence|ParsedBoolean|ParsedIntegerOrDecimal|ParsedToken|ParsedDate} ParsedBareItem
+ * @typedef {ParsedString|ParsedByteSequence|ParsedBoolean|ParsedIntegerOrDecimal|ParsedToken|ParsedDate|ParsedDisplayString} ParsedBareItem
  *
  * @param {string} input_string
  * @return {ParsedBareItem}
@@ -1635,6 +1635,14 @@ export function parseDate(input_string) {
 // 4.2.10.  Parsing a Display String
 // Given an ASCII string as input_string, return a sequence of Unicode
 // codepoints. input_string is modified to remove the parsed value.
+/**
+ * @typedef {Object} ParsedDisplayString
+ * @property {string} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedDisplayString}
+ */
 export function parseDisplayString(input_string) {
   const textDecoder = new TextDecoder("utf-8", { fatal: true })
   let i = 0

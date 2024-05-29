@@ -156,7 +156,7 @@ export function parseDictionary(input_string: string, option?: any | null): Pars
  */
 export function parseItem(input_string: string): ParsedItem;
 /**
- * @typedef {ParsedString|ParsedByteSequence|ParsedBoolean|ParsedIntegerOrDecimal|ParsedToken|ParsedDate} ParsedBareItem
+ * @typedef {ParsedString|ParsedByteSequence|ParsedBoolean|ParsedIntegerOrDecimal|ParsedToken|ParsedDate|ParsedDisplayString} ParsedBareItem
  *
  * @param {string} input_string
  * @return {ParsedBareItem}
@@ -240,10 +240,15 @@ export function parseBoolean(input_string: string): ParsedBoolean;
  * @return {ParsedDate}
  */
 export function parseDate(input_string: string): ParsedDate;
-export function parseDisplayString(input_string: any): {
-    value: string;
-    input_string: any;
-};
+/**
+ * @typedef {Object} ParsedDisplayString
+ * @property {string} value
+ * @property {string} input_string
+ *
+ * @param {string} input_string
+ * @return {ParsedDisplayString}
+ */
+export function parseDisplayString(input_string: string): ParsedDisplayString;
 /**
  * @param {string} str
  * @return {Uint8Array}
@@ -289,7 +294,7 @@ export type ParsedItem = {
     value: Item;
     input_string: string;
 };
-export type ParsedBareItem = ParsedString | ParsedByteSequence | ParsedBoolean | ParsedIntegerOrDecimal | ParsedToken | ParsedDate;
+export type ParsedBareItem = ParsedString | ParsedByteSequence | ParsedBoolean | ParsedIntegerOrDecimal | ParsedToken | ParsedDate | ParsedDisplayString;
 export type BareItem = string | Uint8Array | boolean | number | symbol | Date;
 export type Parameters = any;
 export type ParsedParameters = {
@@ -323,5 +328,9 @@ export type ParsedBoolean = {
 };
 export type ParsedDate = {
     value: Date;
+    input_string: string;
+};
+export type ParsedDisplayString = {
+    value: string;
     input_string: string;
 };
