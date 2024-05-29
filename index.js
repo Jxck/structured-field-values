@@ -728,7 +728,7 @@ export function serializeDisplayString(input_sequence) {
   // 2.  Let byte_array be the result of applying UTF-8 encoding
   //     (Section 3 of [UTF8]) to input_sequence.  If encoding fails, fail
   //     serialization.
-  const textEncoder = new TextEncoder();
+  const textEncoder = new TextEncoder()
   const byte_array = textEncoder.encode(input_sequence)
 
   // 3.  Let encoded_string be a string containing "%" followed by DQUOTE.
@@ -1636,7 +1636,7 @@ export function parseDate(input_string) {
 // Given an ASCII string as input_string, return a sequence of Unicode
 // codepoints. input_string is modified to remove the parsed value.
 export function parseDisplayString(input_string) {
-  const textDecoder = new TextDecoder()
+  const textDecoder = new TextDecoder("utf-8", { fatal: true })
   let i = 0
 
   // 1.  If the first two characters of input_string are not "%" followed by DQUOTE, fail parsing.
@@ -1670,14 +1670,17 @@ export function parseDisplayString(input_string) {
       if (input_string.length < i + 2) {
         throw new Error(`failed to parse "${input_string}" as Display String`)
       }
-      let octet_hex = `0x${input_string[i + 1]}${input_string[i + 2]}`
-
       //  2.  If octet_hex contains characters outside the range
       //      %x30-39 or %x61-66 (i.e., it is not in 0-9 or lowercase
       //      a-f), fail parsing.
+      let octet_hex = `${input_string[i + 1]}${input_string[i + 2]}`
+      if (/^[a-f0-9]+$/.test(octet_hex) === false) {
+        throw new Error(`failed to parse "${input_string}" as Display String`)
+      }
+
       //  3.  Let octet be the result of hex decoding octet_hex
       //      (Section 8 of [RFC4648]).
-      let octet = parseInt(octet_hex)
+      let octet = parseInt(octet_hex, 16)
 
       //  4.  Append octet to byte_array.
       byte_array.push(octet)
@@ -1688,11 +1691,16 @@ export function parseDisplayString(input_string) {
       //  1.  Let unicode_sequence be the result of decoding byte_array
       //      as a UTF-8 string (Section 3 of [UTF8]).  Fail parsing if
       //      decoding fails.
-      let unicode_sequence = textDecoder.decode(new Uint8Array(byte_array))
-      //  2.  Return unicode_sequence.
-      return {
-        value: unicode_sequence,
-        input_string: input_string.substring(++i)
+      try {
+        let unicode_sequence = textDecoder.decode(new Uint8Array(byte_array))
+
+        //  2.  Return unicode_sequence.
+        return {
+          value: unicode_sequence,
+          input_string: input_string.substring(++i)
+        }
+      } catch (e) {
+        throw new Error(`failed to parse "${input_string}" as Display String`, { cause: e })
       }
     }
     //  5.  Otherwise, if char is not "%" or DQUOTE:
