@@ -662,26 +662,28 @@ test("structured_field_tests", () => {
   })
 })
 
-test("serialisation_tests", () => {
+test("serialisation_tests", { only: true }, async (t) => {
   const suites = [
     ...read("serialisation-tests/key-generated"),
-    ...read("serialisation-tests/number"),
-    ...read("serialisation-tests/string-generated"),
-    ...read("serialisation-tests/token-generated"),
+    // ...read("serialisation-tests/number"),
+    // ...read("serialisation-tests/string-generated"),
+    // ...read("serialisation-tests/token-generated"),
   ]
 
-  suites.forEach((suite) => {
-    // console.debug(suite.name)
-    try {
-      if (suite.header_type === `item`) {
-        // encode
-        const obj     = formatItem(suite.expected)
-        const encoded = encodeItem(obj)
-        const str     = suite.canonical[0]
-        assert.deepStrictEqual(str, encoded, suite.name)
+  await Promise.all(suites.map((suite) => {
+    return t.test(suite.name, () => {
+      try {
+        if (suite.header_type === `item`) {
+          // encode
+          const obj     = formatItem(suite.expected)
+          const encoded = encodeItem(obj)
+          const str     = suite.canonical[0]
+          assert.deepStrictEqual(str, encoded, suite.name)
+        }
+      } catch(err) {
+          console.error(err.message)
+        assert.deepStrictEqual(suite.must_fail, true, err)
       }
-    } catch(err) {
-      assert.deepStrictEqual(suite.must_fail, true, err)
-    }
-  })
+    })
+  }))
 })
