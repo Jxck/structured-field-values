@@ -419,7 +419,11 @@ export function serializeBareItem(value) {
       }
       return serializeDecimal(value)
     case "string":
-      return serializeString(value)
+      if (/^[\x00-\x7F]*$/.test(value)) {
+        return serializeString(value)
+      } else {
+        return serializeDisplayString(value)
+      }
     case "symbol":
       return serializeToken(value)
     case "boolean":

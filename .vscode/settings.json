@@ -10,6 +10,7 @@
     "listlist",
     "sfbis",
     "tchar",
-    "VCHAR"
+    "VCHAR",
+    "displaystring"
   ]
 }

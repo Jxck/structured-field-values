@@ -35,6 +35,8 @@ export function format(e) {
       return Symbol.for(e.value)
     case `date`:
       return new Date(e.value * 1000)
+    case `displaystring`:
+      return e.value
     default:
       return e
   }

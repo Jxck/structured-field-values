@@ -254,8 +254,9 @@ test("test decode", () => {
 
 test("test encode_item", () => {
   assert.deepStrictEqual(encodeItem("a"),  `"a"`)
-  assert.deepStrictEqual(encodeItem(true), `?1`)
-  assert.deepStrictEqual(encodeItem(1),    `1`)
+  assert.deepStrictEqual(encodeItem("füü"), `%"f%c3%bc%c3%bc"`)
+  assert.deepStrictEqual(encodeItem(true),  `?1`)
+  assert.deepStrictEqual(encodeItem(1),     `1`)
   assert.deepStrictEqual(encodeItem(Symbol.for('a')), `a`)
   assert.deepStrictEqual(encodeItem(new Uint8Array([1,2,3])), `:AQID:`)
 
@@ -610,7 +611,6 @@ test("structured_field_tests", () => {
     ...read(`boolean`),
     ...read(`date`),
     ...read(`dictionary`),
-    // TODO: ...read(`display-string`),
     ...read(`examples`),
     ...read(`item`),
     ...read(`key-generated`),
@@ -644,7 +644,7 @@ test("structured_field_tests", () => {
     if (ignore.includes(suite.name)) return
     if (suite.name.endsWith("0 decimal")) return // .0 is Integer in JS
 
-    // console.debug(suite.name)
+    console.debug(suite.name)
     try {
       if (suite.header_type === `item`) {
         // decode
@@ -655,6 +655,8 @@ test("structured_field_tests", () => {
         // encode
         const str     = suite?.canonical?.[0] || suite.raw[0]
         const encoded = encodeItem(obj)
+        console.log({encoded})
+        
         assert.deepStrictEqual(str, encoded, suite.name)
       }
       if (suite.header_type === `list`) {
