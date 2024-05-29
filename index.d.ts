@@ -99,6 +99,11 @@ export function serializeBoolean(value: boolean): string;
  */
 export function serializeDate(value: Date): string;
 /**
+ * @param {string} input_sequence
+ * @return {string}
+ */
+export function serializeDisplayString(input_sequence: string): string;
+/**
  * @typedef {Array.<Item|InnerList>} MemberList
  *
  * @typedef {Object} ParsedList

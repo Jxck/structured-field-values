@@ -24,6 +24,7 @@ import {
   serializeToken,
   serializeBoolean,
   serializeByteSequence,
+  serializeDisplayString,
 
   parseList,
   parseItemOrInnerList,
@@ -193,6 +194,12 @@ test("test serializeByteSequence", () => {
   ])
   assert.deepStrictEqual(serializeByteSequence(value), `:cHJldGVuZCB0aGlzIGlzIGJpbmFyeSBjb250ZW50Lg==:`)
   assert.throws(() => serializeByteSequence([1,2,3]), /failed to serialize "\[1,2,3\]" as Byte Sequence/)
+})
+
+test("test serializeDisplayString", () => {
+  assert.deepStrictEqual(serializeDisplayString("foo bar"),            "%\"foo bar\"")
+  assert.deepStrictEqual(serializeDisplayString("füü"),                "%\"f%c3%bc%c3%bc\"")
+  assert.deepStrictEqual(serializeDisplayString("foo \"bar\" \\ baz"), "%\"foo %22bar%22 \\ baz\"")
 })
 
 test("test decode", () => {

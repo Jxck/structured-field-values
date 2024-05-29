@@ -680,7 +680,75 @@ export function serializeDate(value) {
   return `@${serializeInteger(input_date)}`
 }
 
-// TODO: Serializing a Display String
+// 4.1.11.  Serializing a Display String
+//
+// Given a sequence of Unicode codepoints as input_sequence, return an
+// ASCII string suitable for use in an HTTP field value.
+//
+// 1.  If input_sequence is not a sequence of Unicode codepoints, fail serialization.
+//
+// 2.  Let byte_array be the result of applying UTF-8 encoding
+//     (Section 3 of [UTF8]) to input_sequence.  If encoding fails, fail
+//     serialization.
+//
+// 3.  Let encoded_string be a string containing "%" followed by DQUOTE.
+//
+// 4.  For each byte in byte_array:
+//
+//     1.  If byte is %x25 ("%"), %x22 (DQUOTE), or in the ranges
+//         %x00-1f or %x7f-ff:
+//
+//         1.  Append "%" to encoded_string.
+//
+//         2.  Let encoded_byte be the result of applying base16
+//             encoding (Section 8 of [RFC4648]) to byte, with any
+//             alphabetic characters converted to lowercase.
+//
+//         3.  Append encoded_byte to encoded_string.
+//
+//     2.  Otherwise, decode byte as an ASCII character and append the
+//         result to encoded_string.
+//
+// 5.  Append DQUOTE to encoded_string.
+//
+// 6.  Return encoded_string.
+//
+// Note that [UTF8] prohibits the encoding of codepoints between U+D800
+// and U+DFFF (surrogates); if they occur in input_sequence,
+// serialization will fail.
+/**
+ * @param {string} input_sequence
+ * @return {string}
+ */
+export function serializeDisplayString(input_sequence) {
+  // 2.  Let byte_array be the result of applying UTF-8 encoding
+  //     (Section 3 of [UTF8]) to input_sequence.  If encoding fails, fail
+  //     serialization.
+  const textEncoder = new TextEncoder();
+  const byte_array = textEncoder.encode(input_sequence)
+
+  // 3.  Let encoded_string be a string containing "%" followed by DQUOTE.
+  let encoded_string = `%"`
+
+  // 4.  For each byte in byte_array:
+  for (const byte of byte_array) {
+    // 1.  If byte is %x25 ("%"), %x22 (DQUOTE), or in the ranges %x00-1f or %x7f-ff:
+    if (byte === 0x25 || byte === 0x22 || byte <= 0x1f || 0x7f <= byte) {
+      //  1.  Append "%" to encoded_string.
+      //  2.  Let encoded_byte be the result of applying base16 encoding (Section 8 of [RFC4648]) to byte,
+      //      with any alphabetic characters converted to lowercase.
+      //  3.  Append encoded_byte to encoded_string.
+      encoded_string += `%${byte.toString(16)}`
+    } else {
+      //  2.  Otherwise, decode byte as an ASCII character and append the result to encoded_string.
+      encoded_string += String.fromCodePoint(byte)
+    }
+  }
+
+  // 5.  Append DQUOTE to encoded_string.
+  // 6.  Return encoded_string.
+  return encoded_string + `"`
+}
 
 // 4.2.1.  Parsing a List
 //
