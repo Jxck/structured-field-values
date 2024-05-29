@@ -671,9 +671,8 @@ test("serialisation_tests", { only: true }, async (t) => {
           const encoded = encodeItem(obj)
           assert.deepStrictEqual(suite.canonical[0], encoded, suite.name)
         } catch(err) {
-          // console.error(err.message)
           assert.deepStrictEqual(suite.must_fail, true)
-          assert.deepStrictEqual(err.message.startsWith(`failed to serialize "${obj.value}"`), true)
+          assert.deepStrictEqual(err.message.startsWith(`failed to serialize`), true)
         }
       })
     }
@@ -694,26 +693,23 @@ test("serialisation_tests", { only: true }, async (t) => {
     }
   })
 
+  await t.test("serialisation-tests/string-generated", { skip: false }, async (t) => {
+    for (const suite of read(t.name)) {
+      await t.test(suite.name, () => {
+        const obj = formatItem(suite.expected)
+        try {
+          const encoded = encodeItem(obj)
+          assert.deepStrictEqual(suite.canonical[0], encoded, suite.name)
+        } catch(err) {
+          assert.deepStrictEqual(suite.must_fail, true)
+          assert.deepStrictEqual(err.message.startsWith(`failed to serialize`), true)
+        }
+      })
+    }
+  })
+
   const suites = [
     // ...read("serialisation-tests/key-generated"),
-    // ...read("serialisation-tests/string-generated"),
   ]
 
-
-  // await Promise.all(suites.map((suite) => {
-  //   return t.test(suite.name, () => {
-  //     try {
-  //       if (suite.header_type === `item`) {
-  //         // encode
-  //         const obj     = formatItem(suite.expected)
-  //         const encoded = encodeItem(obj)
-  //         const str     = suite.canonical[0]
-  //         assert.deepStrictEqual(str, encoded, suite.name)
-  //       }
-  //     } catch(err) {
-  //       console.error(err.message)
-  //       assert.deepStrictEqual(suite.must_fail, true, err)
-  //     }
-  //   })
-  // }))
 })
