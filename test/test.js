@@ -40,6 +40,7 @@ import {
   parseByteSequence,
   parseBoolean,
   parseDate,
+  parseDisplayString,
 
   base64decode,
   base64encode,
@@ -434,6 +435,12 @@ test("test parseDate", () => {
   assert.deepStrictEqual(parseDate(`@1659578233`), {value: new Date(1659578233000), input_string: ``})
   assert.deepStrictEqual(parseDate(`@-1659578233`), {value: new Date('1917-05-30 22:02:47Z'), input_string: ``})
   assert.throws(() => parseDate(``), /failed to parse "" as Date/)
+})
+
+test("test parseDisplayString", {only: true}, () => {
+  assert.deepStrictEqual(parseDisplayString(`%"foo bar"`), {value: "foo bar", input_string: ``})
+  assert.deepStrictEqual(parseDisplayString(`%"f%c3%bc%c3%bc"`), {value: "füü", input_string: ``})
+  assert.throws(() => parseDisplayString(``), /failed to parse "" as Display String/)
 })
 
 test("test parseList", () => {

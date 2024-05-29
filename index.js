@@ -1628,7 +1628,82 @@ export function parseDate(input_string) {
   }
 }
 
-// TODO: Parsing a Display String
+// 4.2.10.  Parsing a Display String
+// Given an ASCII string as input_string, return a sequence of Unicode
+// codepoints. input_string is modified to remove the parsed value.
+export function parseDisplayString(input_string) {
+  const textDecoder = new TextDecoder()
+  let i = 0
+
+  // 1.  If the first two characters of input_string are not "%" followed by DQUOTE, fail parsing.
+  if (!(input_string[i] === `%` && input_string[i + 1] === `"`)) {
+    throw new Error(`failed to parse "${input_string}" as Display String`)
+  }
+
+  // 2.  Discard the first two characters of input_string.
+  i += 2
+
+  // 3.  Let byte_array be an empty byte array.
+  let byte_array = []
+
+  // 4.  While input_string is not empty:
+  while (input_string.length > i) {
+    //  1.  Let char be the result of consuming the first character of input_string.
+    let char = input_string[i]
+
+    let codePoint = char.codePointAt(0)
+
+    //  2.  If char is in the range %x00-1f or %x7f-ff (i.e., it is not in VCHAR or SP), fail parsing.
+    if (codePoint <= 0x1f || 0x7f <= codePoint) {
+      throw new Error(`failed to parse "${input_string}" as Display String`)
+    }
+
+    // 3.  If char is "%":
+    if (char === `%`) {
+      //  1.  Let octet_hex be the result of consuming two characters
+      //      from input_string.  If there are not two characters, fail
+      //      parsing.
+      if (input_string.length < i + 2) {
+        throw new Error(`failed to parse "${input_string}" as Display String`)
+      }
+      let octet_hex = `0x${input_string[i + 1]}${input_string[i + 2]}`
+
+      //  2.  If octet_hex contains characters outside the range
+      //      %x30-39 or %x61-66 (i.e., it is not in 0-9 or lowercase
+      //      a-f), fail parsing.
+      //  3.  Let octet be the result of hex decoding octet_hex
+      //      (Section 8 of [RFC4648]).
+      let octet = parseInt(octet_hex)
+
+      //  4.  Append octet to byte_array.
+      byte_array.push(octet)
+      i += 3
+    }
+    //  4.  If char is DQUOTE:
+    if (char === `"`) {
+      //  1.  Let unicode_sequence be the result of decoding byte_array
+      //      as a UTF-8 string (Section 3 of [UTF8]).  Fail parsing if
+      //      decoding fails.
+      let unicode_sequence = textDecoder.decode(new Uint8Array(byte_array))
+      //  2.  Return unicode_sequence.
+      return {
+        value: unicode_sequence,
+        input_string: input_string.substring(++i)
+      }
+    }
+    //  5.  Otherwise, if char is not "%" or DQUOTE:
+    if (char !== `%` && char !== `"`) {
+      //  1.  Let byte be the result of applying ASCII encoding to
+      //      char.
+      //  2.  Append byte to byte_array.
+      byte_array.push(codePoint)
+      i += 1
+    }
+  }
+  // 5.  Reached the end of input_string without finding a closing DQUOTE;
+  //     fail parsing.
+  throw new Error(`failed to parse "${input_string}" as Display String`)
+}
 
 /////////////////////////
 // base64 utility
