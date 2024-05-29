@@ -675,6 +675,8 @@ export function serializeDate(value) {
   return `@${serializeInteger(input_date)}`
 }
 
+// TODO: Serializing a Display String
+
 // 4.2.1.  Parsing a List
 //
 // Given an ASCII string as input_string, return an array of
@@ -1022,6 +1024,9 @@ export function parseBareItem(input_string) {
   if (first === `@`) {
     return parseDate(input_string)
   }
+  // if (first === `%`) {
+  //   return parseDisplayString(input_string)
+  // }
   throw new Error(err`failed to parse "${input_string}" as Bare Item`)
 }
 
@@ -1549,6 +1554,8 @@ export function parseDate(input_string) {
     input_string: output_date.input_string
   }
 }
+
+// TODO: Parsing a Display String
 
 /////////////////////////
 // base64 utility

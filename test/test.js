@@ -576,6 +576,7 @@ test("structured_field_tests", () => {
     ...read(`boolean`),
     ...read(`date`),
     ...read(`dictionary`),
+    // TODO: ...read(`display-string`),
     ...read(`examples`),
     ...read(`item`),
     ...read(`key-generated`),
