@@ -656,60 +656,36 @@ test("structured_field_tests", () => {
         const encoded = encodeDict(obj)
         assert.deepStrictEqual(str, encoded, suite.name)
       }
-    } catch(err) {
+    } catch (err) {
       assert.deepStrictEqual(suite.must_fail, true, err)
     }
   })
 })
 
 test("serialisation_tests", { only: true }, async (t) => {
-  await t.test("serialisation-tests/number", { skip: true }, async (t) => {
-    for (const suite of read(t.name)) {
-      await t.test(suite.name, () => {
-        const obj = formatItem(suite.expected)
-        try {
-          const encoded = encodeItem(obj)
-          assert.deepStrictEqual(suite.canonical[0], encoded, suite.name)
-        } catch(err) {
-          assert.deepStrictEqual(suite.must_fail, true)
-          assert.deepStrictEqual(err.message.startsWith(`failed to serialize`), true)
-        }
-      })
-    }
-  })
-
-  await t.test("serialisation-tests/token-generated", { skip: true }, async (t) => {
-    for (const suite of read(t.name)) {
-      await t.test(suite.name, () => {
-        const obj = formatItem(suite.expected)
-        try {
-          const encoded = encodeItem(obj)
-          assert.deepStrictEqual(suite.canonical[0], encoded, suite.name)
-        } catch(err) {
-          assert.deepStrictEqual(suite.must_fail, true)
-          assert.deepStrictEqual(err.message.startsWith(`failed to serialize`), true)
-        }
-      })
-    }
-  })
-
-  await t.test("serialisation-tests/string-generated", { skip: false }, async (t) => {
-    for (const suite of read(t.name)) {
-      await t.test(suite.name, () => {
-        const obj = formatItem(suite.expected)
-        try {
-          const encoded = encodeItem(obj)
-          assert.deepStrictEqual(suite.canonical[0], encoded, suite.name)
-        } catch(err) {
-          assert.deepStrictEqual(suite.must_fail, true)
-          assert.deepStrictEqual(err.message.startsWith(`failed to serialize`), true)
-        }
-      })
-    }
-  })
-
-  const suites = [
-    // ...read("serialisation-tests/key-generated"),
+  const files = [
+    "serialisation-tests/number",
+    "serialisation-tests/token-generated",
+    "serialisation-tests/string-generated"
+    // "serialisation-tests/key-generated"
   ]
 
+  for (const file of files) {
+    await t.test(file, async (t) => {
+      for (const suite of read(t.name)) {
+        await t.test(suite.name, () => {
+          try {
+            if (suite.header_type === "item") {
+              const obj = formatItem(suite.expected)
+              const encoded = encodeItem(obj)
+              assert.deepStrictEqual(suite.canonical[0], encoded, suite.name)
+            }
+          } catch (err) {
+            assert.deepStrictEqual(suite.must_fail, true)
+            assert.deepStrictEqual(err.message.startsWith(`failed to serialize`), true)
+          }
+        })
+      }
+    })
+  }
 })
