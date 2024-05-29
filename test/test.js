@@ -684,16 +684,18 @@ test("serialisation_tests", async (t) => {
               }
               case "dictionary": {
                 const dict = formatDict(suite.expected)
-                const encoded = encodeDict(dict)
+                encodeDict(dict)
+                throw "unreachable"
                 break;
               }
               case "list": {
                 const list = formatList(suite.expected)
-                const encoded = encodeList(list)
+                encodeList(list)
+                throw "unreachable"
                 break;
               }
               default:
-                throw "can't be here"
+                throw "unreachable"
               }
           } catch (err) {
             // console.log(err)
