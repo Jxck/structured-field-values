@@ -405,7 +405,7 @@ export function _repeat_dict_member() {
 
 // dict-member
 //       = member-name [ "=" member-value ]
-//       = member-name [ ( "=" member-value ) / parameters ] TODO: https://github.com/httpwg/http-extensions/issues/1273
+//       = member-name [ ( "=" member-value ) / parameters ]
 // member-name
 //       = key
 export function dict_member() {

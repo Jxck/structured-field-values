@@ -32,7 +32,7 @@ import {
   parameter,
   sf_key,
   sf_date,
-} from "../bnf/bnf.js"
+} from "./bnf.js"
 
 import {
   base64decode,
@@ -49,7 +49,7 @@ import {
   formatItem,
   formatList,
   formatDict,
-} from "./test.util.js"
+} from "../test/test.util.js"
 
 // utility const
 const ok = true;
