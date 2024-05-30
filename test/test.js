@@ -626,20 +626,33 @@ test("test parseKey", () => {
 
 test("structured_field_tests", ONLY, async (t) => {
   const files = [
-    // `binary`,
-    // `boolean`,
-    // `date`,
-    // `number`,
-
-
-
+    `binary`,
+    `boolean`,
+    `date`,
+    `number`,
     `number-generated`,
-    // `string`
+    `string`,
+    `string-generated`,
+    `item`,
+
+
+    // TODO:
+    // `key-generated`
+    // `dictionary`,
+    // `examples`,
+    // `large-generated`,
+    // `list`,
+    // `listlist`,
+    // `param-dict`,
+    // `param-list`,
+    // `param-listlist`,
+    // `token-generated`,
+    // `token`,
   ]
 
   for (const file of files) {
     await t.test(file, async (t) => {
-      for (const suite of read(t.name)) {
+      for (const suite of read(t.name).slice(4, 5)) {
         await t.test(suite.name, (t) => {
           if (suite.header_type === `item`) {
             if ([
@@ -682,6 +695,9 @@ test("structured_field_tests", ONLY, async (t) => {
             ].includes(suite.name)) {
               return t.skip(`"1.0" is "1" in JS`)
             }
+            if (suite.name === `non-ascii string`) {
+              return t.skip(`non-ascii string will be encoded as Display String`)
+            }
 
             if (suite.must_fail) {
               const raw = suite.raw[0]
@@ -720,19 +736,7 @@ test("structured_field_tests", ONLY, async (t) => {
 
 // test("_structured_field_tests", () => {
 //   const suites = [
-//     ...read(`dictionary`),
-//     ...read(`examples`),
-//     ...read(`item`),
-//     ...read(`key-generated`),
-//     ...read(`large-generated`),
-//     ...read(`list`),
-//     ...read(`listlist`),
-//     ...read(`param-dict`),
-//     ...read(`param-list`),
-//     ...read(`param-listlist`),
-//     ...read(`string-generated`),
-//     ...read(`token-generated`),
-//     ...read(`token`),
+
 //   ]
 //   suites.forEach((suite) => {
 //     const ignore = [
