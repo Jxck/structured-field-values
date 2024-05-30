@@ -635,12 +635,12 @@ test("structured_field_tests", ONLY, async (t) => {
     // `string-generated`,
     // `list`,
     // `listlist`,
+    // `dictionary`,
     
     
     // TODO:
-    // `item`,
+    `item`,
     // `key-generated`
-    `dictionary`,
     // `examples`,
     // `large-generated`,
     // `param-dict`,

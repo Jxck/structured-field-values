@@ -117,7 +117,9 @@ export function encodeDict(value) {
  */
 export function decodeItem(input) {
   try {
-    const { input_string, value } = parseItem(input.trim())
+    // 2.  Discard any leading SP characters from input_string.
+    input = input.replace(/^ +/, "")
+    const { input_string, value } = parseItem(input)
     if (input_string !== ``) throw new Error(err`failed to parse "${input_string}" as Item`)
     return value
   } catch (cause) {
@@ -1065,7 +1067,6 @@ export function parseItem(input_string) {
   const parsedParameters = parseParameters(input_string)
   const params = parsedParameters.value
   input_string = parsedParameters.input_string
-  /** @type {Item} */
   const item = new Item(value, params)
   return {
     value: item,
