@@ -709,7 +709,6 @@ test("structured_field_tests", () => {
         ].includes(suite.name)) return
         const canonical = suite?.canonical?.[0] || suite.raw[0]
         const encoded   = encodeDict(dict)
-        console.log({canonical, encoded})
         assert.deepStrictEqual(encoded, canonical, suite.name)
       }
     } catch (err) {

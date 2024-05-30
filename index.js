@@ -9,15 +9,15 @@
 function err(strings, ...keys) {
   keys = keys.map((key) => {
     if (Array.isArray(key)) return JSON.stringify(key)
-    if (key instanceof Map) return "Map{}"
-    if (key instanceof Set) return "Set{}"
-    if (typeof key === "object") return JSON.stringify(key)
+    if (key instanceof Map) return `Map{}`
+    if (key instanceof Set) return `Set{}`
+    if (typeof key === `object`) return JSON.stringify(key)
     return String(key)
   })
   const result = strings.map((string, i) => {
     return [string, keys.at(i)]
   })
-  return result.flat().join("")
+  return result.flat().join(``)
 }
 
 export class Item {
@@ -118,7 +118,7 @@ export function encodeDict(value) {
 export function decodeItem(input) {
   try {
     const { input_string, value } = parseItem(input.trim())
-    if (input_string !== "") throw new Error(err`failed to parse "${input_string}" as Item`)
+    if (input_string !== ``) throw new Error(err`failed to parse "${input_string}" as Item`)
     return value
   } catch (cause) {
     throw new Error(err`failed to parse "${input}" as Item`, { cause })
@@ -132,7 +132,7 @@ export function decodeItem(input) {
 export function decodeList(input) {
   try {
     const { input_string, value } = parseList(input.trim())
-    if (input_string !== "") throw new Error(err`failed to parse "${input_string}" as List`)
+    if (input_string !== ``) throw new Error(err`failed to parse "${input_string}" as List`)
     return value
   } catch (cause) {
     throw new Error(err`failed to parse "${input}" as List`, { cause })
@@ -146,7 +146,7 @@ export function decodeList(input) {
 export function decodeDict(input) {
   try {
     const { input_string, value } = parseDictionary(input.trim())
-    if (input_string !== "") throw new Error(err`failed to parse "${input_string}" as Dict`)
+    if (input_string !== ``) throw new Error(err`failed to parse "${input_string}" as Dict`)
     return value
   } catch (cause) {
     throw new Error(err`failed to parse "${input}" as Dict`, { cause })
@@ -263,13 +263,13 @@ export function serializeInnerList(value) {
  * @return {string}
  */
 export function serializeParams(params) {
-  if (params === null) return ""
+  if (params === null) return ``
   return Object.entries(params)
     .map(([key, value]) => {
       if (value === true) return `;${serializeKey(key)}` // omit true
       return `;${serializeKey(key)}=${serializeBareItem(value)}`
     })
-    .join("")
+    .join(``)
 }
 
 // 4.1.1.3.  Serializing a Key
@@ -1251,7 +1251,7 @@ export function parseKey(input_string) {
     throw new Error(err`failed to parse "${input_string}" as Key`)
   }
   /** @type {Key} */
-  let output_string = ""
+  let output_string = ``
   while (input_string.length > i) {
     if (/^[a-z0-9\_\-\.\*]$/.test(input_string[i]) === false) {
       return {
@@ -1343,7 +1343,7 @@ export function parseKey(input_string) {
 export function parseIntegerOrDecimal(input_string) {
   const orig_string = input_string
   let sign = 1
-  let input_number = ""
+  let input_number = ``
   let output_number
   let i = 0
 
@@ -1432,7 +1432,7 @@ export function parseIntegerOrDecimal(input_string) {
  * @return {ParsedString}
  */
 export function parseString(input_string) {
-  let output_string = ""
+  let output_string = ``
   let i = 0
   if (input_string[i] !== `"`) {
     throw new Error(err`failed to parse "${input_string}" as String`)
@@ -1769,11 +1769,3 @@ export function base64decode(str) {
 export function base64encode(binary) {
   return btoa(String.fromCharCode(...binary))
 }
-
-console.log(
-  encodeDict({
-    a: new Item(1),
-    b: new Item(true),
-    c: new Item(3)
-  })
-)
