@@ -1,3 +1,5 @@
+import * as assert from "assert"
+
 ;`use strict`
 
 /**

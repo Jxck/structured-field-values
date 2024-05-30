@@ -1,8 +1,6 @@
 import fs from "fs"
 import base32 from "hi-base32"
-import {
-  Item
-} from "../index.js"
+import { InnerList, Item } from "../index.js"
 
 export function log(...arg) {
   try {
@@ -15,7 +13,7 @@ export function log(...arg) {
 
 export const j = JSON.stringify.bind(JSON)
 
-export const  s = (value)  => Symbol.for(value)
+export const s = (value) => Symbol.for(value)
 export const ss = (values) => values.map((value) => Symbol.for(value))
 
 // read json test suite
@@ -28,7 +26,7 @@ export function format(e) {
   if (Array.isArray(e)) {
     return e.map(format)
   }
-  switch(e[`__type`]) {
+  switch (e[`__type`]) {
     case `binary`:
       return Uint8Array.from(e.value === `` ? [] : base32.decode.asBytes(e.value))
     case `token`:
@@ -43,29 +41,27 @@ export function format(e) {
 }
 
 export function formatItem([value, params]) {
-  value  = format(value)
+  value = format(value)
   params = formatParams(params)
   return new Item(value, params)
 }
 
 export function formatList(expected) {
   return expected.map(([value, params]) => {
-    value  = formatValue(value)
-    params = formatParams(params)
-    return new Item(value, params)
+    return formatValue(value, params)
   })
 }
 
 export function formatDict(expected) {
-  return Object.fromEntries(expected.map(([name, [value, params]]) => {
-    value  = formatValue(value)
-    params = formatParams(params)
-    return [name, new Item(value, params)]
-  }))
+  return Object.fromEntries(
+    expected.map(([name, [value, params]]) => {
+      return [name, formatValue(value, params)]
+    })
+  )
 }
 
-function formatValue(value) {
-  return Array.isArray(value) ? value.map(formatItem) : format(value)
+function formatValue(value, params) {
+  return Array.isArray(value) ? new InnerList(value.map(formatItem), formatParams(params)) : new Item(format(value), formatParams(params))
 }
 
 function formatParams(params) {

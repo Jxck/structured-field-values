@@ -6,11 +6,13 @@
     "AQID",
     "AQIDBA",
     "caaab",
+    "displaystring",
     "lcalpha",
     "listlist",
+    "parameterised",
+    "serialisation",
     "sfbis",
     "tchar",
-    "VCHAR",
-    "displaystring"
+    "VCHAR"
   ]
 }

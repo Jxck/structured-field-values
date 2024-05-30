@@ -224,7 +224,7 @@ test("test decode", () => {
   })
 
   assert.deepStrictEqual(decodeList(``), [])
-  assert.deepStrictEqual(decodeList(`("foo"; a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), [
+  assert.deepStrictEqual(decodeList(`("foo";a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), [
     new InnerList(
       [new Item("foo", {a: 1, b: 2})],
       { "lvl": 5 }
@@ -485,46 +485,57 @@ test("test parseList", () => {
   assert.deepStrictEqual(
     parseList(`("foo" "bar"), ("baz"), ("bat" "one"), ()`),
     { value: [
-      new Item(["foo", "bar"]),
-      new Item(["baz", ]),
-      new Item(["bat", "one"]),
-      new Item([])
+      new InnerList([new Item("foo"), new Item("bar")]),
+      new InnerList([new Item("baz")]),
+      new InnerList([new Item("bat"), new Item("one")]),
+      new InnerList([])
     ], input_string: ``}
   )
-  assert.deepStrictEqual(parseList(`("foo"; a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), {value: [
-    new Item([
-      new Item("foo", { "a": 1, "b": 2 })
-    ], { "lvl": 5 }),
-    new Item(["bar", "baz"], { "lvl": 1 }),
-  ], input_string: ``})
+  assert.deepStrictEqual(parseList(`("foo";a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), {
+    value: [
+      new InnerList(
+        [new Item("foo", {a: 1, b: 2})],
+        { "lvl": 5 }
+      ),
+      new InnerList(
+        [new Item("bar"), new Item("baz")],
+        { "lvl": 1 }
+      ),
+    ], input_string: ``})
 
   assert.throws(() => parseList(`("aaa").`), /failed to parse "." as List/)
   assert.throws(() => parseList(`("aaa"),`), /failed to parse "" as List/)
 })
 
-test("test parseInnerList", () => {
+test("test parseInnerList", ONLY, () => {
   assert.deepStrictEqual(parseInnerList(`( 1 2 3 )`), {
-    value: new Item([1, 2, 3]),
+    value: new InnerList([
+      new Item(1),
+      new Item(2),
+      new Item(3)
+    ]),
     input_string: ``
   })
   assert.deepStrictEqual(parseInnerList(`(1)`), {
-    value: new Item([1]),
+    value: new InnerList([
+      new Item(1)
+    ]),
     input_string: ``
   })
   assert.deepStrictEqual(parseInnerList(`()`), {
-    value: new Item([]),
+    value: new InnerList([]),
     input_string: ``
   })
   assert.deepStrictEqual(parseList(`(1 1.23 a "a" ?1 :AQID: @1659578233)`), {
     value: [
-      new Item([
-        1,
-        1.23,
-        s("a"),
-        "a",
-        true,
-        new Uint8Array([1, 2, 3]),
-        new Date(1659578233*1000)
+      new InnerList([
+        new Item(1),
+        new Item(1.23),
+        new Item(s("a")),
+        new Item("a"),
+        new Item(true),
+        new Item(new Uint8Array([1, 2, 3])),
+        new Item(new Date(1659578233*1000))
       ])
     ], input_string: ``}
   )
@@ -561,17 +572,20 @@ test("test parseDictionary", () => {
   assert.deepStrictEqual(parseDictionary(`rating=1.5, feelings=(joy sadness)`), {
     value: {
       "rating":   new Item(1.5),
-      "feelings": new Item([s("joy"), s("sadness")])
+      "feelings": new InnerList([
+        new Item(s("joy")),
+        new Item(s("sadness"))
+      ])
     },
     input_string:``
   })
 
   assert.deepStrictEqual(parseDictionary(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {
     value: {
-      "a": new Item([1,2]),
+      "a": new InnerList([new Item(1), new Item(2)]),
       "b": new Item(3),
       "c": new Item(4, { "aa": s("bb") }),
-      "d": new Item([5,6], { "valid": true })
+      "d": new InnerList([new Item(5), new Item(6)], { "valid": true })
     },
     input_string: ``
   })
@@ -652,7 +666,6 @@ test("structured_field_tests", () => {
     if (ignore.includes(suite.name)) return
     if (suite.name.endsWith("0 decimal")) return // .0 is Integer in JS
 
-    console.debug(suite.name)
     try {
       if (suite.header_type === `item`) {
         // decode
@@ -663,8 +676,6 @@ test("structured_field_tests", () => {
         // encode
         const str     = suite?.canonical?.[0] || suite.raw[0]
         const encoded = encodeItem(obj)
-        console.log({encoded})
-        
         assert.deepStrictEqual(str, encoded, suite.name)
       }
       if (suite.header_type === `list`) {
