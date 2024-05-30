@@ -1352,33 +1352,33 @@ export function parseIntegerOrDecimal(input_string) {
     input_string = input_string.substring(1)
   }
 
-  if (input_string.length <= 0) throw new Error(`failed to parse "${orig_string}" as Integer or Decimal`)
+  if (input_string.length <= 0) throw new Error(err`failed to parse "${orig_string}" as Integer or Decimal`)
 
   const re_integer = /^(\d+)?/g
   const result_integer = re_integer.exec(input_string)
-  if (result_integer[0].length === 0) throw new Error(`failed to parse "${orig_string}" as Integer or Decimal`)
+  if (result_integer[0].length === 0) throw new Error(err`failed to parse "${orig_string}" as Integer or Decimal`)
   input_number += result_integer[1]
   input_string = input_string.substring(re_integer.lastIndex)
 
   if (input_string[0] === ".") {
     // decimal
-    if (input_number.length > 12) throw new Error(`failed to parse "${orig_string}" as Integer or Decimal`)
+    if (input_number.length > 12) throw new Error(err`failed to parse "${orig_string}" as Integer or Decimal`)
     const re_decimal = /^(\.\d+)?/g
     const result_decimal = re_decimal.exec(input_string)
     input_string = input_string.substring(re_decimal.lastIndex)
     // 9.2.  If the number of characters after "." in input_number is greater than three, fail parsing.
-    if (result_decimal[0].length === 0 || result_decimal[1].length > 4) throw new Error(`failed to parse "${orig_string}" as Integer or Decimal`)
+    if (result_decimal[0].length === 0 || result_decimal[1].length > 4) throw new Error(err`failed to parse "${orig_string}" as Integer or Decimal`)
     input_number += result_decimal[1]
     // 7.6.  If type is "decimal" and input_number contains more than 16 characters, fail parsing.
-    if (input_number.length > 16) throw new Error(`failed to parse "${orig_string}" as Integer or Decimal`)
+    if (input_number.length > 16) throw new Error(err`failed to parse "${orig_string}" as Integer or Decimal`)
     output_number = parseFloat(input_number) * sign
   } else {
     // integer
     // 7.5.  If type is "integer" and input_number contains more than 15 characters, fail parsing.
-    if (input_number.length > 15) throw new Error(`failed to parse "${orig_string}" as Integer or Decimal`)
+    if (input_number.length > 15) throw new Error(err`failed to parse "${orig_string}" as Integer or Decimal`)
     output_number = parseInt(input_number) * sign
     if (output_number < -999999999999999n || 999999999999999n < output_number)
-      throw new Error(`failed to parse "${input_number}" as Integer or Decimal`)
+      throw new Error(err`failed to parse "${input_number}" as Integer or Decimal`)
   }
   return {
     value: output_number,
@@ -1435,18 +1435,18 @@ export function parseString(input_string) {
   let output_string = ""
   let i = 0
   if (input_string[i] !== `"`) {
-    throw new Error(`failed to parse "${input_string}" as String`)
+    throw new Error(err`failed to parse "${input_string}" as String`)
   }
   i++
   while (input_string.length > i) {
     // console.log(i, input_string[i], output_string)
     if (input_string[i] === `\\`) {
       if (input_string.length <= i + 1) {
-        throw new Error(`failed to parse "${input_string}" as String`)
+        throw new Error(err`failed to parse "${input_string}" as String`)
       }
       i++
       if (input_string[i] !== `"` && input_string[i] !== `\\`) {
-        throw new Error(`failed to parse "${input_string}" as String`)
+        throw new Error(err`failed to parse "${input_string}" as String`)
       }
       output_string += input_string[i]
     } else if (input_string[i] === `"`) {
@@ -1455,13 +1455,13 @@ export function parseString(input_string) {
         input_string: input_string.substring(++i)
       }
     } else if (/[\x00-\x1f\x7f]+/.test(input_string[i])) {
-      throw new Error(`failed to parse "${input_string}" as String`)
+      throw new Error(err`failed to parse "${input_string}" as String`)
     } else {
       output_string += input_string[i]
     }
     i++
   }
-  throw new Error(`failed to parse "${input_string}" as String`)
+  throw new Error(err`failed to parse "${input_string}" as String`)
 }
 
 // 4.2.6.  Parsing a Token
@@ -1495,7 +1495,7 @@ export function parseString(input_string) {
  */
 export function parseToken(input_string) {
   if (/^[a-zA-Z\*]$/.test(input_string[0]) === false) {
-    throw new Error(`failed to parse "${input_string}" as Token`)
+    throw new Error(err`failed to parse "${input_string}" as Token`)
   }
   const re = /^([\!\#\$\%\&\'\*\+\-\.\^\_\`\|\~\w\:\/]+)/g
   const output_string = re.exec(input_string)[1]
@@ -1555,9 +1555,9 @@ export function parseToken(input_string) {
  * @return {ParsedByteSequence}
  */
 export function parseByteSequence(input_string) {
-  if (input_string[0] !== ":") throw new Error(`failed to parse "${input_string}" as Byte Sequence`)
+  if (input_string[0] !== ":") throw new Error(err`failed to parse "${input_string}" as Byte Sequence`)
   input_string = input_string.substring(1)
-  if (input_string.includes(":") === false) throw new Error(`failed to parse "${input_string}" as Byte Sequence`)
+  if (input_string.includes(":") === false) throw new Error(err`failed to parse "${input_string}" as Byte Sequence`)
   const re = /(^.*?)(:)/g
   const b64_content = re.exec(input_string)[1]
   input_string = input_string.substring(re.lastIndex)
@@ -1596,7 +1596,7 @@ export function parseByteSequence(input_string) {
 export function parseBoolean(input_string) {
   let i = 0
   if (input_string[i] !== "?") {
-    throw new Error(`failed to parse "${input_string}" as Boolean`)
+    throw new Error(err`failed to parse "${input_string}" as Boolean`)
   }
   i++
   if (input_string[i] === "1") {
@@ -1611,7 +1611,7 @@ export function parseBoolean(input_string) {
       input_string: input_string.substring(++i)
     }
   }
-  throw new Error(`failed to parse "${input_string}" as Boolean`)
+  throw new Error(err`failed to parse "${input_string}" as Boolean`)
 }
 
 // 4.2.9.  Parsing a Date
@@ -1641,7 +1641,7 @@ export function parseDate(input_string) {
   let i = 0
   // 1.  If the first character of input_string is not "@", fail parsing.
   if (input_string[i] !== "@") {
-    throw new Error(`failed to parse "${input_string}" as Date`)
+    throw new Error(err`failed to parse "${input_string}" as Date`)
   }
   // 2.  Discard the first character of input_string.
   i++
@@ -1650,7 +1650,7 @@ export function parseDate(input_string) {
   const output_date = parseIntegerOrDecimal(input_string.substring(i))
   if (Number.isInteger(output_date.value) === false) {
     // 4.  If output_date is a Decimal, fail parsing.
-    throw new Error(`failed to parse "${input_string}" as Date`)
+    throw new Error(err`failed to parse "${input_string}" as Date`)
   }
   return {
     value: new Date(output_date.value * 1000),
@@ -1675,7 +1675,7 @@ export function parseDisplayString(input_string) {
 
   // 1.  If the first two characters of input_string are not "%" followed by DQUOTE, fail parsing.
   if (!(input_string[i] === `%` && input_string[i + 1] === `"`)) {
-    throw new Error(`failed to parse "${input_string}" as Display String`)
+    throw new Error(err`failed to parse "${input_string}" as Display String`)
   }
 
   // 2.  Discard the first two characters of input_string.
@@ -1693,7 +1693,7 @@ export function parseDisplayString(input_string) {
 
     //  2.  If char is in the range %x00-1f or %x7f-ff (i.e., it is not in VCHAR or SP), fail parsing.
     if (codePoint <= 0x1f || 0x7f <= codePoint) {
-      throw new Error(`failed to parse "${input_string}" as Display String`)
+      throw new Error(err`failed to parse "${input_string}" as Display String`)
     }
 
     // 3.  If char is "%":
@@ -1702,14 +1702,14 @@ export function parseDisplayString(input_string) {
       //      from input_string.  If there are not two characters, fail
       //      parsing.
       if (input_string.length < i + 2) {
-        throw new Error(`failed to parse "${input_string}" as Display String`)
+        throw new Error(err`failed to parse "${input_string}" as Display String`)
       }
       //  2.  If octet_hex contains characters outside the range
       //      %x30-39 or %x61-66 (i.e., it is not in 0-9 or lowercase
       //      a-f), fail parsing.
       let octet_hex = `${input_string[i + 1]}${input_string[i + 2]}`
       if (/^[a-f0-9]+$/.test(octet_hex) === false) {
-        throw new Error(`failed to parse "${input_string}" as Display String`)
+        throw new Error(err`failed to parse "${input_string}" as Display String`)
       }
 
       //  3.  Let octet be the result of hex decoding octet_hex
@@ -1748,7 +1748,7 @@ export function parseDisplayString(input_string) {
   }
   // 5.  Reached the end of input_string without finding a closing DQUOTE;
   //     fail parsing.
-  throw new Error(`failed to parse "${input_string}" as Display String`)
+  throw new Error(err`failed to parse "${input_string}" as Display String`)
 }
 
 /////////////////////////
