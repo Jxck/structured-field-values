@@ -502,7 +502,6 @@ test("test parseList", () => {
         { "lvl": 1 }
       ),
     ], input_string: ``})
-
   assert.throws(() => parseList(`("aaa").`), /failed to parse "." as List/)
   assert.throws(() => parseList(`("aaa"),`), /failed to parse "" as List/)
 })
@@ -609,7 +608,6 @@ test("test bareItem", () => {
   assert.deepStrictEqual(parseBareItem(`token`),      {value: s(`token`), input_string: ``})
   assert.deepStrictEqual(parseBareItem(`foo123;456`), {value: s(`foo123`), input_string: `;456`})
   assert.deepStrictEqual(parseBareItem(`@1659578233`), {value: new Date(1659578233000), input_string: ``})
-
   assert.throws(() => parseBareItem(`&`), /failed to parse "&" as Bare Item/)
 })
 
@@ -623,7 +621,6 @@ test("test parseParameters", () => {
 test("test parseKey", () => {
   assert.deepStrictEqual(parseKey(`a123_-.*`), {value: `a123_-.*`, input_string: ``})
   assert.deepStrictEqual(parseKey(`*a123`),    {value: `*a123`,    input_string: ``})
-
   assert.throws(() => parseKey(`&`), /failed to parse "&" as Key/)
 })
 
