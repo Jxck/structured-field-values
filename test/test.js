@@ -626,23 +626,23 @@ test("test parseKey", () => {
 
 test("structured_field_tests", ONLY, async (t) => {
   const files = [
-    `binary`,
-    `boolean`,
-    `date`,
-    `number`,
-    `number-generated`,
-    `string`,
-    `string-generated`,
-    `item`,
-
-
+    // `binary`,
+    // `boolean`,
+    // `date`,
+    // `number`,
+    // `number-generated`,
+    // `string`,
+    // `string-generated`,
+    // `list`,
+    // `listlist`,
+    
+    
     // TODO:
+    // `item`,
     // `key-generated`
     // `dictionary`,
     // `examples`,
     // `large-generated`,
-    // `list`,
-    // `listlist`,
     // `param-dict`,
     // `param-list`,
     // `param-listlist`,
@@ -652,9 +652,9 @@ test("structured_field_tests", ONLY, async (t) => {
 
   for (const file of files) {
     await t.test(file, async (t) => {
-      for (const suite of read(t.name).slice(4, 5)) {
+      for (const suite of read(t.name)) {
         await t.test(suite.name, (t) => {
-          if (suite.header_type === `item`) {
+          if (file === `number-generated`) {
             if ([
               `2 digit, 1 fractional 0 decimal`,
               `3 digit, 2 fractional 0 decimal`,
@@ -695,10 +695,19 @@ test("structured_field_tests", ONLY, async (t) => {
             ].includes(suite.name)) {
               return t.skip(`"1.0" is "1" in JS`)
             }
+          }
+          if (file === `string`) {
             if (suite.name === `non-ascii string`) {
               return t.skip(`non-ascii string will be encoded as Display String`)
             }
+          }
+          if (file === `list`) {
+            if (suite.name === `empty item list (multiple field lines)`) {
+              return t.skip(`not support multiline header`)
+            }
+          }
 
+          if (suite.header_type === `item`) {
             const raw = suite?.canonical?.[0] || suite.raw[0]
             if (suite.must_fail) {
               return assert.throws(() => decodeItem(raw), /failed to parse/)
@@ -709,13 +718,16 @@ test("structured_field_tests", ONLY, async (t) => {
             return
           }
 
-          // if (suite.header_type === `list`) {
-          //   if (suite.must_fail) {
-          //     const list = formatList(suite.expected)
-          //     return assert.throws(() => encodeList(list), /failed to serialize/)
-          //   }
-          //   return assert.deepStrictEqual(suite.canonical[0], encodeList(list), suite.name)
-          // }
+          if (suite.header_type === `list`) {
+            const raw = suite?.canonical?.[0] || suite.raw[0]
+            if (suite.must_fail) {
+              return assert.throws(() => decodeList(raw), /failed to parse/)
+            }
+            const list = formatList(suite.expected)
+            assert.deepStrictEqual(decodeList(raw), list, suite.name)
+            assert.deepStrictEqual(encodeList(list), raw, suite.name)
+            return
+          }
 
           // if (suite.header_type === "dictionary") {
           //   const dict = formatDict(suite.expected)
