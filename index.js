@@ -201,7 +201,7 @@ export function serializeList(list) {
       }
       return serializeItem(new Item(item))
     })
-    .join(", ")
+    .join(`, `)
 }
 
 // 4.1.1.1.  Serializing an Inner List
@@ -373,7 +373,7 @@ export function serializeDict(dict) {
       }
       return output + `=${serializeItem(new Item(item))}`
     })
-    .join(", ")
+    .join(`, `)
 }
 
 // 4.1.3.  Serializing an Item
@@ -536,7 +536,7 @@ export function serializeDecimal(value) {
   const roundedValue = roundToEven(value, 3) // round to 3 decimal places
   if (Math.floor(Math.abs(roundedValue)).toString().length > 12) throw new Error(err`failed to serialize "${value}" as Decimal`)
   const stringValue = roundedValue.toString()
-  return stringValue.includes(".") ? stringValue : `${stringValue}.0`
+  return stringValue.includes(`.`) ? stringValue : `${stringValue}.0`
 }
 
 /**
@@ -827,9 +827,9 @@ export function parseList(input_string) {
     members.push(parsedItemOrInnerList.value)
     input_string = parsedItemOrInnerList.input_string.trim()
     if (input_string.length === 0) return { input_string, value: members }
-    if (input_string[0] !== ",") throw new Error(err`failed to parse "${input_string}" as List`)
+    if (input_string[0] !== `,`) throw new Error(err`failed to parse "${input_string}" as List`)
     input_string = input_string.substring(1).trim()
-    if (input_string.length === 0 || input_string[0] === ",") throw new Error(err`failed to parse "${input_string}" as List`)
+    if (input_string.length === 0 || input_string[0] === `,`) throw new Error(err`failed to parse "${input_string}" as List`)
   }
   return {
     value: members,
@@ -857,7 +857,7 @@ export function parseList(input_string) {
  * @return {ParsedItemOrInnerList}
  */
 export function parseItemOrInnerList(input_string) {
-  if (input_string[0] === "(") {
+  if (input_string[0] === `(`) {
     return parseInnerList(input_string)
   }
   return parseItem(input_string)
@@ -907,13 +907,13 @@ export function parseItemOrInnerList(input_string) {
  * @return {ParsedInnerList}
  */
 export function parseInnerList(input_string) {
-  if (input_string[0] !== "(") throw new Error(err`failed to parse "${input_string}" as Inner List`)
+  if (input_string[0] !== `(`) throw new Error(err`failed to parse "${input_string}" as Inner List`)
   input_string = input_string.substring(1)
   /** @type {ItemList}  */
   const inner_list = []
   while (input_string.length > 0) {
     input_string = input_string.trim()
-    if (input_string[0] === ")") {
+    if (input_string[0] === `)`) {
       input_string = input_string.substring(1)
       const parsedParameters = parseParameters(input_string)
       const innerList = new InnerList(inner_list, parsedParameters.value)
@@ -926,7 +926,7 @@ export function parseInnerList(input_string) {
     const parsedItem = parseItem(input_string)
     inner_list.push(parsedItem.value)
     input_string = parsedItem.input_string
-    if (input_string[0] !== " " && input_string[0] !== ")") throw new Error(err`failed to parse "${input_string}" as Inner List`)
+    if (input_string[0] !== ` ` && input_string[0] !== `)`) throw new Error(err`failed to parse "${input_string}" as Inner List`)
   }
   throw new Error(err`failed to parse "${input_string}" as Inner List`)
 }
@@ -1013,7 +1013,7 @@ export function parseDictionary(input_string, option = {}) {
     /** @type {Key} */
     const this_key = parsedKey.value
     input_string = parsedKey.input_string
-    if (input_string[0] === "=") {
+    if (input_string[0] === `=`) {
       /** @type {ParsedItemOrInnerList} */
       const parsedItemOrInnerList = parseItemOrInnerList(input_string.substring(1))
       member = parsedItemOrInnerList.value
@@ -1027,9 +1027,9 @@ export function parseDictionary(input_string, option = {}) {
     value.push([this_key, member])
     input_string = input_string.trim()
     if (input_string.length === 0) return { input_string, value: toDict(value) }
-    if (input_string[0] !== ",") throw new Error(err`failed to parse "${input_string}" as Dict`)
+    if (input_string[0] !== `,`) throw new Error(err`failed to parse "${input_string}" as Dict`)
     input_string = input_string.substring(1).trim()
-    if (input_string.length === 0 || input_string[0] === ",") throw new Error(err`failed to parse "${input_string}" as Dict`)
+    if (input_string.length === 0 || input_string[0] === `,`) throw new Error(err`failed to parse "${input_string}" as Dict`)
   }
   return {
     value: toDict(value),
@@ -1190,14 +1190,14 @@ export function parseParameters(input_string) {
    */
   let parameters = null
   while (input_string.length > 0) {
-    if (input_string[0] !== ";") break
+    if (input_string[0] !== `;`) break
     input_string = input_string.substring(1).trim()
     const parsedKey = parseKey(input_string)
     const param_name = parsedKey.value
     /** @type {BareItem} */
     let param_value = true
     input_string = parsedKey.input_string
-    if (input_string[0] === "=") {
+    if (input_string[0] === `=`) {
       input_string = input_string.substring(1)
       const parsedBareItem = parseBareItem(input_string)
       param_value = parsedBareItem.value
@@ -1347,7 +1347,7 @@ export function parseIntegerOrDecimal(input_string) {
   let output_number
   let i = 0
 
-  if (input_string[i] === "-") {
+  if (input_string[i] === `-`) {
     sign = -1
     input_string = input_string.substring(1)
   }
@@ -1360,7 +1360,7 @@ export function parseIntegerOrDecimal(input_string) {
   input_number += result_integer[1]
   input_string = input_string.substring(re_integer.lastIndex)
 
-  if (input_string[0] === ".") {
+  if (input_string[0] === `.`) {
     // decimal
     if (input_number.length > 12) throw new Error(err`failed to parse "${orig_string}" as Integer or Decimal`)
     const re_decimal = /^(\.\d+)?/g
@@ -1555,9 +1555,9 @@ export function parseToken(input_string) {
  * @return {ParsedByteSequence}
  */
 export function parseByteSequence(input_string) {
-  if (input_string[0] !== ":") throw new Error(err`failed to parse "${input_string}" as Byte Sequence`)
+  if (input_string[0] !== `:`) throw new Error(err`failed to parse "${input_string}" as Byte Sequence`)
   input_string = input_string.substring(1)
-  if (input_string.includes(":") === false) throw new Error(err`failed to parse "${input_string}" as Byte Sequence`)
+  if (input_string.includes(`:`) === false) throw new Error(err`failed to parse "${input_string}" as Byte Sequence`)
   const re = /(^.*?)(:)/g
   const b64_content = re.exec(input_string)[1]
   input_string = input_string.substring(re.lastIndex)
@@ -1595,17 +1595,17 @@ export function parseByteSequence(input_string) {
  */
 export function parseBoolean(input_string) {
   let i = 0
-  if (input_string[i] !== "?") {
+  if (input_string[i] !== `?`) {
     throw new Error(err`failed to parse "${input_string}" as Boolean`)
   }
   i++
-  if (input_string[i] === "1") {
+  if (input_string[i] === `1`) {
     return {
       value: true,
       input_string: input_string.substring(++i)
     }
   }
-  if (input_string[i] === "0") {
+  if (input_string[i] === `0`) {
     return {
       value: false,
       input_string: input_string.substring(++i)
@@ -1640,7 +1640,7 @@ export function parseBoolean(input_string) {
 export function parseDate(input_string) {
   let i = 0
   // 1.  If the first character of input_string is not "@", fail parsing.
-  if (input_string[i] !== "@") {
+  if (input_string[i] !== `@`) {
     throw new Error(err`failed to parse "${input_string}" as Date`)
   }
   // 2.  Discard the first character of input_string.
