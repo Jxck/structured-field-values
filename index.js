@@ -1,5 +1,3 @@
-import { log } from "console"
-
 ;`use strict`
 
 /**
@@ -1575,7 +1573,7 @@ export function parseByteSequence(input_string) {
   input_string = input_string.substring(re.lastIndex)
 
   // 6.  If b64_content contains a character not included in ALPHA, DIGIT, "+", "/" and "=", fail parsing.
-  if (/^[a-zA-Z0-9\+\/\=]+$/.test(b64_content) === false) throw new Error(err`failed to parse "${input_string}" as Byte Sequence`)
+  if (/^[a-zA-Z0-9\+\/\=]*$/.test(b64_content) === false) throw new Error(err`failed to parse "${input_string}" as Byte Sequence`)
 
   // 7.  Let binary_content be the result of Base 64 Decoding [RFC4648]
   //     b64_content, synthesizing padding if necessary (note the

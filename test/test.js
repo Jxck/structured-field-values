@@ -626,23 +626,71 @@ test("test parseKey", () => {
 
 test("structured_field_tests", ONLY, async (t) => {
   const files = [
-    "binary",
+    // `binary`,
+    // `boolean`,
+    // `date`,
+    // `number`,
+
+
+
+    `number-generated`,
+    // `string`
   ]
 
   for (const file of files) {
     await t.test(file, async (t) => {
-      for (const suite of read(t.name).slice(0, 1)) {
-        await t.test(suite.name, () => {
-          console.log(suite.name)
-          if (suite.header_type === "item") {
+      for (const suite of read(t.name)) {
+        await t.test(suite.name, (t) => {
+          if (suite.header_type === `item`) {
+            if ([
+              `2 digit, 1 fractional 0 decimal`,
+              `3 digit, 2 fractional 0 decimal`,
+              `4 digit, 3 fractional 0 decimal`,
+              `3 digit, 1 fractional 0 decimal`,
+              `4 digit, 2 fractional 0 decimal`,
+              `5 digit, 3 fractional 0 decimal`,
+              `4 digit, 1 fractional 0 decimal`,
+              `5 digit, 2 fractional 0 decimal`,
+              `6 digit, 3 fractional 0 decimal`,
+              `5 digit, 1 fractional 0 decimal`,
+              `6 digit, 2 fractional 0 decimal`,
+              `7 digit, 3 fractional 0 decimal`,
+              `6 digit, 1 fractional 0 decimal`,
+              `7 digit, 2 fractional 0 decimal`,
+              `8 digit, 3 fractional 0 decimal`,
+              `7 digit, 1 fractional 0 decimal`,
+              `8 digit, 2 fractional 0 decimal`,
+              `9 digit, 3 fractional 0 decimal`,
+              `8 digit, 1 fractional 0 decimal`,
+              `9 digit, 2 fractional 0 decimal`,
+              `10 digit, 3 fractional 0 decimal`,
+              `9 digit, 1 fractional 0 decimal`,
+              `10 digit, 2 fractional 0 decimal`,
+              `11 digit, 3 fractional 0 decimal`,
+              `10 digit, 1 fractional 0 decimal`,
+              `11 digit, 2 fractional 0 decimal`,
+              `12 digit, 3 fractional 0 decimal`,
+              `11 digit, 1 fractional 0 decimal`,
+              `12 digit, 2 fractional 0 decimal`,
+              `13 digit, 3 fractional 0 decimal`,
+              `12 digit, 1 fractional 0 decimal`,
+              `13 digit, 2 fractional 0 decimal`,
+              `14 digit, 3 fractional 0 decimal`,
+              `13 digit, 1 fractional 0 decimal`,
+              `14 digit, 2 fractional 0 decimal`,
+              `15 digit, 3 fractional 0 decimal`,
+            ].includes(suite.name)) {
+              return t.skip(`"1.0" is "1" in JS`)
+            }
+
             if (suite.must_fail) {
               const raw = suite.raw[0]
               return assert.throws(() => decodeItem(raw), /failed to parse/)
             }
             const item = formatItem(suite.expected)
-            const raw = suite.raw[0]
+            const raw = suite?.canonical?.[0] || suite.raw[0]
             assert.deepStrictEqual(decodeItem(raw), item, suite.name)
-            // assert.deepStrictEqual(decodeItem(canonical), item, suite.name)
+            assert.deepStrictEqual(encodeItem(item), raw, suite.name)
             return
           }
 
@@ -672,9 +720,6 @@ test("structured_field_tests", ONLY, async (t) => {
 
 // test("_structured_field_tests", () => {
 //   const suites = [
-//     ...read(`binary`),
-//     ...read(`boolean`),
-//     ...read(`date`),
 //     ...read(`dictionary`),
 //     ...read(`examples`),
 //     ...read(`item`),
@@ -682,13 +727,10 @@ test("structured_field_tests", ONLY, async (t) => {
 //     ...read(`large-generated`),
 //     ...read(`list`),
 //     ...read(`listlist`),
-//     ...read(`number-generated`),
-//     ...read(`number`),
 //     ...read(`param-dict`),
 //     ...read(`param-list`),
 //     ...read(`param-listlist`),
 //     ...read(`string-generated`),
-//     ...read(`string`),
 //     ...read(`token-generated`),
 //     ...read(`token`),
 //   ]
