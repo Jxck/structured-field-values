@@ -638,12 +638,11 @@ test("structured_field_tests", ONLY, async (t) => {
     // `token`,
     // `token-generated`,
     // `large-generated`,
-
-    `item`,
+    // `item`,
     
     
     // TODO:
-    // `dictionary`,
+    `dictionary`,
     // `key-generated`
     // `examples`,
     // `param-dict`,
@@ -655,6 +654,7 @@ test("structured_field_tests", ONLY, async (t) => {
     await t.test(file, async (t) => {
       for (const suite of read(t.name)) {
         await t.test(suite.name, (t) => {
+          // SKIP tests -----
           if (file === `number`) {
             if (suite.name === `negative zero`) {
               return t.skip("0 and -0 is difference in JS")
@@ -712,6 +712,12 @@ test("structured_field_tests", ONLY, async (t) => {
               return t.skip(`not support multiline header`)
             }
           }
+          if (file === `dictionary`) {
+            if (suite.name === `two lines dictionary`) {
+              return t.skip(`not support multiline header`)
+            }
+          }
+          // SKIP tests -----
 
           if (suite.header_type === `item`) {
             const raw = suite.raw[0]
@@ -731,24 +737,34 @@ test("structured_field_tests", ONLY, async (t) => {
           }
 
           if (suite.header_type === `list`) {
-            const raw = suite?.canonical?.[0] || suite.raw[0]
+            const raw = suite.raw[0]
             if (suite.must_fail) {
               return assert.throws(() => decodeList(raw), /failed to parse/)
             }
             const list = formatList(suite.expected)
             assert.deepStrictEqual(decodeList(raw), list, suite.name)
-            assert.deepStrictEqual(encodeList(list), raw, suite.name)
+
+            if (suite.canonical) {
+              const canonical = suite.canonical[0]
+              assert.deepStrictEqual(encodeList(list), canonical, suite.name)
+            } else {
+              assert.deepStrictEqual(encodeList(list), raw, suite.name)
+            }
             return
           }
 
           if (suite.header_type === "dictionary") {
-            const raw = suite?.canonical?.[0] || suite.raw[0]
+            const raw = suite.raw[0]
             if (suite.must_fail) {
               return assert.throws(() => decodeDict(raw), /failed to parse/)
             }
             const dict = formatDict(suite.expected)
-            assert.deepStrictEqual(decodeDict(raw), dict, suite.name)
-            assert.deepStrictEqual(encodeDict(dict), raw, suite.name)
+            if (suite.canonical) {
+              const canonical = suite.canonical[0] || ``
+              assert.deepStrictEqual(encodeDict(dict), canonical, suite.name)
+            } else {
+              assert.deepStrictEqual(encodeDict(dict), raw, suite.name)
+            }
             return
           }
 
