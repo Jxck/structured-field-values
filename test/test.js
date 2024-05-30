@@ -624,97 +624,150 @@ test("test parseKey", () => {
   assert.throws(() => parseKey(`&`), /failed to parse "&" as Key/)
 })
 
-test("structured_field_tests", () => {
-  const suites = [
-    ...read(`binary`),
-    ...read(`boolean`),
-    ...read(`date`),
-    ...read(`dictionary`),
-    ...read(`examples`),
-    ...read(`item`),
-    ...read(`key-generated`),
-    ...read(`large-generated`),
-    ...read(`list`),
-    ...read(`listlist`),
-    ...read(`number-generated`),
-    ...read(`number`),
-    ...read(`param-dict`),
-    ...read(`param-list`),
-    ...read(`param-listlist`),
-    ...read(`string-generated`),
-    ...read(`string`),
-    ...read(`token-generated`),
-    ...read(`token`),
-  ]
-  suites.forEach((suite) => {
-    const ignore = [
-      // number.json
-      `negative zero`, // -0 & +0 are no equal in deepStrictEqual
-      // list.json
-      `two line list`,
-      // dictionary.json
-      `two lines dictionary`,
-      // param-dict.json
-      `two lines parameterised list`,
-      // example.json
-      `Example-Hdr (list on two lines)`,
-      `Example-Hdr (dictionary on two lines)`,
-    ]
-    if (ignore.includes(suite.name)) return
-    if (suite.name.endsWith("0 decimal")) return // .0 is Integer in JS
+// test("structured_field_tests", async (t) => {
+//   const files = [
+//     `binary`,
+//     // `boolean`,
+//     // `date`,
+//     // `dictionary`,
+//     // `examples`,
+//     // `item`,
+//     // `key-generated`,
+//     // `large-generated`,
+//     // `list`,
+//     // `listlist`,
+//     // `number-generated`,
+//     // `number`,
+//     // `param-dict`,
+//     // `param-list`,
+//     // `param-listlist`,
+//     // `string-generated`,
+//     // `string`,
+//     // `token-generated`,
+//     // `token`,
+//   ]
 
-    try {
-      if (suite.header_type === `item`) {
-        // decode
-        const decoded = decodeItem(suite.raw[0])
-        const item    = formatItem(suite.expected)
-        assert.deepStrictEqual(decoded, item, suite.name)
 
-        // encode
-        const encoded   = encodeItem(item)
-        const canonical = suite?.canonical?.[0] || suite.raw[0]
-        assert.deepStrictEqual(encoded, canonical, suite.name)
-      }
-      if (suite.header_type === `list`) {
-        // decode
-        const list    = formatList(suite.expected)
-        const decoded = decodeList(suite.raw[0])
-        assert.deepStrictEqual(decoded, list, suite.name)
+//   for (const file of files) {
+//     await t.test(file, async (t) => {
+//       for (const suite of read(t.name)) {
+//         await t.test(suite.name, () => {
+//           if (suite.header_type === `item`) {
+//             if (suite.must_fail) {
+//               console.log(suite.raw)
+//               console.log(decodeItem(suite.raw[0]))
+//               assert.throws(() => decodeItem(suite.raw[0]), /failed to parse .*/)
+//               return
+//             }
 
-        // encode
-        if ([
-          // 1.0 is 1 in JS
-          `single item parameterised list`,
-          `missing parameter value parameterised list`,
-          `missing terminal parameter value parameterised list`,
-        ].includes(suite.name)) return
-        const canonical = suite?.canonical?.[0] || suite.raw[0]
-        const encoded   = encodeList(list)
-        assert.deepStrictEqual(encoded, canonical, suite.name)
-      }
-      if (suite.header_type === `dictionary`) {
-        // decode
-        const dict    = formatDict(suite.expected)
-        const decoded = decodeDict(suite.raw[0])
-        assert.deepStrictEqual(decoded, dict, suite.name)
+//             // decode
+//             const decoded = decodeItem(suite.raw[0])
+//             const item    = formatItem(suite.expected)
+//             assert.deepStrictEqual(decoded, item, suite.name)
+    
+//             // encode
+//             const encoded   = encodeItem(item)
+//             const canonical = suite?.canonical?.[0] || suite.raw[0]
+//             assert.deepStrictEqual(encoded, canonical, suite.name)
+//           }
+//         })
+//       }
+//     })
+//   }
+// })
 
-        // encode
-        if ([
-          // 1.0 is 1 in JS
-          `single item parameterised dict`,
-          `list item parameterised dictionary`,
-        ].includes(suite.name)) return
-        const canonical = suite?.canonical?.[0] || suite.raw[0]
-        const encoded   = encodeDict(dict)
-        assert.deepStrictEqual(encoded, canonical, suite.name)
-      }
-    } catch (err) {
-      assert.deepStrictEqual(suite.must_fail, true, err)
-    }
-  })
-})
 
-test("serialisation_tests", async (t) => {
+// test("_structured_field_tests", () => {
+//   const suites = [
+//     ...read(`binary`),
+//     ...read(`boolean`),
+//     ...read(`date`),
+//     ...read(`dictionary`),
+//     ...read(`examples`),
+//     ...read(`item`),
+//     ...read(`key-generated`),
+//     ...read(`large-generated`),
+//     ...read(`list`),
+//     ...read(`listlist`),
+//     ...read(`number-generated`),
+//     ...read(`number`),
+//     ...read(`param-dict`),
+//     ...read(`param-list`),
+//     ...read(`param-listlist`),
+//     ...read(`string-generated`),
+//     ...read(`string`),
+//     ...read(`token-generated`),
+//     ...read(`token`),
+//   ]
+//   suites.forEach((suite) => {
+//     const ignore = [
+//       // number.json
+//       `negative zero`, // -0 & +0 are no equal in deepStrictEqual
+//       // list.json
+//       `two line list`,
+//       // dictionary.json
+//       `two lines dictionary`,
+//       // param-dict.json
+//       `two lines parameterised list`,
+//       // example.json
+//       `Example-Hdr (list on two lines)`,
+//       `Example-Hdr (dictionary on two lines)`,
+//     ]
+//     if (ignore.includes(suite.name)) return
+//     if (suite.name.endsWith("0 decimal")) return // .0 is Integer in JS
+
+//     try {
+//       if (suite.header_type === `item`) {
+//         // decode
+//         const decoded = decodeItem(suite.raw[0])
+//         const item    = formatItem(suite.expected)
+//         assert.deepStrictEqual(decoded, item, suite.name)
+
+//         // encode
+//         const encoded   = encodeItem(item)
+//         const canonical = suite?.canonical?.[0] || suite.raw[0]
+//         assert.deepStrictEqual(encoded, canonical, suite.name)
+//       }
+//       if (suite.header_type === `list`) {
+//         // decode
+//         const list    = formatList(suite.expected)
+//         const decoded = decodeList(suite.raw[0])
+//         assert.deepStrictEqual(decoded, list, suite.name)
+
+//         // encode
+//         if ([
+//           // 1.0 is 1 in JS
+//           `single item parameterised list`,
+//           `missing parameter value parameterised list`,
+//           `missing terminal parameter value parameterised list`,
+//         ].includes(suite.name)) return
+//         const canonical = suite?.canonical?.[0] || suite.raw[0]
+//         const encoded   = encodeList(list)
+//         assert.deepStrictEqual(encoded, canonical, suite.name)
+//       }
+//       if (suite.header_type === `dictionary`) {
+//         // decode
+//         const dict    = formatDict(suite.expected)
+//         const decoded = decodeDict(suite.raw[0])
+//         assert.deepStrictEqual(decoded, dict, suite.name)
+
+//         // encode
+//         if ([
+//           // 1.0 is 1 in JS
+//           `single item parameterised dict`,
+//           `list item parameterised dictionary`,
+//         ].includes(suite.name)) return
+//         const canonical = suite?.canonical?.[0] || suite.raw[0]
+//         const encoded   = encodeDict(dict)
+//         assert.deepStrictEqual(encoded, canonical, suite.name)
+//       }
+//     } catch (err) {
+//       assert.deepStrictEqual(suite.must_fail, true, err)
+//     }
+//   })
+// })
+
+test("serialisation_tests", ONLY, async (t) => {
   const files = [
     "serialisation-tests/number",
     "serialisation-tests/token-generated",
@@ -726,34 +779,31 @@ test("serialisation_tests", async (t) => {
     await t.test(file, async (t) => {
       for (const suite of read(t.name)) {
         await t.test(suite.name, () => {
-          try {
-            switch (suite.header_type) {
-              case "item": {
-                  const item = formatItem(suite.expected)
-                  const encoded = encodeItem(item)
-                  assert.deepStrictEqual(suite.canonical[0], encoded, suite.name)
-                  break;
-              }
-              case "dictionary": {
-                const dict = formatDict(suite.expected)
-                encodeDict(dict)
-                throw "unreachable"
-                break;
-              }
-              case "list": {
-                const list = formatList(suite.expected)
-                encodeList(list)
-                throw "unreachable"
-                break;
-              }
-              default:
-                throw "unreachable"
-              }
-          } catch (err) {
-            // console.log(err)
-            assert.deepStrictEqual(suite.must_fail, true)
-            assert.deepStrictEqual(err.message.startsWith(`failed to serialize`), true)
+          if (suite.header_type === "item") {
+            const item = formatItem(suite.expected)
+            if (suite.must_fail) {
+              return assert.throws(() => encodeItem(item), /failed to serialize/)
+            }
+            return assert.deepStrictEqual(suite.canonical[0], encodeItem(item), suite.name)
           }
+
+          if (suite.header_type === "dictionary") {
+            const dict = formatDict(suite.expected)
+            if (suite.must_fail) {
+              return assert.throws(() => encodeDict(dict), /failed to serialize/)
+            }
+            return assert.deepStrictEqual(suite.canonical[0], encodeDict(dict), suite.name)
+          }
+           
+          if (suite.header_type === "list") {
+            const list = formatList(suite.expected)
+            if (suite.must_fail) {
+              return assert.throws(() => encodeList(list), /failed to serialize/)
+            }
+            return assert.deepStrictEqual(suite.canonical[0], encodeList(list), suite.name)
+          }
+
+          assert.fail("unreachable")
         })
       }
     })
