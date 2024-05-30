@@ -104,7 +104,8 @@ export function serializeDate(value: Date): string;
  */
 export function serializeDisplayString(input_sequence: string): string;
 /**
- * @typedef {Array.<Item|InnerList>} MemberList
+ * allow BareItem (JS Primitives) for usability
+ * @typedef {Array.<Item|InnerList|BareItem|Array<BareItem>>} MemberList
  *
  * @typedef {Object} ParsedList
  * @property {MemberList} value
@@ -133,7 +134,7 @@ export function parseItemOrInnerList(input_string: string): ParsedItemOrInnerLis
  */
 export function parseInnerList(input_string: string): ParsedInnerList;
 /**
- * @typedef {Object.<string, Item|InnerList>|Map.<string, Item|InnerList>} Dictionary
+ * @typedef {Object.<string, Item|InnerList|BareItem|Array<BareItem>>|Map.<string, Item|InnerList|BareItem|Array<BareItem>>} Dictionary
  *
  * @typedef {Object} ParsedDictionary
  * @property {Dictionary} value
@@ -279,7 +280,13 @@ export class InnerList {
         [x: string]: BareItem;
     };
 }
-export type MemberList = Array<Item | InnerList>;
+/**
+ * allow BareItem (JS Primitives) for usability
+ */
+export type MemberList = Array<Item | InnerList | BareItem | Array<BareItem>>;
+/**
+ * allow BareItem (JS Primitives) for usability
+ */
 export type ParsedList = {
     value: MemberList;
     input_string: string;
@@ -291,8 +298,8 @@ export type ParsedInnerList = {
     input_string: string;
 };
 export type Dictionary = {
-    [x: string]: Item | InnerList;
-} | Map<string, Item | InnerList>;
+    [x: string]: Item | InnerList | BareItem | Array<BareItem>;
+} | Map<string, Item | InnerList | BareItem | Array<BareItem>>;
 export type ParsedDictionary = {
     value: Dictionary;
     input_string: string;

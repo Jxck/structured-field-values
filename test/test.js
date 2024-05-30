@@ -669,20 +669,20 @@ test("structured_field_tests", () => {
     try {
       if (suite.header_type === `item`) {
         // decode
-        const obj     = formatItem(suite.expected)
         const decoded = decodeItem(suite.raw[0])
-        assert.deepStrictEqual(decoded, obj, suite.name)
+        const item    = formatItem(suite.expected)
+        assert.deepStrictEqual(decoded, item, suite.name)
 
         // encode
-        const str     = suite?.canonical?.[0] || suite.raw[0]
-        const encoded = encodeItem(obj)
-        assert.deepStrictEqual(str, encoded, suite.name)
+        const encoded   = encodeItem(item)
+        const canonical = suite?.canonical?.[0] || suite.raw[0]
+        assert.deepStrictEqual(encoded, canonical, suite.name)
       }
       if (suite.header_type === `list`) {
         // decode
-        const obj     = formatList(suite.expected)
+        const list    = formatList(suite.expected)
         const decoded = decodeList(suite.raw[0])
-        assert.deepStrictEqual(decoded, obj, suite.name)
+        assert.deepStrictEqual(decoded, list, suite.name)
 
         // encode
         if ([
@@ -691,15 +691,15 @@ test("structured_field_tests", () => {
           `missing parameter value parameterised list`,
           `missing terminal parameter value parameterised list`,
         ].includes(suite.name)) return
-        const str     = suite?.canonical?.[0] || suite.raw[0]
-        const encoded = encodeList(obj)
-        assert.deepStrictEqual(str, encoded, suite.name)
+        const canonical = suite?.canonical?.[0] || suite.raw[0]
+        const encoded   = encodeList(list)
+        assert.deepStrictEqual(encoded, canonical, suite.name)
       }
       if (suite.header_type === `dictionary`) {
         // decode
-        const obj     = formatDict(suite.expected)
+        const dict    = formatDict(suite.expected)
         const decoded = decodeDict(suite.raw[0])
-        assert.deepStrictEqual(decoded, obj, suite.name)
+        assert.deepStrictEqual(decoded, dict, suite.name)
 
         // encode
         if ([
@@ -707,9 +707,10 @@ test("structured_field_tests", () => {
           `single item parameterised dict`,
           `list item parameterised dictionary`,
         ].includes(suite.name)) return
-        const str     = suite?.canonical?.[0] || suite.raw[0]
-        const encoded = encodeDict(obj)
-        assert.deepStrictEqual(str, encoded, suite.name)
+        const canonical = suite?.canonical?.[0] || suite.raw[0]
+        const encoded   = encodeDict(dict)
+        console.log({canonical, encoded})
+        assert.deepStrictEqual(encoded, canonical, suite.name)
       }
     } catch (err) {
       assert.deepStrictEqual(suite.must_fail, true, err)

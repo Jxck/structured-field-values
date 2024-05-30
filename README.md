@@ -105,10 +105,10 @@ decodeList(`a;x,"b";y=?0,10,(1 2)`)
 //   Item { value: Symbol(a), params: { x: true } },
 //   Item { value: `b`,       params: { y: false } },
 //   Item { value: 10,        params: null },
-//   Item { value: [
-//                   { value: 1, params: null }
-//                   { value: 2, params: null }
-//                 ], params: null }
+//   InnerList { value: [
+//                   Item { value: 1, params: null }
+//                   Item { value: 2, params: null }
+//               ], params: null }
 // ]
 ```
 
@@ -122,6 +122,14 @@ encodeList([
   new Item(1),
   new Item(2),
   new Item(3)
+])
+
+// a, "b", 10, (1 2)
+encodeList([
+  Symbol.for('a'),
+  `b`,
+  10,
+  [1, 2]
 ])
 
 // `a;x, "b";y=?0, 10, (1 2)`
@@ -145,10 +153,10 @@ decodeDict(`a=x, b="y", c=10, d=?0, e=(1 2)`)
 //   b: Item { value: 'y',       params: null },
 //   c: Item { value: 10,        params: null },
 //   d: Item { value: false,     params: null },
-//   e: Item { value: [
+//   e: InnerList { value: [
 //                      Item { value: 1, params: null }
 //                      Item { value: 2, params: null }
-//                    ], params: null }
+//                  ], params: null }
 // }
 ```
 
@@ -165,11 +173,10 @@ encodeDict({
 
 // `a=10, b=20, c=30`
 encodeDict(new Map([
-                     ['a', 10],
-                     ['b', 20],
-                     ['c', 30],
-                   ])
-),
+  ['a', 10],
+  ['b', 20],
+  ['c', 30],
+]))
 
 
 // `a=x, b="y", c=10, d=?0, e=:AQID:, f=(10 20)`

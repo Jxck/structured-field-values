@@ -1,4 +1,4 @@
-`use strict`
+;`use strict`
 
 /**
  * Tagged Template Literal for Error message
@@ -184,10 +184,22 @@ export function serializeList(list) {
   if (Array.isArray(list) === false) throw new Error(err`failed to serialize "${list}" as List`)
   return list
     .map((item) => {
-      if (Array.isArray(item.value)) {
-        return serializeInnerList(/**@type {InnerList}*/ (item))
+      if (item instanceof Item) {
+        return serializeItem(item)
       }
-      return serializeItem(/**@type {Item}*/ (item))
+      if (item instanceof InnerList) {
+        return serializeInnerList(item)
+      }
+      if (Array.isArray(item)) {
+        const innerList = new InnerList(
+          item.map((_item) => {
+            if (_item instanceof Item) return _item
+            return new Item(_item)
+          })
+        )
+        return serializeInnerList(innerList)
+      }
+      return serializeItem(new Item(item))
     })
     .join(", ")
 }
@@ -338,17 +350,28 @@ export function serializeDict(dict) {
   return Array.from(entries)
     .map(([key, item]) => {
       let output = serializeKey(key)
-      if (item.value === true) {
-        output += serializeParams(item.params)
-      } else {
-        output += "="
-        if (Array.isArray(item.value)) {
-          output += serializeInnerList(/**@type {InnerList}*/ (item))
-        } else {
-          output += serializeItem(/**@type {Item}*/ (item))
+      if (item instanceof Item) {
+        if (item.value === true) {
+          return output + serializeParams(item.params)
         }
+        return output + `=${serializeItem(item)}`
       }
-      return output
+      if (item instanceof InnerList) {
+        return output + `=${serializeInnerList(item)}`
+      }
+      if (Array.isArray(item)) {
+        const innerList = new InnerList(
+          item.map((_item) => {
+            if (_item instanceof Item) return _item
+            return new Item(_item)
+          })
+        )
+        return output + `=${serializeInnerList(innerList)}`
+      }
+      if (item === true) {
+        return output
+      }
+      return output + `=${serializeItem(new Item(item))}`
     })
     .join(", ")
 }
@@ -785,7 +808,8 @@ export function serializeDisplayString(input_sequence) {
 // 3.  No structured data has been found; return members (which is
 //     empty).
 /**
- * @typedef {Array.<Item|InnerList>} MemberList
+ * allow BareItem (JS Primitives) for usability
+ * @typedef {Array.<Item|InnerList|BareItem|Array<BareItem>>} MemberList
  *
  * @typedef {Object} ParsedList
  * @property {MemberList} value
@@ -958,7 +982,7 @@ export function parseInnerList(input_string) {
 // Note that when duplicate Dictionary keys are encountered, this has
 // the effect of ignoring all but the last instance.
 /**
- * @typedef {Object.<string, Item|InnerList>|Map.<string, Item|InnerList>} Dictionary
+ * @typedef {Object.<string, Item|InnerList|BareItem|Array<BareItem>>|Map.<string, Item|InnerList|BareItem|Array<BareItem>>} Dictionary
  *
  * @typedef {Object} ParsedDictionary
  * @property {Dictionary} value
@@ -1745,3 +1769,11 @@ export function base64decode(str) {
 export function base64encode(binary) {
   return btoa(String.fromCharCode(...binary))
 }
+
+console.log(
+  encodeDict({
+    a: new Item(1),
+    b: new Item(true),
+    c: new Item(3)
+  })
+)

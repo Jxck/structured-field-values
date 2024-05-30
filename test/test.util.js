@@ -61,7 +61,9 @@ export function formatDict(expected) {
 }
 
 function formatValue(value, params) {
-  return Array.isArray(value) ? new InnerList(value.map(formatItem), formatParams(params)) : new Item(format(value), formatParams(params))
+  return Array.isArray(value)
+    ? new InnerList(value.map(formatItem), formatParams(params))
+    : new Item(format(value), formatParams(params))
 }
 
 function formatParams(params) {
