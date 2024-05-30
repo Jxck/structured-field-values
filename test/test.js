@@ -624,57 +624,50 @@ test("test parseKey", () => {
   assert.throws(() => parseKey(`&`), /failed to parse "&" as Key/)
 })
 
-// test("structured_field_tests", async (t) => {
-//   const files = [
-//     `binary`,
-//     // `boolean`,
-//     // `date`,
-//     // `dictionary`,
-//     // `examples`,
-//     // `item`,
-//     // `key-generated`,
-//     // `large-generated`,
-//     // `list`,
-//     // `listlist`,
-//     // `number-generated`,
-//     // `number`,
-//     // `param-dict`,
-//     // `param-list`,
-//     // `param-listlist`,
-//     // `string-generated`,
-//     // `string`,
-//     // `token-generated`,
-//     // `token`,
-//   ]
+test("structured_field_tests", ONLY, async (t) => {
+  const files = [
+    "binary",
+  ]
 
+  for (const file of files) {
+    await t.test(file, async (t) => {
+      for (const suite of read(t.name).slice(0, 1)) {
+        await t.test(suite.name, () => {
+          console.log(suite.name)
+          if (suite.header_type === "item") {
+            if (suite.must_fail) {
+              const raw = suite.raw[0]
+              return assert.throws(() => decodeItem(raw), /failed to parse/)
+            }
+            const item = formatItem(suite.expected)
+            const raw = suite.raw[0]
+            assert.deepStrictEqual(decodeItem(raw), item, suite.name)
+            // assert.deepStrictEqual(decodeItem(canonical), item, suite.name)
+            return
+          }
 
-//   for (const file of files) {
-//     await t.test(file, async (t) => {
-//       for (const suite of read(t.name)) {
-//         await t.test(suite.name, () => {
-//           if (suite.header_type === `item`) {
-//             if (suite.must_fail) {
-//               console.log(suite.raw)
-//               console.log(decodeItem(suite.raw[0]))
-//               assert.throws(() => decodeItem(suite.raw[0]), /failed to parse .*/)
-//               return
-//             }
+          // if (suite.header_type === "dictionary") {
+          //   const dict = formatDict(suite.expected)
+          //   if (suite.must_fail) {
+          //     return assert.throws(() => encodeDict(dict), /failed to serialize/)
+          //   }
+          //   return assert.deepStrictEqual(suite.canonical[0], encodeDict(dict), suite.name)
+          // }
+           
+          // if (suite.header_type === "list") {
+          //   const list = formatList(suite.expected)
+          //   if (suite.must_fail) {
+          //     return assert.throws(() => encodeList(list), /failed to serialize/)
+          //   }
+          //   return assert.deepStrictEqual(suite.canonical[0], encodeList(list), suite.name)
+          // }
 
-//             // decode
-//             const decoded = decodeItem(suite.raw[0])
-//             const item    = formatItem(suite.expected)
-//             assert.deepStrictEqual(decoded, item, suite.name)
-    
-//             // encode
-//             const encoded   = encodeItem(item)
-//             const canonical = suite?.canonical?.[0] || suite.raw[0]
-//             assert.deepStrictEqual(encoded, canonical, suite.name)
-//           }
-//         })
-//       }
-//     })
-//   }
-// })
+          assert.fail("unreachable")
+        })
+      }
+    })
+  }
+})
 
 
 // test("_structured_field_tests", () => {
@@ -767,7 +760,7 @@ test("test parseKey", () => {
 //   })
 // })
 
-test("serialisation_tests", ONLY, async (t) => {
+test("serialisation_tests", async (t) => {
   const files = [
     "serialisation-tests/number",
     "serialisation-tests/token-generated",

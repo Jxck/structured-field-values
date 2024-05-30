@@ -1,3 +1,5 @@
+import { log } from "console"
+
 ;`use strict`
 
 /**
@@ -1555,14 +1557,32 @@ export function parseToken(input_string) {
  * @return {ParsedByteSequence}
  */
 export function parseByteSequence(input_string) {
+  // 1.  If the first character of input_string is not ":", fail parsing.
   if (input_string[0] !== `:`) throw new Error(err`failed to parse "${input_string}" as Byte Sequence`)
+
+  // 2.  Discard the first character of input_string.
   input_string = input_string.substring(1)
+
+  // 3.  If there is not a ":" character before the end of input_string, fail parsing.
   if (input_string.includes(`:`) === false) throw new Error(err`failed to parse "${input_string}" as Byte Sequence`)
+
+  // 4.  Let b64_content be the result of consuming content of
+  //     input_string up to but not including the first instance of the
+  //     character ":".
+  // 5.  Consume the ":" character at the beginning of input_string.
   const re = /(^.*?)(:)/g
   const b64_content = re.exec(input_string)[1]
   input_string = input_string.substring(re.lastIndex)
-  // pass b64_content char check step 6
+
+  // 6.  If b64_content contains a character not included in ALPHA, DIGIT, "+", "/" and "=", fail parsing.
+  if (/^[a-zA-Z0-9\+\/\=]+$/.test(b64_content) === false) throw new Error(err`failed to parse "${input_string}" as Byte Sequence`)
+
+  // 7.  Let binary_content be the result of Base 64 Decoding [RFC4648]
+  //     b64_content, synthesizing padding if necessary (note the
+  //     requirements about recipient behavior below).
   const binary_content = base64decode(b64_content)
+
+  // 8.  Return binary_content.
   return {
     value: binary_content,
     input_string
