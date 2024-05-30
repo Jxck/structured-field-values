@@ -699,16 +699,23 @@ test("structured_field_tests", ONLY, async (t) => {
               return t.skip(`non-ascii string will be encoded as Display String`)
             }
 
+            const raw = suite?.canonical?.[0] || suite.raw[0]
             if (suite.must_fail) {
-              const raw = suite.raw[0]
               return assert.throws(() => decodeItem(raw), /failed to parse/)
             }
             const item = formatItem(suite.expected)
-            const raw = suite?.canonical?.[0] || suite.raw[0]
             assert.deepStrictEqual(decodeItem(raw), item, suite.name)
             assert.deepStrictEqual(encodeItem(item), raw, suite.name)
             return
           }
+
+          // if (suite.header_type === `list`) {
+          //   if (suite.must_fail) {
+          //     const list = formatList(suite.expected)
+          //     return assert.throws(() => encodeList(list), /failed to serialize/)
+          //   }
+          //   return assert.deepStrictEqual(suite.canonical[0], encodeList(list), suite.name)
+          // }
 
           // if (suite.header_type === "dictionary") {
           //   const dict = formatDict(suite.expected)
@@ -717,14 +724,7 @@ test("structured_field_tests", ONLY, async (t) => {
           //   }
           //   return assert.deepStrictEqual(suite.canonical[0], encodeDict(dict), suite.name)
           // }
-           
-          // if (suite.header_type === "list") {
-          //   const list = formatList(suite.expected)
-          //   if (suite.must_fail) {
-          //     return assert.throws(() => encodeList(list), /failed to serialize/)
-          //   }
-          //   return assert.deepStrictEqual(suite.canonical[0], encodeList(list), suite.name)
-          // }
+
 
           assert.fail("unreachable")
         })
