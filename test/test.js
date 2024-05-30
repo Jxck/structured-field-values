@@ -640,7 +640,7 @@ test("structured_field_tests", ONLY, async (t) => {
     // TODO:
     // `item`,
     // `key-generated`
-    // `dictionary`,
+    `dictionary`,
     // `examples`,
     // `large-generated`,
     // `param-dict`,
@@ -729,14 +729,16 @@ test("structured_field_tests", ONLY, async (t) => {
             return
           }
 
-          // if (suite.header_type === "dictionary") {
-          //   const dict = formatDict(suite.expected)
-          //   if (suite.must_fail) {
-          //     return assert.throws(() => encodeDict(dict), /failed to serialize/)
-          //   }
-          //   return assert.deepStrictEqual(suite.canonical[0], encodeDict(dict), suite.name)
-          // }
-
+          if (suite.header_type === "dictionary") {
+            const raw = suite?.canonical?.[0] || suite.raw[0]
+            if (suite.must_fail) {
+              return assert.throws(() => decodeDict(raw), /failed to parse/)
+            }
+            const dict = formatDict(suite.expected)
+            assert.deepStrictEqual(decodeDict(raw), dict, suite.name)
+            assert.deepStrictEqual(encodeDict(dict), raw, suite.name)
+            return
+          }
 
           assert.fail("unreachable")
         })

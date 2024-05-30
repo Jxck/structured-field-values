@@ -12,6 +12,7 @@
     "listlist",
     "parameterised",
     "serialisation",
+    "serialise",
     "sfbis",
     "tchar",
     "VCHAR"
