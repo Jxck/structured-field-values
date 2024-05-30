@@ -119,7 +119,10 @@ export function decodeItem(input) {
   try {
     // 2.  Discard any leading SP characters from input_string.
     input = input.replace(/^ +/, "")
-    const { input_string, value } = parseItem(input)
+    let { input_string, value } = parseItem(input)
+
+    // 6.  Discard any leading SP characters from input_string.
+    input_string = input_string.replace(/^ +/, "")
     if (input_string !== ``) throw new Error(err`failed to parse "${input_string}" as Item`)
     return value
   } catch (cause) {
