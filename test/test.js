@@ -3,6 +3,7 @@ import test from "node:test"
 
 import {
   Item,
+  InnerList,
 
   encodeItem,
   encodeList,
@@ -57,6 +58,9 @@ import {
   formatList,
   formatDict,
 } from "./test.util.js"
+
+const ONLY = { only: true }
+const SKIP = { skip: true }
 
 test("test serializeList", () => {
   assert.deepStrictEqual(serializeList([1, 2, 3]), "1, 2, 3")
@@ -221,10 +225,14 @@ test("test decode", () => {
 
   assert.deepStrictEqual(decodeList(``), [])
   assert.deepStrictEqual(decodeList(`("foo"; a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), [
-    new Item([
-      new Item("foo", { "a": 1, "b": 2 })
-    ], { "lvl": 5 }),
-    new Item(["bar", "baz"], { "lvl": 1 }),
+    new InnerList(
+      [new Item("foo", {a: 1, b: 2})],
+      { "lvl": 5 }
+    ),
+    new InnerList(
+      [new Item("bar"), new Item("baz")],
+      { "lvl": 1 }
+    ),
   ])
 
   assert.throws(() => decodeList(`1,2,3)`), (err) => {
@@ -240,10 +248,10 @@ test("test decode", () => {
 
   assert.deepStrictEqual(decodeDict(``), {})
   assert.deepStrictEqual(decodeDict(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {
-    "a": new Item([1,2]),
+    "a": new InnerList([new Item(1), new Item(2)]),
     "b": new Item(3),
     "c": new Item(4, { "aa": s("bb") }),
-    "d": new Item([5,6], { "valid": true })
+    "d": new InnerList([new Item(5), new Item(6)], { "valid": true })
   })
   assert.throws(() => decodeDict(`a=1, b=2)`), (err) => {
     assert.deepStrictEqual(err.message,       `failed to parse "a=1, b=2)" as Dict`)
@@ -440,7 +448,7 @@ test("test parseDate", () => {
   assert.throws(() => parseDate(``), /failed to parse "" as Date/)
 })
 
-test("test parseDisplayString", {only: true}, () => {
+test("test parseDisplayString", () => {
   assert.deepStrictEqual(parseDisplayString(`%"foo bar"`), {value: "foo bar", input_string: ``})
   assert.deepStrictEqual(parseDisplayString(`%"f%c3%bc%c3%bc"`), {value: "füü", input_string: ``})
   assert.throws(() => parseDisplayString(``), /failed to parse "" as Display String/)

@@ -22,16 +22,21 @@ function err(strings, ...keys) {
 
 export class Item {
   /**
-   * @property {BareItem} value
-   * @property {Parameters} params
+   * @param {BareItem} value
+   * @param {Parameters} params
    */
   constructor(value, params = null) {
-    if (Array.isArray(value)) {
-      value = value.map((v) => {
-        if (v instanceof Item) return v
-        return new Item(v)
-      })
-    }
+    this.value = value
+    this.params = params
+  }
+}
+
+export class InnerList {
+  /**
+   * @param {ItemList} value
+   * @param {Parameters} params
+   */
+  constructor(value, params = null) {
     this.value = value
     this.params = params
   }
@@ -179,11 +184,10 @@ export function serializeList(list) {
   if (Array.isArray(list) === false) throw new Error(err`failed to serialize "${list}" as List`)
   return list
     .map((item) => {
-      if (item instanceof Item === false) item = new Item(item)
       if (Array.isArray(item.value)) {
-        return serializeInnerList(item)
+        return serializeInnerList(/**@type {InnerList}*/ (item))
       }
-      return serializeItem(item)
+      return serializeItem(/**@type {Item}*/ (item))
     })
     .join(", ")
 }
@@ -333,16 +337,15 @@ export function serializeDict(dict) {
   const entries = dict instanceof Map ? dict.entries() : Object.entries(dict)
   return Array.from(entries)
     .map(([key, item]) => {
-      if (item instanceof Item === false) item = new Item(item)
       let output = serializeKey(key)
       if (item.value === true) {
         output += serializeParams(item.params)
       } else {
         output += "="
         if (Array.isArray(item.value)) {
-          output += serializeInnerList(item)
+          output += serializeInnerList(/**@type {InnerList}*/ (item))
         } else {
-          output += serializeItem(item)
+          output += serializeItem(/**@type {Item}*/ (item))
         }
       }
       return output
@@ -872,8 +875,6 @@ export function parseItemOrInnerList(input_string) {
 /**
  * @typedef {Array.<Item>} ItemList
  *
- * @typedef {{value: ItemList, params: Parameters}} InnerList
- *
  * @typedef {Object} ParsedInnerList
  * @property {InnerList} value
  * @property {string} input_string
@@ -891,8 +892,9 @@ export function parseInnerList(input_string) {
     if (input_string[0] === ")") {
       input_string = input_string.substring(1)
       const parsedParameters = parseParameters(input_string)
+      const innerList = new InnerList(inner_list, parsedParameters.value)
       return {
-        value: new Item(inner_list, parsedParameters.value),
+        value: innerList,
         input_string: parsedParameters.input_string
       }
     }
