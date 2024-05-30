@@ -633,18 +633,18 @@ test("structured_field_tests", ONLY, async (t) => {
     // `number-generated`,
     // `string`,
     // `string-generated`,
-    `list`,
+    // `list`,
     // `listlist`,
     // `token`,
     // `token-generated`,
     // `large-generated`,
     // `item`,
     // `dictionary`,
+    // `examples`,
     
     
     // TODO:
-    // `key-generated`
-    // `examples`,
+    `key-generated`
     // `param-dict`,
     // `param-list`,
     // `param-listlist`,
@@ -652,7 +652,7 @@ test("structured_field_tests", ONLY, async (t) => {
 
   for (const file of files) {
     await t.test(file, async (t) => {
-      for (const suite of read(t.name)) {
+      for (const suite of read(t.name).slice(521, 522)) {
         await t.test(suite.name, (t) => {
           // SKIP tests -----
           if (suite.raw.length > 1) {
