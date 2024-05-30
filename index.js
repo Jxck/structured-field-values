@@ -1,6 +1,4 @@
-import * as assert from "assert"
-
-;`use strict`
+`use strict`
 
 /**
  * Tagged Template Literal for Error message

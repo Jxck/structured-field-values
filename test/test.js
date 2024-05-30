@@ -507,7 +507,7 @@ test("test parseList", () => {
   assert.throws(() => parseList(`("aaa"),`), /failed to parse "" as List/)
 })
 
-test("test parseInnerList", ONLY, () => {
+test("test parseInnerList", () => {
   assert.deepStrictEqual(parseInnerList(`( 1 2 3 )`), {
     value: new InnerList([
       new Item(1),
