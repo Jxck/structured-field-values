@@ -45,6 +45,8 @@ import {
 
   base64decode,
   base64encode,
+  leadingSP,
+  leadingOWS
 } from "../index.js"
 
 import {
@@ -61,6 +63,20 @@ import {
 
 const ONLY = { only: true }
 const SKIP = { skip: true }
+
+test("test utility", async (t) => {
+  await t.test("test leadingSP", () => {
+    assert.deepStrictEqual(leadingSP("   a "), "a ")
+    assert.deepStrictEqual(leadingSP(" \t  a "), "\t  a ")
+    assert.deepStrictEqual(leadingSP("a "), "a ")
+  })
+
+  await t.test("test leadingOWS", () => {
+    assert.deepStrictEqual(leadingOWS("   a "), "a ")
+    assert.deepStrictEqual(leadingOWS("\t  a "), "a ")
+    assert.deepStrictEqual(leadingOWS("a "), "a ")
+  })
+})
 
 test("test serializeList", () => {
   assert.deepStrictEqual(serializeList([1, 2, 3]), "1, 2, 3")

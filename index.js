@@ -1791,3 +1791,26 @@ export function base64decode(str) {
 export function base64encode(binary) {
   return btoa(String.fromCharCode(...binary))
 }
+
+/////////////////////////
+// trim utility
+/////////////////////////
+/**
+ * Discard any leading SP characters from input_string
+ *
+ * @param {string} input_string
+ * @return {string}
+ */
+export function leadingSP(input_string) {
+  return input_string.replace(/^ +/, "")
+}
+
+/**
+ * Discard any leading OWS characters from input_string.
+ *
+ * @param {string} input_string
+ * @return {string}
+ */
+export function leadingOWS(input_string) {
+  return input_string.replace(/^[ \t]+/, "")
+}
