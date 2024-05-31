@@ -642,33 +642,30 @@ test("test parseKey", () => {
 
 test("structured_field_tests", ONLY, async (t) => {
   const files = [
-    // `binary`,
-    // `boolean`,
-    // `date`,
-    // `number`,
-    // `number-generated`,
-    // `string`,
-    // `string-generated`,
-    // `list`,
-    // `listlist`,
-    // `token`,
-    // `token-generated`,
-    // `large-generated`,
-    // `item`,
-    // `dictionary`,
-    // `examples`,
-    
-    
-    // TODO:
-    `key-generated`
-    // `param-dict`,
-    // `param-list`,
-    // `param-listlist`,
+    `binary`,
+    `boolean`,
+    `date`,
+    `number`,
+    `number-generated`,
+    `string`,
+    `string-generated`,
+    `list`,
+    `listlist`,
+    `token`,
+    `token-generated`,
+    `large-generated`,
+    `item`,
+    `dictionary`,
+    `examples`,
+    `key-generated`,
+    `param-dict`,
+    `param-list`,
+    `param-listlist`,
   ]
 
   for (const file of files) {
     await t.test(file, async (t) => {
-      for (const suite of read(t.name).slice(521, 522)) {
+      for (const suite of read(t.name)) {
         await t.test(suite.name, (t) => {
           // SKIP tests -----
           if (suite.raw.length > 1) {
@@ -724,6 +721,23 @@ test("structured_field_tests", ONLY, async (t) => {
           if (file === `string`) {
             if (suite.name === `non-ascii string`) {
               return t.skip(`non-ascii string will be encoded as Display String`)
+            }
+          }
+          if (file === `param-dict`) {
+            if ([
+              `single item parameterised dict`,
+              `list item parameterised dictionary`
+            ].includes(suite.name)) {
+              return t.skip(`"1.0" is "1" in JS`)
+            }
+          }
+          if (file === `param-list`) {
+            if ([
+              `single item parameterised list`,
+              `missing parameter value parameterised list`,
+              `missing terminal parameter value parameterised list`,
+            ].includes(suite.name)) {
+              return t.skip(`"1.0" is "1" in JS`)
             }
           }
           // SKIP tests -----

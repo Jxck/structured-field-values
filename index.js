@@ -118,11 +118,11 @@ export function encodeDict(value) {
 export function decodeItem(input) {
   try {
     // 2.  Discard any leading SP characters from input_string.
-    input = input.replace(/^ +/, "")
+    input = leadingSP(input)
     let { input_string, value } = parseItem(input)
 
     // 6.  Discard any leading SP characters from input_string.
-    input_string = input_string.replace(/^ +/, "")
+    input_string = leadingSP(input_string)
     if (input_string !== ``) throw new Error(err`failed to parse "${input_string}" as Item`)
     return value
   } catch (cause) {
@@ -136,7 +136,13 @@ export function decodeItem(input) {
  */
 export function decodeList(input) {
   try {
-    const { input_string, value } = parseList(input.trim())
+    // 2.  Discard any leading SP characters from input_string.
+    input = leadingSP(input)
+    let { input_string, value } = parseList(input)
+
+    // 6.  Discard any leading SP characters from input_string.
+    input_string = leadingSP(input_string)
+
     if (input_string !== ``) throw new Error(err`failed to parse "${input_string}" as List`)
     return value
   } catch (cause) {
@@ -150,7 +156,13 @@ export function decodeList(input) {
  */
 export function decodeDict(input) {
   try {
-    const { input_string, value } = parseDictionary(input.trim())
+    // 2.  Discard any leading SP characters from input_string.
+    input = leadingSP(input)
+    let { input_string, value } = parseDictionary(input)
+
+    // 6.  Discard any leading SP characters from input_string.
+    input_string = leadingSP(input_string)
+
     if (input_string !== ``) throw new Error(err`failed to parse "${input_string}" as Dict`)
     return value
   } catch (cause) {
@@ -824,18 +836,34 @@ export function serializeDisplayString(input_sequence) {
  * @return {ParsedList}
  */
 export function parseList(input_string) {
+  // 1.  Let members be an empty array.
   /** @type {MemberList} */
   const members = []
+
+  // 2.  While input_string is not empty:
   while (input_string.length > 0) {
+    //  1.  Append the result of running Parsing an Item or Inner List (Section 4.2.1.1) with input_string to members.
     /** @type {ParsedItemOrInnerList} */
     const parsedItemOrInnerList = parseItemOrInnerList(input_string)
     members.push(parsedItemOrInnerList.value)
-    input_string = parsedItemOrInnerList.input_string.trim()
+
+    //  2.  Discard any leading OWS characters from input_string.
+    input_string = leadingOWS(parsedItemOrInnerList.input_string)
+
+    //  3.  If input_string is empty, return members.
     if (input_string.length === 0) return { input_string, value: members }
+
+    //  4.  Consume the first character of input_string; if it is not ",", fail parsing.
     if (input_string[0] !== `,`) throw new Error(err`failed to parse "${input_string}" as List`)
-    input_string = input_string.substring(1).trim()
+
+    //  5.  Discard any leading OWS characters from input_string.
+    input_string = leadingOWS(input_string.substring(1))
+
+    //  6.  If input_string is empty, there is a trailing comma; fail parsing.
     if (input_string.length === 0 || input_string[0] === `,`) throw new Error(err`failed to parse "${input_string}" as List`)
   }
+
+  // 3.  No structured data has been found; return members (which is empty).
   return {
     value: members,
     input_string
@@ -912,27 +940,46 @@ export function parseItemOrInnerList(input_string) {
  * @return {ParsedInnerList}
  */
 export function parseInnerList(input_string) {
+  // 1.  Consume the first character of input_string; if it is not "(", fail parsing.
   if (input_string[0] !== `(`) throw new Error(err`failed to parse "${input_string}" as Inner List`)
+
   input_string = input_string.substring(1)
-  /** @type {ItemList}  */
-  const inner_list = []
+
+  // 2.  Let inner_list be an empty array.
+  const /** @type {ItemList}  */ inner_list = []
+
+  // 3.  While input_string is not empty:
   while (input_string.length > 0) {
-    input_string = input_string.trim()
+    // 1.  Discard any leading SP characters from input_string.
+    input_string = leadingSP(input_string)
+
+    // 2.  If the first character of input_string is ")":
     if (input_string[0] === `)`) {
+      // 1.  Consume the first character of input_string.
       input_string = input_string.substring(1)
+
+      // 2.  Let parameters be the result of running Parsing Parameters (Section 4.2.3.2) with input_string.
       const parsedParameters = parseParameters(input_string)
+
+      // 3.  Return the tuple (inner_list, parameters).
       const innerList = new InnerList(inner_list, parsedParameters.value)
       return {
         value: innerList,
         input_string: parsedParameters.input_string
       }
     }
-    /** @type {ParsedItem} */
-    const parsedItem = parseItem(input_string)
+
+    // 3.  Let item be the result of running Parsing an Item (Section 4.2.3) with input_string.
+    const /** @type {ParsedItem} */ parsedItem = parseItem(input_string)
+
+    // 4.  Append item to inner_list.
     inner_list.push(parsedItem.value)
+
+    // 5.  If the first character of input_string is not SP or ")", fail parsing.
     input_string = parsedItem.input_string
     if (input_string[0] !== ` ` && input_string[0] !== `)`) throw new Error(err`failed to parse "${input_string}" as Inner List`)
   }
+  // 4.  The end of the inner list was not found; fail parsing.
   throw new Error(err`failed to parse "${input_string}" as Inner List`)
 }
 
@@ -998,8 +1045,9 @@ export function parseInnerList(input_string) {
  * @return {ParsedDictionary}
  */
 export function parseDictionary(input_string, option = {}) {
+  // 1.  Let dictionary be an empty, ordered map.
   /** @type {Array.<[Key, Item|InnerList]>} */
-  const value = [] // ordered map
+  const ordered_map = []
 
   /**
    * @param {Array.<[Key, Item|InnerList]>} entries
@@ -1010,34 +1058,60 @@ export function parseDictionary(input_string, option = {}) {
     return Object.fromEntries(entries)
   }
 
+  // 2.  While input_string is not empty:
   while (input_string.length > 0) {
     /** @type {Item|InnerList} */
     let member
+
+    // 1.  Let this_key be the result of running Parsing a Key (Section 4.2.3.3) with input_string.
     /** @type {ParsedKey} */
     const parsedKey = parseKey(input_string)
     /** @type {Key} */
     const this_key = parsedKey.value
     input_string = parsedKey.input_string
+
+    // 2.  If the first character of input_string is "=":
     if (input_string[0] === `=`) {
+      // 1.  Consume the first character of input_string.
       /** @type {ParsedItemOrInnerList} */
       const parsedItemOrInnerList = parseItemOrInnerList(input_string.substring(1))
+
+      // 2.  Let member be the result of running Parsing an Item or Inner List (Section 4.2.1.1) with input_string.
       member = parsedItemOrInnerList.value
       input_string = parsedItemOrInnerList.input_string
     } else {
+      // 1.  Let value be Boolean true.
+      // 2.  Let parameters be the result of running Parsing Parameters Section 4.2.3.2 with input_string.
+      // 3.  Let member be the tuple (value, parameters).
       /** @type {ParsedParameters} */
       const parsedParameters = parseParameters(input_string)
       member = new Item(true, parsedParameters.value)
       input_string = parsedParameters.input_string
     }
-    value.push([this_key, member])
-    input_string = input_string.trim()
-    if (input_string.length === 0) return { input_string, value: toDict(value) }
+    // 4.  Add name this_key with value member to dictionary.
+    //     If dictionary already contains a name this_key (comparing character-for-character),
+    //     overwrite its value.
+    // TODO: key が重複していたら value だけ足す
+    ordered_map.push([this_key, member])
+
+    // 5.  Discard any leading OWS characters from input_string.
+    input_string = leadingOWS(input_string)
+
+    // 6.  If input_string is empty, return dictionary.
+    if (input_string.length === 0) return { input_string, value: toDict(ordered_map) }
+
+    // 7.  Consume the first character of input_string; if it is not ",", fail parsing.
     if (input_string[0] !== `,`) throw new Error(err`failed to parse "${input_string}" as Dict`)
-    input_string = input_string.substring(1).trim()
+
+    // 8.  Discard any leading OWS characters from input_string.
+    input_string = leadingOWS(input_string.substring(1))
+
+    // 9.  If input_string is empty, there is a trailing comma; fail parsing.
     if (input_string.length === 0 || input_string[0] === `,`) throw new Error(err`failed to parse "${input_string}" as Dict`)
   }
+  // 3.  No structured data has been found; return dictionary (which is empty).
   return {
-    value: toDict(value),
+    value: toDict(ordered_map),
     input_string
   }
 }
@@ -1188,30 +1262,50 @@ export function parseBareItem(input_string) {
  * @return {ParsedParameters}
  */
 export function parseParameters(input_string) {
+  // 1.  Let parameters be an empty, ordered map.
   /**
    * null by default for easy to detect parameter existence.
    * @type {Parameters}
    */
   let parameters = null
+
+  // 2.  While input_string is not empty:
   while (input_string.length > 0) {
+    // 1.  If the first character of input_string is not ";", exit the loop.
     if (input_string[0] !== `;`) break
-    input_string = input_string.substring(1).trim()
+
+    // 2.  Consume a ";" character from the beginning of input_string.
+    // 3.  Discard any leading SP characters from input_string.
+    input_string = leadingSP(input_string.substring(1))
+
+    // 4.  let param_name be the result of running Parsing a Key (Section 4.2.3.3) with input_string.
     const parsedKey = parseKey(input_string)
     const param_name = parsedKey.value
-    /** @type {BareItem} */
-    let param_value = true
+
+    // 5.  Let param_value be Boolean true.
+    let /** @type {BareItem} */ param_value = true
     input_string = parsedKey.input_string
+
+    // 6.  If the first character of input_string is "=":
     if (input_string[0] === `=`) {
+      // 1.  Consume the "=" character at the beginning of input_string.
       input_string = input_string.substring(1)
+
+      // 2.  Let param_value be the result of running Parsing a Bare Item (Section 4.2.3.1) with input_string.
       const parsedBareItem = parseBareItem(input_string)
       param_value = parsedBareItem.value
       input_string = parsedBareItem.input_string
     }
+
+    // 7.  Append key param_name with value param_value to parameters.
+    //     If parameters already contains a name param_name (comparing
+    //     character-for-character), overwrite its value.
     // initialize as object when params exists
     if (parameters === null) parameters = {}
     // override if param_name exists
     parameters[param_name] = param_value
   }
+  // 3.  Return parameters.
   return {
     value: parameters,
     input_string
@@ -1443,7 +1537,6 @@ export function parseString(input_string) {
   }
   i++
   while (input_string.length > i) {
-    // console.log(i, input_string[i], output_string)
     if (input_string[i] === `\\`) {
       if (input_string.length <= i + 1) {
         throw new Error(err`failed to parse "${input_string}" as String`)

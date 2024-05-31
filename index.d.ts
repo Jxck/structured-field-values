@@ -258,6 +258,20 @@ export function base64decode(str: string): Uint8Array;
  * @return {string}
  */
 export function base64encode(binary: Uint8Array): string;
+/**
+ * Discard any leading SP characters from input_string
+ *
+ * @param {string} input_string
+ * @return {string}
+ */
+export function leadingSP(input_string: string): string;
+/**
+ * Discard any leading OWS characters from input_string.
+ *
+ * @param {string} input_string
+ * @return {string}
+ */
+export function leadingOWS(input_string: string): string;
 export class Item {
     /**
      * @param {BareItem} value
