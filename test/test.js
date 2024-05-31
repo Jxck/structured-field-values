@@ -11,6 +11,7 @@ import {
   decodeItem,
   decodeList,
   decodeDict,
+  decodeMap,
 
   serializeList,
   // serializeInnerList,
@@ -269,6 +270,19 @@ test("test decode", () => {
     "c": new Item(4, { "aa": s("bb") }),
     "d": new InnerList([new Item(5), new Item(6)], { "valid": true })
   })
+  assert.throws(() => decodeDict(`a=1, b=2)`), (err) => {
+    assert.deepStrictEqual(err.message,       `failed to parse "a=1, b=2)" as Dict`)
+    assert.deepStrictEqual(err.cause.message, `failed to parse ")" as Dict`)
+    return true
+  })
+
+  assert.deepStrictEqual(decodeMap(``), new Map())
+  assert.deepStrictEqual(decodeMap(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), new Map([
+    ["a", new InnerList([new Item(1), new Item(2)])],
+    ["b", new Item(3)],
+    ["c", new Item(4, { "aa": s("bb") })],
+    ["d", new InnerList([new Item(5), new Item(6)], { "valid": true })]
+  ]))
   assert.throws(() => decodeDict(`a=1, b=2)`), (err) => {
     assert.deepStrictEqual(err.message,       `failed to parse "a=1, b=2)" as Dict`)
     assert.deepStrictEqual(err.cause.message, `failed to parse ")" as Dict`)
@@ -563,45 +577,46 @@ test("test parseDictionary", () => {
   assert.deepStrictEqual(parseDictionary(
     `int=1, dec=1.23, token=a, str="a", bool=?1, bin=:AQID:, date=@1659578233`
   ), {
-    value: {
-      "int": new Item(1),
-      "dec": new Item(1.23),
-      "token": new Item(s("a")),
-      "str": new Item("a"),
-      "bool": new Item(true),
-      "bin": new Item(new Uint8Array([1, 2, 3])),
-      "date": new Item(new Date(1659578233*1000))
-    },
+    value: [
+      ["int",   new Item(1)],
+      ["dec",   new Item(1.23)],
+      ["token", new Item(s("a"))],
+      ["str",   new Item("a")],
+      ["bool",  new Item(true)],
+      ["bin",   new Item(new Uint8Array([1, 2, 3]))],
+      ["date",  new Item(new Date(1659578233*1000))]
+    ],
     input_string: ``
   })
 
   assert.deepEqual(parseDictionary(`a=?0, b, c; foo=bar`), {
-    value: {
-      "a": new Item(false),
-      "b": new Item(true),
-      "c": new Item(true, { "foo": s("bar")}),
-    },
+    value: [
+      ["a", new Item(false)],
+      ["b", new Item(true)],
+      ["c", new Item(true, { "foo": s("bar")})],
+    ],
     input_string: ``
   })
 
   assert.deepStrictEqual(parseDictionary(`rating=1.5, feelings=(joy sadness)`), {
-    value: {
-      "rating":   new Item(1.5),
-      "feelings": new InnerList([
-        new Item(s("joy")),
-        new Item(s("sadness"))
-      ])
-    },
+    value: [
+      ["rating",   new Item(1.5)],
+      ["feelings", new InnerList([
+          new Item(s("joy")),
+          new Item(s("sadness"))
+        ])
+      ]
+    ],
     input_string:``
   })
 
   assert.deepStrictEqual(parseDictionary(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {
-    value: {
-      "a": new InnerList([new Item(1), new Item(2)]),
-      "b": new Item(3),
-      "c": new Item(4, { "aa": s("bb") }),
-      "d": new InnerList([new Item(5), new Item(6)], { "valid": true })
-    },
+    value: [
+      ["a", new InnerList([new Item(1), new Item(2)])],
+      ["b", new Item(3)],
+      ["c", new Item(4, { "aa": s("bb") })],
+      ["d", new InnerList([new Item(5), new Item(6)], { "valid": true })]
+    ],
     input_string: ``
   })
 
@@ -640,7 +655,7 @@ test("test parseKey", () => {
   assert.throws(() => parseKey(`&`), /failed to parse "&" as Key/)
 })
 
-test("structured_field_tests", ONLY, async (t) => {
+test("structured_field_tests", async (t) => {
   const files = [
     `binary`,
     `boolean`,
@@ -805,79 +820,6 @@ test("structured_field_tests", ONLY, async (t) => {
     })
   }
 })
-
-
-// test("_structured_field_tests", () => {
-//   const suites = [
-
-//   ]
-//   suites.forEach((suite) => {
-//     const ignore = [
-//       // number.json
-//       `negative zero`, // -0 & +0 are no equal in deepStrictEqual
-//       // list.json
-//       `two line list`,
-//       // dictionary.json
-//       `two lines dictionary`,
-//       // param-dict.json
-//       `two lines parameterised list`,
-//       // example.json
-//       `Example-Hdr (list on two lines)`,
-//       `Example-Hdr (dictionary on two lines)`,
-//     ]
-//     if (ignore.includes(suite.name)) return
-//     if (suite.name.endsWith("0 decimal")) return // .0 is Integer in JS
-
-//     try {
-//       if (suite.header_type === `item`) {
-//         // decode
-//         const decoded = decodeItem(suite.raw[0])
-//         const item    = formatItem(suite.expected)
-//         assert.deepStrictEqual(decoded, item, suite.name)
-
-//         // encode
-//         const encoded   = encodeItem(item)
-//         const canonical = suite?.canonical?.[0] || suite.raw[0]
-//         assert.deepStrictEqual(encoded, canonical, suite.name)
-//       }
-//       if (suite.header_type === `list`) {
-//         // decode
-//         const list    = formatList(suite.expected)
-//         const decoded = decodeList(suite.raw[0])
-//         assert.deepStrictEqual(decoded, list, suite.name)
-
-//         // encode
-//         if ([
-//           // 1.0 is 1 in JS
-//           `single item parameterised list`,
-//           `missing parameter value parameterised list`,
-//           `missing terminal parameter value parameterised list`,
-//         ].includes(suite.name)) return
-//         const canonical = suite?.canonical?.[0] || suite.raw[0]
-//         const encoded   = encodeList(list)
-//         assert.deepStrictEqual(encoded, canonical, suite.name)
-//       }
-//       if (suite.header_type === `dictionary`) {
-//         // decode
-//         const dict    = formatDict(suite.expected)
-//         const decoded = decodeDict(suite.raw[0])
-//         assert.deepStrictEqual(decoded, dict, suite.name)
-
-//         // encode
-//         if ([
-//           // 1.0 is 1 in JS
-//           `single item parameterised dict`,
-//           `list item parameterised dictionary`,
-//         ].includes(suite.name)) return
-//         const canonical = suite?.canonical?.[0] || suite.raw[0]
-//         const encoded   = encodeDict(dict)
-//         assert.deepStrictEqual(encoded, canonical, suite.name)
-//       }
-//     } catch (err) {
-//       assert.deepStrictEqual(suite.must_fail, true, err)
-//     }
-//   })
-// })
 
 test("serialisation_tests", async (t) => {
   const files = [

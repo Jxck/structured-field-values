@@ -29,6 +29,11 @@ export function decodeList(input: string): MemberList;
  */
 export function decodeDict(input: string): Dictionary;
 /**
+ * @param {string} input
+ * @returns {Dictionary}
+ */
+export function decodeMap(input: string): Dictionary;
+/**
  * @param {MemberList} list
  * @return {string}
  */
@@ -134,17 +139,18 @@ export function parseItemOrInnerList(input_string: string): ParsedItemOrInnerLis
  */
 export function parseInnerList(input_string: string): ParsedInnerList;
 /**
- * @typedef {Object.<string, Item|InnerList|BareItem|Array<BareItem>>|Map.<string, Item|InnerList|BareItem|Array<BareItem>>} Dictionary
+ * @typedef {Item|InnerList|BareItem|Array<BareItem>}DictValue
+ * @typedef {Array<[string, DictValue]>} OrderedMap
+ * @typedef {Object.<string, DictValue>|Map.<string, DictValue>} Dictionary
  *
  * @typedef {Object} ParsedDictionary
- * @property {Dictionary} value
+ * @property {OrderedMap} value
  * @property {string} input_string
  *
  * @param {string} input_string
- * @param {Object?} option TODO: not fully supported yet
  * @return {ParsedDictionary}
  */
-export function parseDictionary(input_string: string, option?: any | null): ParsedDictionary;
+export function parseDictionary(input_string: string): ParsedDictionary;
 /**
  * @typedef {Object} ParsedItem
  * @property {Item} value
@@ -311,11 +317,13 @@ export type ParsedInnerList = {
     value: InnerList;
     input_string: string;
 };
+export type DictValue = Item | InnerList | BareItem | Array<BareItem>;
+export type OrderedMap = Array<[string, DictValue]>;
 export type Dictionary = {
-    [x: string]: Item | InnerList | BareItem | Array<BareItem>;
-} | Map<string, Item | InnerList | BareItem | Array<BareItem>>;
+    [x: string]: DictValue;
+} | Map<string, DictValue>;
 export type ParsedDictionary = {
-    value: Dictionary;
+    value: OrderedMap;
     input_string: string;
 };
 export type ParsedItem = {

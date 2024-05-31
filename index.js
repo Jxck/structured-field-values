@@ -164,7 +164,27 @@ export function decodeDict(input) {
     input_string = leadingSP(input_string)
 
     if (input_string !== ``) throw new Error(err`failed to parse "${input_string}" as Dict`)
-    return value
+    return Object.fromEntries(value)
+  } catch (cause) {
+    throw new Error(err`failed to parse "${input}" as Dict`, { cause })
+  }
+}
+
+/**
+ * @param {string} input
+ * @returns {Dictionary}
+ */
+export function decodeMap(input) {
+  try {
+    // 2.  Discard any leading SP characters from input_string.
+    input = leadingSP(input)
+    let { input_string, value } = parseDictionary(input)
+
+    // 6.  Discard any leading SP characters from input_string.
+    input_string = leadingSP(input_string)
+
+    if (input_string !== ``) throw new Error(err`failed to parse "${input_string}" as Dict`)
+    return new Map(value)
   } catch (cause) {
     throw new Error(err`failed to parse "${input}" as Dict`, { cause })
   }
@@ -1034,29 +1054,21 @@ export function parseInnerList(input_string) {
 // Note that when duplicate Dictionary keys are encountered, this has
 // the effect of ignoring all but the last instance.
 /**
- * @typedef {Object.<string, Item|InnerList|BareItem|Array<BareItem>>|Map.<string, Item|InnerList|BareItem|Array<BareItem>>} Dictionary
+ * @typedef {Item|InnerList|BareItem|Array<BareItem>}DictValue
+ * @typedef {Array<[string, DictValue]>} OrderedMap
+ * @typedef {Object.<string, DictValue>|Map.<string, DictValue>} Dictionary
  *
  * @typedef {Object} ParsedDictionary
- * @property {Dictionary} value
+ * @property {OrderedMap} value
  * @property {string} input_string
  *
  * @param {string} input_string
- * @param {Object?} option TODO: not fully supported yet
  * @return {ParsedDictionary}
  */
-export function parseDictionary(input_string, option = {}) {
+export function parseDictionary(input_string) {
   // 1.  Let dictionary be an empty, ordered map.
-  /** @type {Array.<[Key, Item|InnerList]>} */
+  /** @type {OrderedMap} */
   const ordered_map = []
-
-  /**
-   * @param {Array.<[Key, Item|InnerList]>} entries
-   * @return {Dictionary}
-   */
-  function toDict(entries) {
-    if (option?.use_map === true) return new Map(entries)
-    return Object.fromEntries(entries)
-  }
 
   // 2.  While input_string is not empty:
   while (input_string.length > 0) {
@@ -1098,7 +1110,7 @@ export function parseDictionary(input_string, option = {}) {
     input_string = leadingOWS(input_string)
 
     // 6.  If input_string is empty, return dictionary.
-    if (input_string.length === 0) return { input_string, value: toDict(ordered_map) }
+    if (input_string.length === 0) return { input_string, value: ordered_map }
 
     // 7.  Consume the first character of input_string; if it is not ",", fail parsing.
     if (input_string[0] !== `,`) throw new Error(err`failed to parse "${input_string}" as Dict`)
@@ -1111,7 +1123,7 @@ export function parseDictionary(input_string, option = {}) {
   }
   // 3.  No structured data has been found; return dictionary (which is empty).
   return {
-    value: toDict(ordered_map),
+    value: ordered_map,
     input_string
   }
 }
