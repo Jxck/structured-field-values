@@ -1103,7 +1103,6 @@ export function parseDictionary(input_string) {
     // 4.  Add name this_key with value member to dictionary.
     //     If dictionary already contains a name this_key (comparing character-for-character),
     //     overwrite its value.
-    // TODO: key が重複していたら value だけ足す
     ordered_map.push([this_key, member])
 
     // 5.  Discard any leading OWS characters from input_string.
