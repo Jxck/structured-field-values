@@ -1,4 +1,4 @@
-import assert from "node:assert"
+import * as assert from "node:assert"
 import test from "node:test"
 
 import {
@@ -64,6 +64,179 @@ import {
 
 const ONLY = { only: true }
 const SKIP = { skip: true }
+
+test("test decodeItem", () => {
+  assert.deepStrictEqual(decodeItem(`"a"`), new Item("a"))
+  assert.deepStrictEqual(decodeItem(`?1`), new Item(true))
+  assert.deepStrictEqual(decodeItem(`1`), new Item(1))
+  assert.deepStrictEqual(decodeItem(`a`), new Item(Symbol.for('a')))
+  assert.deepStrictEqual(decodeItem(`:AQID:`), new Item(new Uint8Array([1, 2, 3])))
+  assert.deepStrictEqual(decodeItem(`@1659578233`), new Item(new Date(1659578233*1000)))
+  assert.deepStrictEqual(decodeItem(`%"foo bar"`), new Item("foo bar"))
+  assert.deepStrictEqual(decodeItem(`%"f%c3%bc%c3%bc"`), new Item("füü"))
+  assert.throws(() => decodeItem(`1;`), (err) => {
+    assert.deepStrictEqual(err.message,       `failed to parse "1;" as Item`)
+    assert.deepStrictEqual(err.cause.message, `failed to parse "" as Key`)
+    return true
+  })
+})
+
+test("test encodeItem", () => {
+  assert.deepStrictEqual(encodeItem("a"), `"a"`)
+  assert.deepStrictEqual(encodeItem("füü"), `%"f%c3%bc%c3%bc"`)
+  assert.deepStrictEqual(encodeItem(true), `?1`)
+  assert.deepStrictEqual(encodeItem(1), `1`)
+  assert.deepStrictEqual(encodeItem(Symbol.for('a')), `a`)
+  assert.deepStrictEqual(encodeItem(new Uint8Array([1,2,3])), `:AQID:`)
+  assert.deepStrictEqual(encodeItem(new Date(1659578233000)), `@1659578233`)
+
+  assert.deepStrictEqual(encodeItem(new Item("a")),  `"a"`)
+  assert.deepStrictEqual(encodeItem(new Item("füü")), `%"f%c3%bc%c3%bc"`)
+  assert.deepStrictEqual(encodeItem(new Item(true)), `?1`)
+  assert.deepStrictEqual(encodeItem(new Item(1)),    `1`)
+  assert.deepStrictEqual(encodeItem(new Item(Symbol.for('a'))), `a`)
+  assert.deepStrictEqual(encodeItem(new Item(new Uint8Array([1,2,3]))), `:AQID:`)
+  assert.deepStrictEqual(encodeItem(new Item(new Date(1659578233000))), `@1659578233`)
+
+  assert.throws(() => encodeItem(function(){}), /failed to serialize "function\(\)\{\}" as Bare Item/)
+  assert.throws(() => encodeItem(() => {}),     /failed to serialize "\(\) => \{\}" as Bare Item/)
+  assert.throws(() => encodeItem(999n),         /failed to serialize "999" as Bare Item/)
+  assert.throws(() => encodeItem([]),           /failed to serialize "\[\]" as Bare Item/)
+  assert.throws(() => encodeItem(new Map()),    /failed to serialize "Map{}" as Bare Item/)
+  assert.throws(() => encodeItem(new Set()),    /failed to serialize "Set{}" as Bare Item/)
+  assert.throws(() => encodeItem(null),         /failed to serialize "null" as Bare Item/)
+  assert.throws(() => encodeItem(undefined),    /failed to serialize "undefined" as Bare Item/)
+})
+
+test("test decodeList", () => {
+  assert.deepStrictEqual(decodeList(``), [])
+  assert.deepStrictEqual(decodeList(`("foo";a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), [
+    new InnerList(
+      [new Item("foo", {a: 1, b: 2})],
+      { "lvl": 5 }
+    ),
+    new InnerList(
+      [new Item("bar"), new Item("baz")],
+      { "lvl": 1 }
+    ),
+  ])
+  assert.throws(() => decodeList(`1,2,3)`), (err) => {
+    assert.deepStrictEqual(err.message,       `failed to parse "1,2,3)" as List`)
+    assert.deepStrictEqual(err.cause.message, `failed to parse ")" as List`)
+    return true
+  })
+  assert.throws(() => decodeList(`1,2,`), (err) => {
+    assert.deepStrictEqual(err.message,       `failed to parse "1,2," as List`)
+    assert.deepStrictEqual(err.cause.message, `failed to parse "" as List`)
+    return true
+  })
+})
+
+test("test encodeList", () => {
+  assert.deepStrictEqual(encodeList([]),       ``)
+  assert.deepStrictEqual(encodeList([1,2,3]),  `1, 2, 3`)
+  assert.deepStrictEqual(encodeList([
+    new Item(1),
+    new Item(2),
+    new Item(3)
+  ]),  `1, 2, 3`)
+  assert.deepStrictEqual(encodeList([
+    new Item(1, {a: 2}),
+    new Item(2, {a: 2}),
+    new Item(3, {a: 2})
+  ]),  `1;a=2, 2;a=2, 3;a=2`)
+})
+
+test("test encodeDict", () => {
+  assert.deepStrictEqual(encodeDict({}), ``)
+  assert.deepStrictEqual(encodeDict(new Map()), ``)
+  assert.deepStrictEqual(
+    encodeDict({
+      a: 10,
+      b: 20,
+      c: 30,
+    }),
+    `a=10, b=20, c=30`
+  )
+  assert.deepStrictEqual(
+    encodeDict(new Map([
+      ["a", 10],
+      ["b", 20],
+      ["c", 30],
+    ])),
+    `a=10, b=20, c=30`
+  )
+  assert.deepStrictEqual(
+    encodeDict({
+      a: 1,
+      b: false,
+      c: "x",
+      d: Symbol.for("y"),
+      e: new Uint8Array([1,2,3])
+    }),
+    `a=1, b=?0, c="x", d=y, e=:AQID:`
+  )
+  assert.deepStrictEqual(
+    encodeDict(new Map([
+      ["a", 1],
+      ["b", false],
+      ["c", "x"],
+      ["d", Symbol.for("y")],
+      ["e", new Uint8Array([1,2,3])],
+    ])),
+    `a=1, b=?0, c="x", d=y, e=:AQID:`
+  )
+  assert.deepStrictEqual(
+    encodeDict({
+      a: new Item(1),
+      b: new Item(false),
+      c: new Item("x"),
+      d: new Item(Symbol.for("y")),
+      e: new Item(new Uint8Array([1,2,3])),
+    }),
+    `a=1, b=?0, c="x", d=y, e=:AQID:`
+  )
+  assert.deepStrictEqual(
+    encodeDict(new Map([
+      ['a', new Item(1)],
+      ['b', new Item(false)],
+      ['c', new Item("x")],
+      ['d', new Item(Symbol.for("y"))],
+      ['e', new Item(new Uint8Array([1,2,3]))],
+    ])),
+    `a=1, b=?0, c="x", d=y, e=:AQID:`
+  )
+})
+
+test("test decodeDict", () => {
+  assert.deepStrictEqual(decodeDict(``), {})
+  assert.deepStrictEqual(decodeDict(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {
+    "a": new InnerList([new Item(1), new Item(2)]),
+    "b": new Item(3),
+    "c": new Item(4, { "aa": s("bb") }),
+    "d": new InnerList([new Item(5), new Item(6)], { "valid": true })
+  })
+  assert.throws(() => decodeDict(`a=1, b=2)`), (err) => {
+    assert.deepStrictEqual(err.message,       `failed to parse "a=1, b=2)" as Dict`)
+    assert.deepStrictEqual(err.cause.message, `failed to parse ")" as Dict`)
+    return true
+  })
+})
+
+test("test decodeMap", () => {
+  assert.deepStrictEqual(decodeMap(``), new Map())
+  assert.deepStrictEqual(decodeMap(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), new Map([
+    ["a", new InnerList([new Item(1), new Item(2)])],
+    ["b", new Item(3)],
+    ["c", new Item(4, { "aa": s("bb") })],
+    ["d", new InnerList([new Item(5), new Item(6)], { "valid": true })]
+  ]))
+  assert.throws(() => decodeDict(`a=1, b=2)`), (err) => {
+    assert.deepStrictEqual(err.message,       `failed to parse "a=1, b=2)" as Dict`)
+    assert.deepStrictEqual(err.cause.message, `failed to parse ")" as Dict`)
+    return true
+  })
+})
 
 test("test utility", async (t) => {
   await t.test("test leadingSP", () => {
@@ -222,163 +395,6 @@ test("test serializeDisplayString", () => {
   assert.deepStrictEqual(serializeDisplayString("foo bar"),            `%"foo bar"`)
   assert.deepStrictEqual(serializeDisplayString("füü"),                `%"f%c3%bc%c3%bc"`)
   assert.deepStrictEqual(serializeDisplayString("foo \"bar\" \\ baz"), `%"foo %22bar%22 \\ baz"`)
-})
-
-test("test decode", () => {
-  assert.deepStrictEqual(decodeItem(`"a"`), new Item("a"))
-  assert.deepStrictEqual(decodeItem(`?1`),  new Item(true))
-  assert.deepStrictEqual(decodeItem(`1`),   new Item(1))
-  assert.deepStrictEqual(decodeItem(`a`),   new Item(Symbol.for('a')))
-  assert.deepStrictEqual(decodeItem(`:AQID:`), new Item(new Uint8Array([1, 2, 3])))
-  assert.deepStrictEqual(decodeItem(`@1659578233`), new Item(new Date(1659578233*1000)))
-  assert.deepStrictEqual(decodeItem(`%"foo bar"`), new Item("foo bar"))
-  assert.deepStrictEqual(decodeItem(`%"f%c3%bc%c3%bc"`), new Item("füü"))
-
-  assert.throws(() => decodeItem(`1;`), (err) => {
-    assert.deepStrictEqual(err.message,       `failed to parse "1;" as Item`)
-    assert.deepStrictEqual(err.cause.message, `failed to parse "" as Key`)
-    return true
-  })
-
-  assert.deepStrictEqual(decodeList(``), [])
-  assert.deepStrictEqual(decodeList(`("foo";a=1;b=2);lvl=5, ("bar" "baz");lvl=1`), [
-    new InnerList(
-      [new Item("foo", {a: 1, b: 2})],
-      { "lvl": 5 }
-    ),
-    new InnerList(
-      [new Item("bar"), new Item("baz")],
-      { "lvl": 1 }
-    ),
-  ])
-
-  assert.throws(() => decodeList(`1,2,3)`), (err) => {
-    assert.deepStrictEqual(err.message,       `failed to parse "1,2,3)" as List`)
-    assert.deepStrictEqual(err.cause.message, `failed to parse ")" as List`)
-    return true
-  })
-  assert.throws(() => decodeList(`1,2,`), (err) => {
-    assert.deepStrictEqual(err.message,       `failed to parse "1,2," as List`)
-    assert.deepStrictEqual(err.cause.message, `failed to parse "" as List`)
-    return true
-  })
-
-  assert.deepStrictEqual(decodeDict(``), {})
-  assert.deepStrictEqual(decodeDict(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), {
-    "a": new InnerList([new Item(1), new Item(2)]),
-    "b": new Item(3),
-    "c": new Item(4, { "aa": s("bb") }),
-    "d": new InnerList([new Item(5), new Item(6)], { "valid": true })
-  })
-  assert.throws(() => decodeDict(`a=1, b=2)`), (err) => {
-    assert.deepStrictEqual(err.message,       `failed to parse "a=1, b=2)" as Dict`)
-    assert.deepStrictEqual(err.cause.message, `failed to parse ")" as Dict`)
-    return true
-  })
-
-  assert.deepStrictEqual(decodeMap(``), new Map())
-  assert.deepStrictEqual(decodeMap(`a=(1 2), b=3, c=4;aa=bb, d=(5 6);valid`), new Map([
-    ["a", new InnerList([new Item(1), new Item(2)])],
-    ["b", new Item(3)],
-    ["c", new Item(4, { "aa": s("bb") })],
-    ["d", new InnerList([new Item(5), new Item(6)], { "valid": true })]
-  ]))
-  assert.throws(() => decodeDict(`a=1, b=2)`), (err) => {
-    assert.deepStrictEqual(err.message,       `failed to parse "a=1, b=2)" as Dict`)
-    assert.deepStrictEqual(err.cause.message, `failed to parse ")" as Dict`)
-    return true
-  })
-})
-
-test("test encode_item", () => {
-  assert.deepStrictEqual(encodeItem("a"),  `"a"`)
-  assert.deepStrictEqual(encodeItem("füü"), `%"f%c3%bc%c3%bc"`)
-  assert.deepStrictEqual(encodeItem(true),  `?1`)
-  assert.deepStrictEqual(encodeItem(1),     `1`)
-  assert.deepStrictEqual(encodeItem(Symbol.for('a')), `a`)
-  assert.deepStrictEqual(encodeItem(new Uint8Array([1,2,3])), `:AQID:`)
-
-  assert.deepStrictEqual(encodeItem(new Item("a")),  `"a"`)
-  assert.deepStrictEqual(encodeItem(new Item(true)), `?1`)
-  assert.deepStrictEqual(encodeItem(new Item(1)),    `1`)
-  assert.deepStrictEqual(encodeItem(new Item(Symbol.for('a'))), `a`)
-  assert.deepStrictEqual(encodeItem(new Item(new Uint8Array([1,2,3]))), `:AQID:`)
-  assert.deepStrictEqual(encodeItem(new Item(new Date(1659578233000))), `@1659578233`)
-
-  assert.throws(() => encodeItem(function(){}), /failed to serialize "function\(\)\{\}" as Bare Item/)
-  assert.throws(() => encodeItem(() => {}),     /failed to serialize "\(\) => \{\}" as Bare Item/)
-  assert.throws(() => encodeItem(999n),         /failed to serialize "999" as Bare Item/)
-  assert.throws(() => encodeItem([]),           /failed to serialize "\[\]" as Bare Item/)
-  assert.throws(() => encodeItem(new Map()),    /failed to serialize "Map{}" as Bare Item/)
-  assert.throws(() => encodeItem(new Set()),    /failed to serialize "Set{}" as Bare Item/)
-  assert.throws(() => encodeItem(null),         /failed to serialize "null" as Bare Item/)
-  assert.throws(() => encodeItem(undefined),    /failed to serialize "undefined" as Bare Item/)
-})
-
-test("test encode_list", () => {
-  assert.deepStrictEqual(encodeList([]),       ``)
-  assert.deepStrictEqual(encodeList([1,2,3]),  `1, 2, 3`)
-  assert.deepStrictEqual(encodeList([
-    new Item(1),
-    new Item(2),
-    new Item(3)
-  ]),  `1, 2, 3`)
-  assert.deepStrictEqual(encodeList([
-    new Item(1, {a: 2}),
-    new Item(2, {a: 2}),
-    new Item(3, {a: 2})
-  ]),  `1;a=2, 2;a=2, 3;a=2`)
-})
-
-test("test encode_dict", () => {
-  assert.deepStrictEqual(encodeDict({}), ``)
-  assert.deepStrictEqual(encodeDict(new Map()), ``)
-  assert.deepStrictEqual(
-    encodeDict({
-      a: 10,
-      b: 20,
-      c: 30,
-    }),
-    `a=10, b=20, c=30`
-  )
-  assert.deepStrictEqual(
-    encodeDict(new Map([
-      ['a', 10],
-      ['b', 20],
-      ['c', 30],
-    ])),
-    `a=10, b=20, c=30`
-  )
-  assert.deepStrictEqual(
-    encodeDict({
-      a: 1,
-      b: false,
-      c: "x",
-      d: Symbol.for("y"),
-      e: new Uint8Array([1,2,3])
-    }),
-    `a=1, b=?0, c="x", d=y, e=:AQID:`
-  )
-  assert.deepStrictEqual(
-    encodeDict({
-      a: new Item(1),
-      b: new Item(false),
-      c: new Item("x"),
-      d: new Item(Symbol.for("y")),
-      e: new Item(new Uint8Array([1,2,3])),
-    }),
-    `a=1, b=?0, c="x", d=y, e=:AQID:`
-  )
-  assert.deepStrictEqual(
-    encodeDict(new Map([
-      ['a', new Item(1)],
-      ['b', new Item(false)],
-      ['c', new Item("x")],
-      ['d', new Item(Symbol.for("y"))],
-      ['e', new Item(new Uint8Array([1,2,3]))],
-    ])),
-    `a=1, b=?0, c="x", d=y, e=:AQID:`
-  )
 })
 
 test("test parseIntegerOrDecimal", () => {

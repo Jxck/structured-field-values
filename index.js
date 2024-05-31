@@ -67,7 +67,7 @@ export class InnerList {
 // 6.  Return output_string converted into an array of bytes, using
 //     ASCII encoding [RFC0020].
 /**
- * @param {Item} value
+ * @param {Item|BareItem} value
  * @returns {string}
  */
 export function encodeItem(value) {
@@ -428,7 +428,7 @@ export function serializeDict(dict) {
 //
 // 4.  Return output.
 /**
- * @param {Item} value
+ * @param {Item|BareItem} value
  * @return {string}
  */
 export function serializeItem(value) {
@@ -1919,3 +1919,6 @@ export function leadingSP(input_string) {
 export function leadingOWS(input_string) {
   return input_string.replace(/^[ \t]+/, "")
 }
+
+
+  

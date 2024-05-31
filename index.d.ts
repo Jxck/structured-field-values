@@ -1,8 +1,8 @@
 /**
- * @param {Item} value
+ * @param {Item|BareItem} value
  * @returns {string}
  */
-export function encodeItem(value: Item): string;
+export function encodeItem(value: Item | BareItem): string;
 /**
  * @param {MemberList} value
  * @returns {string}
@@ -59,10 +59,10 @@ export function serializeKey(value: string): string;
  */
 export function serializeDict(dict: Dictionary): string;
 /**
- * @param {Item} value
+ * @param {Item|BareItem} value
  * @return {string}
  */
-export function serializeItem(value: Item): string;
+export function serializeItem(value: Item | BareItem): string;
 /**
  * @param {BareItem} value
  * @return {string}
