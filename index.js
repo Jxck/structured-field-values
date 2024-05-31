@@ -45,27 +45,34 @@ function err(strings, ...keys) {
 // 6.  Return output_string converted into an array of bytes, using
 //     ASCII encoding [RFC0020].
 /**
- * @param {Item|BareItem} value
+ * @param {any} input
  * @returns {string}
  */
-export function encodeItem(value) {
-  return serializeItem(value)
+export function encodeItem(input) {
+  if (input?.value !== undefined) {
+    // input is a object of { value, params? }
+    const item = new Item(input.value, input.params)
+    return serializeItem(item)
+  }
+  // input is primitives
+  const item = new Item(input)
+  return serializeItem(item)
 }
 
 /**
- * @param {MemberList} value
+ * @param {MemberList} structure
  * @returns {string}
  */
-export function encodeList(value) {
-  return serializeList(value)
+export function encodeList(structure) {
+  return serializeList(structure)
 }
 
 /**
- * @param {Dictionary} value
+ * @param {Dictionary} structure
  * @returns {string}
  */
-export function encodeDict(value) {
-  return serializeDict(value)
+export function encodeDict(structure) {
+  return serializeDict(structure)
 }
 
 // 4.2.  Parsing Structured Fields
@@ -430,15 +437,11 @@ export function serializeDict(dict) {
 //
 // 4.  Return output.
 /**
- * @param {Item|BareItem} value
+ * @param {Item} value
  * @return {string}
  */
 export function serializeItem(value) {
-  if (value instanceof Item) {
-    return `${serializeBareItem(value.value)}${serializeParams(value.params)}`
-  } else {
-    return serializeBareItem(value)
-  }
+  return `${serializeBareItem(value.value)}${serializeParams(value.params)}`
 }
 
 // 4.1.3.1.  Serializing a Bare Item

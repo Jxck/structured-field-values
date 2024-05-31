@@ -1,18 +1,18 @@
 /**
- * @param {Item|BareItem} value
+ * @param {any} input
  * @returns {string}
  */
-export function encodeItem(value: Item | BareItem): string;
+export function encodeItem(input: any): string;
 /**
- * @param {MemberList} value
+ * @param {MemberList} structure
  * @returns {string}
  */
-export function encodeList(value: MemberList): string;
+export function encodeList(structure: MemberList): string;
 /**
- * @param {Dictionary} value
+ * @param {Dictionary} structure
  * @returns {string}
  */
-export function encodeDict(value: Dictionary): string;
+export function encodeDict(structure: Dictionary): string;
 /**
  * @param {string} input
  * @returns {Item}
@@ -59,10 +59,10 @@ export function serializeKey(value: string): string;
  */
 export function serializeDict(dict: Dictionary): string;
 /**
- * @param {Item|BareItem} value
+ * @param {Item} value
  * @return {string}
  */
-export function serializeItem(value: Item | BareItem): string;
+export function serializeItem(value: Item): string;
 /**
  * @param {BareItem} value
  * @return {string}
