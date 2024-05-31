@@ -20,31 +20,9 @@ function err(strings, ...keys) {
   return result.flat().join(``)
 }
 
-export class Item {
-  /**
-   * @param {BareItem} value
-   * @param {Parameters} params
-   */
-  constructor(value, params = null) {
-    this.value = value
-    this.params = params
-  }
-}
-
-export class InnerList {
-  /**
-   * @param {ItemList} value
-   * @param {Parameters} params
-   */
-  constructor(value, params = null) {
-    this.value = value
-    this.params = params
-  }
-}
-
-/////////////////////////
+///////////////////////////////////////////////////////////////////////
 // public interface
-/////////////////////////
+///////////////////////////////////////////////////////////////////////
 // 4.1.  Serializing Structured Fields
 //
 // 1.  If the structure is a Dictionary or List and its value is empty
@@ -190,6 +168,30 @@ export function decodeMap(input) {
   }
 }
 
+//*********************************************************************
+// private interface
+//*********************************************************************
+export class Item {
+  /**
+   * @param {BareItem} value
+   * @param {Parameters} params
+   */
+  constructor(value, params = null) {
+    this.value = value
+    this.params = params
+  }
+}
+
+export class InnerList {
+  /**
+   * @param {ItemList} value
+   * @param {Parameters} params
+   */
+  constructor(value, params = null) {
+    this.value = value
+    this.params = params
+  }
+}
 // 4.1.1.  Serializing a List
 //
 // Given an array of (member_value, parameters) tuples as input_list,

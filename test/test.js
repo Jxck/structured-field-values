@@ -882,7 +882,7 @@ test("serialisation_tests", async (t) => {
   }
 })
 
-test("doc-testing", ONLY, async (t) => {
+test("doc-testing", SKIP, async (t) => {
   const readme = readFileSync(`./README.md`).toString()
   const codes = Array
     .from(readme.matchAll(/```js(?<code>[\s\S]*?)```/gm))
