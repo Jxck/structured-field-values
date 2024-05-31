@@ -4,20 +4,17 @@
 
 This is a implementation of a [RFC 8941: Structured Field Values for HTTP](https://www.rfc-editor.org/rfc/rfc8941.html) in JavaScript.
 
-And also Date type in [sfbis-02](https://www.ietf.org/archive/id/draft-ietf-httpbis-sfbis-02.html) is also supported.
-
+And also Date type in [sfbis-06](https://www.ietf.org/archive/id/draft-ietf-httpbis-sfbis-06.html) is also supported.
 
 ## DEMO
 
 - https://jxck.github.io/structured-field-values/demo.html
-
 
 ## Install
 
 ```sh
 npm install structured-field-values
 ```
-
 
 ## API
 
@@ -28,19 +25,18 @@ npm install structured-field-values
 - encodeList
 - encodeDict
 
-
 ## Primitives
 
 ### Item
 
 #### decodeItem
 
-SFV has *string* and *token* and this module use Symbol for token.
+SFV has _string_ and _token_ and this module use Symbol for token.
 
 And SFV has params for every item, so decoded token are always object with `value` & `params`.
 
 ```js
-decodeItem(`a`)    // Item { value: Symbol(a), params: null }
+decodeItem(`a`)    // Item { value: Symbol(a), params: null } (token)
 decodeItem(`"a"`)  // Item { value: `a`,       params: null }
 decodeItem(`10`)   // Item { value: 10,        params: null }
 decodeItem(`3.14`) // Item { value: 3.14,      params: null }
@@ -60,17 +56,16 @@ const a = decodeItem(`a`).value // Symbol(a)
 console.log(Symbol.keyFor(a)) // "a" (string)
 ```
 
-
 #### encodeItem
 
 ```js
-encodeItem(Symbol.for('a')) // `a`
+encodeItem(Symbol.for("a")) // `a` (token)
 encodeItem("a")             // `"a"`
 encodeItem(10)              // `10`
 encodeItem(3.14)            // `3.14`
 encodeItem(true)            // `?0`
 
-encodeItem(new Item(Symbol.for('a'))) // `a`
+encodeItem(new Item(Symbol.for("a"))) // `a` (token)
 encodeItem(new Item("a"))             // `"a"`
 encodeItem(new Item(10))              // `10`
 encodeItem(new Item(3.14))            // `3.14`
@@ -78,15 +73,15 @@ encodeItem(new Item(true))            // `?0`
 
 encodeItem(new Item(new Date(1659578233000))) // 2022-08-04T01:57:13.000Z
 
+// with parameter
 encodeItem(new Item(`a`, { x: true, y: false, z: 10 })) // `"a";x;y=?0;z=10`
 ```
 
 Note: JavaScript only supports number
 
 ```js
-encodeItem(decodeItem('1.0')) // '1' not '1.0'
+encodeItem(decodeItem("1.0")) // '1' not '1.0'
 ```
-
 
 ### List
 
@@ -112,21 +107,16 @@ decodeList(`a;x,"b";y=?0,10,(1 2)`)
 // ]
 ```
 
-
 #### encodeList
 
 ```js
 // `1, 2, 3`
-encodeList([1,2,3])
-encodeList([
-  new Item(1),
-  new Item(2),
-  new Item(3)
-])
+encodeList([1, 2, 3])
+encodeList([new Item(1), new Item(2), new Item(3)])
 
 // a, "b", 10, (1 2)
 encodeList([
-  Symbol.for('a'),
+  Symbol.for("a"),
   `b`,
   10,
   [1, 2]
@@ -134,13 +124,12 @@ encodeList([
 
 // `a;x, "b";y=?0, 10, (1 2)`
 encodeList([
-  new Item(Symbol.for('a'), { x: true  }),
-  new Item(`b`,             { y: false }),
+  new Item(Symbol.for("a"), { x: true }),
+  new Item(`b`, { y: false }),
   new Item(10),
   new Item([1, 2])
 ])
 ```
-
 
 ### Dict
 
@@ -159,7 +148,6 @@ decodeDict(`a=x, b="y", c=10, d=?0, e=(1 2)`)
 //                  ], params: null }
 // }
 ```
-
 
 #### encodeDict
 
@@ -197,15 +185,7 @@ encodeDict({
   d: new Item(false),
   e: new Item([1, 2]),
 })
-
-// `a=1, b=?0, c="x", d=y, e=:AQID:`
-encodeDict(new Map([
-  ['a', 10],
-  ['b', 20],
-  ['c', 30],
-])),
 ```
-
 
 ## How to test
 
