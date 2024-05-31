@@ -668,13 +668,15 @@ test("structured_field_tests", ONLY, async (t) => {
       for (const suite of read(t.name)) {
         await t.test(suite.name, (t) => {
           // SKIP tests -----
+          let DECODE_ONLY = false
           if (suite.raw.length > 1) {
             return t.skip(`not support multiline header`)
           }
-          if (file === `number`) {
-            if (suite.name === `negative zero`) {
-              return t.skip("0 and -0 is difference in JS")
-            }
+          if (file === `number` && suite.name === `negative zero`) {
+            return t.skip("0 and -0 is difference in JS")
+          }
+          if (file === `string` && suite.name === `non-ascii string`) {
+            return t.skip(`non-ascii string will be encoded as Display String`)
           }
           if (file === `number-generated`) {
             if ([
@@ -715,12 +717,8 @@ test("structured_field_tests", ONLY, async (t) => {
               `14 digit, 2 fractional 0 decimal`,
               `15 digit, 3 fractional 0 decimal`,
             ].includes(suite.name)) {
-              return t.skip(`"1.0" is "1" in JS`)
-            }
-          }
-          if (file === `string`) {
-            if (suite.name === `non-ascii string`) {
-              return t.skip(`non-ascii string will be encoded as Display String`)
+              // 1.0" is "1" in JS
+              DECODE_ONLY = true
             }
           }
           if (file === `param-dict`) {
@@ -728,7 +726,8 @@ test("structured_field_tests", ONLY, async (t) => {
               `single item parameterised dict`,
               `list item parameterised dictionary`
             ].includes(suite.name)) {
-              return t.skip(`"1.0" is "1" in JS`)
+              // 1.0" is "1" in JS
+              DECODE_ONLY = true
             }
           }
           if (file === `param-list`) {
@@ -737,7 +736,8 @@ test("structured_field_tests", ONLY, async (t) => {
               `missing parameter value parameterised list`,
               `missing terminal parameter value parameterised list`,
             ].includes(suite.name)) {
-              return t.skip(`"1.0" is "1" in JS`)
+              // 1.0" is "1" in JS
+              DECODE_ONLY = true
             }
           }
           // SKIP tests -----
@@ -749,6 +749,8 @@ test("structured_field_tests", ONLY, async (t) => {
             }
             const item = formatItem(suite.expected)
             assert.deepStrictEqual(decodeItem(raw), item, suite.name)
+
+            if (DECODE_ONLY) return
 
             if (suite.canonical) {
               const canonical = suite.canonical[0]
@@ -767,6 +769,8 @@ test("structured_field_tests", ONLY, async (t) => {
             const list = formatList(suite.expected)
             assert.deepStrictEqual(decodeList(raw), list, suite.name)
 
+            if (DECODE_ONLY) return
+
             if (suite.canonical) {
               const canonical = suite.canonical[0] || ``
               assert.deepStrictEqual(encodeList(list), canonical, suite.name)
@@ -783,6 +787,8 @@ test("structured_field_tests", ONLY, async (t) => {
             }
             const dict = formatDict(suite.expected)
             assert.deepStrictEqual(decodeDict(raw), dict, suite.name)
+
+            if (DECODE_ONLY) return
 
             if (suite.canonical) {
               const canonical = suite.canonical[0] || ``
