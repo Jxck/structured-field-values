@@ -1,5 +1,7 @@
 import * as assert from "node:assert"
 import test from "node:test"
+import {readFileSync} from "node:fs"
+
 
 import {
   Item,
@@ -878,4 +880,13 @@ test("serialisation_tests", async (t) => {
       }
     })
   }
+})
+
+test("doc-testing", ONLY, async (t) => {
+  const readme = readFileSync(`./README.md`).toString()
+  const codes = Array
+    .from(readme.matchAll(/```js(?<code>[\s\S]*?)```/gm))
+    .map((match) => match.groups.code.trim())
+
+  codes.forEach((code) => eval(code))
 })

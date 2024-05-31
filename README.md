@@ -58,7 +58,7 @@ Note: Symbol generated in decoder is registered globally as Shared Symbol, so yo
 
 ```js
 const a = decodeItem(`a`).value // Symbol(a)
-console.log(Symbol.keyFor(a)) // "a" (string)
+Symbol.keyFor(a) // "a" (string)
 ```
 
 #### encodeItem

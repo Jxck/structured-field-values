@@ -1919,6 +1919,3 @@ export function leadingSP(input_string) {
 export function leadingOWS(input_string) {
   return input_string.replace(/^[ \t]+/, "")
 }
-
-
-  
