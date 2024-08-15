@@ -199,6 +199,7 @@ export class InnerList {
     this.params = params
   }
 }
+
 // 4.1.1.  Serializing a List
 //
 // Given an array of (member_value, parameters) tuples as input_list,
